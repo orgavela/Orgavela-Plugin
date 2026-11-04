@@ -6,6 +6,7 @@
  */
 
 use UOP\Infrastructure\Database\WpdbConnection;
+use UOP\Infrastructure\Queue\GuardianQuotaScheduleHealth;
 
 // Never run this helper against IONOS, Staging, an ordinary WordPress install,
 // a real participant database, or a non-GitHub execution environment.
@@ -61,6 +62,9 @@ $option_value = static function ( string $key ) use ( $db, $wpdb ): ?string {
 };
 
 if ( 'seed' === $kind ) {
+	if ( 'first_run' !== GuardianQuotaScheduleHealth::inspect( $now ) ) {
+		throw new RuntimeException( 'A scheduled but never dispatched cleanup must be visibly pending, not healthy.' );
+	}
 	$actions = $pending();
 	if ( 1 !== count( $actions ) || false === as_next_scheduled_action( $hook, array(), $group ) ) {
 		throw new RuntimeException( 'Expected exactly one recurring Guardian retention job after WordPress bootstrap.' );
@@ -114,6 +118,9 @@ if ( 'dispatch' === $kind ) {
 	}
 	if ( 1 !== count( $pending() ) ) {
 		throw new RuntimeException( 'Running a one-off Guardian cleanup must preserve the recurring job.' );
+	}
+		if ( 'ok' !== GuardianQuotaScheduleHealth::inspect( time() ) ) {
+		throw new RuntimeException( 'Completed scheduler dispatch must yield healthy read-only queue status.' );
 	}
 	echo "PASS: actual Action Scheduler runner completed due Guardian cleanup; expired removed; active/grace/invalid/unrelated retained; recurring job remains unique.\n";
 	// Remove only disposable fixture keys; never operate on other site data.
