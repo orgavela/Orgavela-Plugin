@@ -9,11 +9,17 @@ on:
     paths:
       - 'scripts/ci/production_backup/**'
       - '.github/workflows/pgp05-offline-regression.yml'
+  pull_request:
+    branches:
+      - feat/pgp05-dreamloud-collector-port-20261023
+    paths:
+      - 'scripts/ci/production_backup/**'
+      - '.github/workflows/pgp05-offline-regression.yml'
 permissions:
   contents: read
 jobs:
   isolated-fixtures:
-    if: github.repository == 'orgavela/Orgavela-Plugin'
+    if: github.repository == 'orgavela/Orgavela-Plugin' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'orgavela/Orgavela-Plugin')
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
