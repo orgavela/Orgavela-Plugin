@@ -4,7 +4,7 @@ import urllib.request
 import urllib.error
 import re
 
-REPOSITORY='janjrre/orgavela-backups'
+REPOSITORY='orgavela/orgavela-backups'
 
 class WriterError(ValueError):
     def __init__(self,message,status=None): super().__init__(message);self.status=status
