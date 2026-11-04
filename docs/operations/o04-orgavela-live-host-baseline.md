@@ -44,3 +44,12 @@ Official hosting references (verified 2026-11-04):
 [Draft #43](https://github.com/orgavela/Orgavela-Plugin/pull/43) already proves an isolated **hook/group-scoped WP-CLI** job and two untouched decoys in GitHub only. A separate CI fixture, tests/Fixtures/o04-ionos-http-cron-probe.php, and a dedicated pipeline step now verify whether a **direct HTTP GET to wp-cron.php** on **127.0.0.1** processes a due synthetic Guardian action with DISABLE_WP_CRON=true. The two proofs are intentionally different: the HTTP variant provides no selective hook/group isolation. Passing them cannot be treated as proof of configured recurring jobs on the real IONOS host.
 
 **Release gate status:** O04 external operation **OPEN**, W0/O03 recovery **OPEN**, P4 Privacy/Legal and guardian identity **OPEN**. No full V1 release approval.
+
+
+## Folgemessung und vorhandene Backups – 04.11.2026
+
+Die wiederholte read-only Abfrage zeigte später **einen neuen nächsten Cronzeitpunkt 2026-11-04 14:40:39 UTC** und **0 überfällige WordPress-Events** statt des vorher über 394 Sekunden verspäteten Zeitpunkts 14:27:39 UTC. **Interpretation:** Ein Cron-bezogener Zustand hat sich weiterbewegt; die Website-Schnittstelle belegt damit **nicht**, ob IONOS bereits einen spezifischen Cronjob eingerichtet hat, welcher Prozess die Umschaltung verursachte, ob Action-Scheduler-Hooks erfolgreich abgeschlossen wurden oder ob mehrere Trigger konkurrieren. Deshalb keinen zweiten Cronjob ohne Hostinginventur einrichten.
+
+Die privaten Releases von orgavela/orgavela-backups wurden **nur auf Metadatenebene** gelesen: Es gab dort ausschließlich ausdrücklich als synthetisch bezeichnete Test-Assets (GPG-/age-/PGP-Durchläufe), **keinen** nachgewiesenen echten Vollbackup-/Restore-Satz für orgavela.com. IONOS könnte eigene Backups verwalten; deren Vorhandensein und Wiederherstellbarkeit sind durch diese Prüfung nicht bestätigt. Keine Backup-Payloads oder privaten Daten wurden geöffnet.
+
+Technischer Gegensatz: [Draft-PR #43](https://github.com/orgavela/Orgavela-Plugin/pull/43) beweist selektiven WP-CLI-Cron **nur in GitHub**. [Draft-PR #44](https://github.com/orgavela/Orgavela-Plugin/pull/44) testet zusätzlich einen **ungescope-ten direkten HTTP-GET an wp-cron.php**, der auf einem Wegwerf-WordPress alle fälligen Jobs des WordPress-Schedulers ausführen kann. Die neue CI-Stufe war auf Source-HEAD 857d0fe154815e413f78ae4a464b6db1473f4845 erfolgreich; die volle SHA-Matrix muss gesondert als solche bestätigt werden.
