@@ -150,6 +150,19 @@ jobs:
           UOP_P4_SCHEDULER_PROBE=1 UOP_P4_PROBE_ACTION=seed wp eval-file tests/Fixtures/p4-guardian-scheduler-probe.php --path="$WP_ROOT"
           UOP_P4_SCHEDULER_PROBE=1 UOP_P4_PROBE_ACTION=dispatch wp eval-file tests/Fixtures/p4-guardian-scheduler-probe.php --path="$WP_ROOT"
           wp plugin deactivate uop-core --path="$WP_ROOT"
+      - name: O04 isolated external WP-CLI cron trigger with hook/group isolation
+        if: ${{ matrix.php == '8.3' && matrix.db == 'mariadb:10.11' }}
+        timeout-minutes: 3
+        run: |
+          # Separate WP-CLI subprocess; WP-Cron is disabled, no browser or
+          # WordPress HTTP worker can execute the seed's due actions.
+          # Restrict work to our Guardian hook and UOP group: decoys prove
+          # unrelated plugin work and other UOP hooks remain untouched.
+          wp plugin activate uop-core --path="$WP_ROOT"
+          UOP_O04_EXTERNAL_CI=1 UOP_O04_EXTERNAL_MODE=seed wp eval-file tests/Fixtures/o04-external-cli-cron-probe.php --path="$WP_ROOT"
+          wp action-scheduler run --hooks=uop_guardian_quota_prune --group=uop --batch-size=1 --batches=1 --path="$WP_ROOT"
+          UOP_O04_EXTERNAL_CI=1 UOP_O04_EXTERNAL_MODE=verify wp eval-file tests/Fixtures/o04-external-cli-cron-probe.php --path="$WP_ROOT"
+          wp plugin deactivate uop-core --path="$WP_ROOT"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Browser activation smoke
