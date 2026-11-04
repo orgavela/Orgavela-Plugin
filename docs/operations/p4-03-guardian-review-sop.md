@@ -36,3 +36,16 @@
 - Nicht erfüllt: externer rechtlicher Guardian-Nachweis, gesicherte UUID-Ausgabe-/Bestätigungsstrecke, widersprüchliche echte Sorgerechtsfälle, O04-Scheduler und W0/O03-Restore.
 
 **Go/No-Go:** Bis zu den fachlichen, Datenschutz-, Betriebs- und Release-Gates bleibt P4-03 unvollständig. Keine realen Testpersonen oder automatische Codeverteilung, kein Merge und kein produktiver Deploy.
+
+
+## O04 – Technische Prüfung des stündlichen Retention-Jobs (04.11.2026)
+
+**Ziel des CI-Nachweises:** Die Quota-Löschlogik wurde zuvor durch direkte Repository-/Pruner-Tests geprüft. Die zusätzliche, isolierte Action-Scheduler-Probe testet den tatsächlich registrierten Hook und seine Ausführung durch den Queue-Runner, **nicht** den externen Website-Cron oder das Hosting.
+
+1. UOP Core ausschließlich auf einer frischen GitHub-Actions-WordPress-Installation mit lokaler MariaDB und abgeschaltetem WP-Cron aktivieren.
+2. WP-CLI-Probelauf mit präzisen Umgebungs- und Loopback-Guards: **genau eine** geplante wiederkehrende Aktion in Gruppe uop für Hook uop_guardian_quota_prune. Bei neuem WP-CLI-Bootstrap kein Duplikat.
+3. Ausschließlich synthetische Optionszeilen (längst abgelaufen / aktiv / Grace-Fenster / korrupt / fremd benannt) erzeugen. Eine zusätzliche fällige einmalige Aktion desselben Hooks planen und den echten ActionScheduler_QueueRunner ausführen. Vollendeten Scheduler-Eintrag für genau diese Aktion verlangen.
+4. Nur die abgelaufene valide Zeile muss verschwinden. Aktive, Grace-, korrupte und fremde Werte bleiben; der wiederkehrende Job bleibt. Testfixture entfernt nur eigene künstliche Werte.
+5. Bei fehlender Initialisierung, Registrierung, Action-Status oder SQL-Endzustand **CI hart fehlschlagen lassen**. Ein direktes do_action() ist kein gleichwertiger Scheduler-Dispatch-Nachweis.
+
+**Betriebsgate weiter OFFEN:** Noch kein Nachweis, dass IONOS einen von echten Besuchern unabhängigen, autorisierten periodischen Trigger ausführt; außerdem fehlen Monitoring gegen überfällige/fehlgeschlagene Aktionen, Alarmierung, Wiederanlauf nach Ausfällen, Privacy-Sign-off für dauerhaft korrupte Quotazeilen und echte Produktionsergebnisse. Grüner GitHub-Workflow erfüllt O04 daher **nicht**.
