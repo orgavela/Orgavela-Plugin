@@ -176,6 +176,42 @@ jobs:
           wp action-scheduler run --hooks=uop_guardian_quota_prune --group=uop --batch-size=1 --batches=1 --path="$WP_ROOT"
           UOP_O04_EXTERNAL_CI=1 UOP_O04_EXTERNAL_MODE=verify wp eval-file tests/Fixtures/o04-external-cli-cron-probe.php --path="$WP_ROOT"
           wp plugin deactivate uop-core --path="$WP_ROOT"
+      - name: O04 IONOS-style direct HTTP wp-cron proof (disposable only)
+        if: ${{ matrix.php == '8.3' && matrix.db == 'mariadb:10.11' }}
+        timeout-minutes: 3
+        run: |
+          # IONOS' control-panel cron is an HTTP GET, not a scoped WP-CLI
+          # process. Never call an actual site's wp-cron.php from this job.
+          wp plugin activate uop-core --path="$WP_ROOT"
+          UOP_O04_HTTP_CI=1 UOP_O04_HTTP_MODE=seed wp eval-file tests/Fixtures/o04-ionos-http-cron-probe.php --path="$WP_ROOT"
+          PHP_CLI_SERVER_WORKERS=3 php -d max_execution_time=60 -d memory_limit=512M -S 127.0.0.1:8080 -t "$WP_ROOT" > /tmp/uop-o04-http-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail --output /dev/null --max-time 2 http://127.0.0.1:8080/wp-login.php; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat /tmp/uop-o04-http-server.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/uop-o04-http-server.log
+            exit 1
+          fi
+          # A direct HTTP request even with DISABLE_WP_CRON=true must cause
+          # WordPress to execute the due Action Scheduler queue. It is
+          # intentionally NOT scoped to one hook or group.
+          curl --silent --show-error --fail --max-time 30 --output /dev/null http://127.0.0.1:8080/wp-cron.php
+          UOP_O04_HTTP_CI=1 UOP_O04_HTTP_MODE=verify wp eval-file tests/Fixtures/o04-ionos-http-cron-probe.php --path="$WP_ROOT"
+          kill "$server_pid" 2>/dev/null || true
+          wait "$server_pid" 2>/dev/null || true
+          trap - EXIT
+          wp plugin deactivate uop-core --path="$WP_ROOT"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Browser activation smoke
