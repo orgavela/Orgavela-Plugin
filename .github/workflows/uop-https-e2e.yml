@@ -173,7 +173,10 @@ jobs:
           UOP_HTTPS_E2E: '1'
         run: |
           npx playwright install --with-deps chromium
-          npx playwright test tests/Browser/m610-https.spec.js tests/Browser/m610-live-guest.spec.js tests/Browser/m610-members-admin.spec.js tests/Browser/m610-responsive-a11y.spec.js tests/Browser/m610-guardian-quota.spec.js
+          # Pre-existing tests assert an initially empty global Guardian queue.
+          # Run their isolated journeys before the deliberate stress mutations.
+          npx playwright test tests/Browser/m610-https.spec.js tests/Browser/m610-live-guest.spec.js tests/Browser/m610-members-admin.spec.js tests/Browser/m610-responsive-a11y.spec.js
+          npx playwright test tests/Browser/m610-guardian-quota.spec.js
       - name: Upload browser and WordPress diagnostics (never email contents)
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

@@ -20,10 +20,18 @@ $user   = get_user_by( 'login', 'uop_ci_review_parent' );
 $linked = $user ? $people->by_user( $scope, (int) $user->ID ) : null;
 $raw    = (string) get_option( 'uop_m610_ci_review_child', '' );
 $child  = $raw ? $people->find( $scope, PublicId::from_string( $raw ) ) : null;
-$rate   = $user ? (int) get_transient( 'uop_guardian_claim_' . hash( 'sha256', $scope->id . ':' . $user->ID ) ) : -1;
+$key    = $user ? 'uop_gclaim_q2_' . hash( 'sha256', $scope->id . ':' . $user->ID ) : '';
+$quota  = $user ? $db->rows(
+	'SELECT option_value FROM %i WHERE option_name = %s',
+	array( $wpdb->options, $key )
+) : array();
+$rate = 0;
+if ( isset( $quota[0]['option_value'] ) && preg_match( '/^([0-3]):[0-9]{1,12}$/D', (string) $quota[0]['option_value'], $parts ) ) {
+	$rate = (int) $parts[1];
+}
 $count  = $db->rows(
-	"SELECT COUNT(*) AS n FROM %i WHERE organization_id = %d AND type_key = 'guardian_of' AND status = 'pending'",
-	array( $wpdb->prefix . 'uop_relationships', $scope->id )
+	"SELECT COUNT(*) AS n FROM %i WHERE organization_id = %d AND from_person_id = %d AND type_key = 'guardian_of' AND status = 'pending'",
+	array( $wpdb->prefix . 'uop_relationships', $scope->id, (int) ( $linked['id'] ?? 0 ) )
 );
 echo wp_json_encode(
 	array(
