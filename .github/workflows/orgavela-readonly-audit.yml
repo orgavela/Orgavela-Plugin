@@ -48,6 +48,24 @@ jobs:
             echo "::error::Readonly SSH audit contains a scheduler execution or crontab mutation."
             exit 1
           fi
+      - name: PHP diagnostic snippets parse cleanly (no execution)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+          source = Path("scripts/ci/orgavela-readonly-audit.sh").read_text()
+          parts = re.findall(r"php_code=\"\$\(cat <<'PHP'\n(.*?)\nPHP\n\)\"", source, flags=re.S)
+          if len(parts) != 3:
+              raise SystemExit(f"Expected 3 read-only PHP diagnostic fragments, got {len(parts)}")
+          for index, fragment in enumerate(parts, 1):
+              result = subprocess.run(["php", "-l"], input="<?php\n" + fragment, text=True, capture_output=True)
+              if result.returncode:
+                  raise SystemExit(f"PHP diagnostic fragment {index} failed syntax check")
+          print("All three bounded WP-CLI diagnostics passed PHP syntax checks.")
+          PY
   readonly-audit:
     if: github.repository == 'orgavela/Orgavela-Plugin' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
