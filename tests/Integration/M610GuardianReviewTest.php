@@ -234,6 +234,7 @@ final class M610GuardianReviewTest extends TestCase {
 	 * This simulates multiple workers observing the same old cache value.
 	 */
 	public function test_guardian_quota_rejects_fourth_attempt_despite_stale_transient_reads(): void {
+		global $wpdb;
 		$s = $this->fixture();
 		wp_set_current_user( $s['parent'] );
 		$key    = 'uop_guardian_claim_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
@@ -244,6 +245,10 @@ final class M610GuardianReviewTest extends TestCase {
 			for ( $i = 0; $i < 3; ++$i ) {
 				$unknown = PublicId::generate();
 				self::assertSame( 202, $this->json( 'POST', $target, array( 'subject_id' => $unknown->to_string() ) )->get_status() );
+				$quota_key = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
+				$rows      = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
+				self::assertCount( 1, $rows, 'Claim quota must persist as a database row.' );
+				self::assertStringStartsWith( ( $i + 1 ) . ':', (string) $rows[0]['option_value'], 'Attempt count must be durable after each request.' );
 			}
 			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
 			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
