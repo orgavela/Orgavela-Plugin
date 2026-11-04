@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - fix/pgp05-backup-repo-pin-20261104
+      - feat/pgp05-dreamloud-collector-port-20261023
     paths:
       - 'scripts/ci/production_backup/**'
       - '.github/workflows/pgp05-offline-regression.yml'
