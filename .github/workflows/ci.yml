@@ -140,6 +140,16 @@ jobs:
         run: |
           wp plugin activate uop-core --path="$WP_ROOT"
           wp plugin deactivate uop-core --path="$WP_ROOT"
+      - name: P4 Guardian retention via Action Scheduler (disposable only)
+        if: ${{ matrix.php == '8.3' && matrix.db == 'mariadb:10.11' }}
+        timeout-minutes: 3
+        run: |
+          # Isolated fixture requires GITHUB_ACTIONS, WP_ROOT, DISABLE_WP_CRON,
+          # a precise loopback URL and an explicit CI opt-in. No IONOS calls.
+          wp plugin activate uop-core --path="$WP_ROOT"
+          UOP_P4_SCHEDULER_PROBE=1 UOP_P4_PROBE_ACTION=seed wp eval-file tests/Fixtures/p4-guardian-scheduler-probe.php --path="$WP_ROOT"
+          UOP_P4_SCHEDULER_PROBE=1 UOP_P4_PROBE_ACTION=dispatch wp eval-file tests/Fixtures/p4-guardian-scheduler-probe.php --path="$WP_ROOT"
+          wp plugin deactivate uop-core --path="$WP_ROOT"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Browser activation smoke
