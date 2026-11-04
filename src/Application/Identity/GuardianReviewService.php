@@ -18,6 +18,7 @@ use UOP\Core\TransactionManager;
 use UOP\Domain\Organization\OrgScope;
 use UOP\Infrastructure\Database\AuditWriter;
 use UOP\Infrastructure\Database\Connection;
+use UOP\Infrastructure\Database\DatabaseException;
 use UOP\Infrastructure\Database\DelegationRepository;
 use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
 use UOP\Infrastructure\Database\OutboxRepository;
@@ -32,16 +33,16 @@ final class GuardianReviewService {
 	/**
 	 * Bind scoped, transactional collaborators.
 	 *
-	 * @param PersonRepository       $people        Scoped person storage.
-	 * @param RelationshipRepository $relationships Guardian claims.
-	 * @param DelegationRepository   $delegations   Time-limited grants.
-	 * @param Connection             $db            Prepared SQL adapter.
-	 * @param PolicyService          $policy        Live scope checks.
-	 * @param TransactionManager     $tx            Atomic transaction.
-	 * @param AuditWriter            $audit         Append-only evidence.
-	 * @param OutboxRepository       $outbox        Domain events.
-	 * @param string                 $prefix        Trusted site table prefix.
-	 * @param GuardianClaimQuotaRepository $quota    Transactional claim attempt quota.
+	 * @param PersonRepository             $people        Scoped person storage.
+	 * @param RelationshipRepository       $relationships Guardian claims.
+	 * @param DelegationRepository         $delegations   Time-limited grants.
+	 * @param Connection                   $db            Prepared SQL adapter.
+	 * @param PolicyService                $policy        Live scope checks.
+	 * @param TransactionManager           $tx            Atomic transaction.
+	 * @param AuditWriter                  $audit         Append-only evidence.
+	 * @param OutboxRepository             $outbox        Domain events.
+	 * @param string                       $prefix        Trusted site table prefix.
+	 * @param GuardianClaimQuotaRepository $quota         Transactional claim attempt quota.
 	 */
 	public function __construct(
 		private PersonRepository $people,
@@ -92,7 +93,7 @@ final class GuardianReviewService {
 				try {
 					$uuid = PublicId::generate();
 					$this->relationships->request_guardian( $scope, $uuid, (int) $linked['id'], (int) $target['id'], $now );
-				} catch ( \\UOP\\Infrastructure\\Database\\DatabaseException $error ) {
+				} catch ( DatabaseException $error ) {
 					// Duplicate claims consume a slot, but create no additional
 					// relationship, audit entry, event or permission.
 					if ( 1062 === $error->getCode() ) {
