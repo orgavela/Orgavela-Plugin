@@ -252,7 +252,18 @@ final class M610GuardianReviewTest extends TestCase {
 			}
 			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
 			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+			$before_keys = $this->db->rows(
+				'SELECT option_name, option_value FROM %i WHERE option_name LIKE %s ORDER BY option_name ASC',
+				array( $wpdb->options, 'uop_gclaim_q2_%' )
+			);
+			self::assertSame( $this->scope->id, (int) get_option( 'uop_default_organization_id' ) );
 			self::assertSame( 202, $this->json( 'POST', $target, array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+			$after_keys = $this->db->rows(
+				'SELECT option_name, option_value FROM %i WHERE option_name LIKE %s ORDER BY option_name ASC',
+				array( $wpdb->options, 'uop_gclaim_q2_%' )
+			);
+			self::assertSame( $before_keys, $after_keys, 'An exhausted actor must not silently switch to a different quota identity.' );
+			self::assertSame( $this->scope->id, (int) get_option( 'uop_default_organization_id' ) );
 			self::assertSame( $s['parent'], get_current_user_id(), 'REST actor must remain the original claimant.' );
 			$after = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
 			self::assertCount( 1, $after );
@@ -313,6 +324,22 @@ final class M610GuardianReviewTest extends TestCase {
 		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
 		self::assertSame( 1, $this->tenant_count( 'audit_log' ) );
 		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+	}
+
+	/** The service itself must enforce quota even without REST transport. */
+	public function test_guardian_quota_service_direct_call_is_independently_bounded(): void {
+		$s = $this->fixture();
+		$actor = new Actor( $s['parent'] );
+		$now   = gmdate( 'Y-m-d H:i:s' );
+		for ( $i = 0; $i < 3; ++$i ) {
+			self::assertFalse( $s['reviews']->request( $actor, $this->scope, PublicId::generate(), $now, CorrelationId::generate() ) );
+		}
+		self::assertFalse(
+			$s['reviews']->request( $actor, $this->scope, $s['child'], $now, CorrelationId::generate() ),
+			'The fourth direct request must not create a guardian relationship.'
+		);
+		self::assertSame( 0, $this->tenant_count( 'relationships' ) );
+		self::assertSame( 0, $this->tenant_count( 'audit_log' ) );
 	}
 
 	/** Reviewer rejection records a decision but never grants family access. */
