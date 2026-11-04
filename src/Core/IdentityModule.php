@@ -22,6 +22,8 @@ use UOP\Infrastructure\Database\AssignmentRepository;
 use UOP\Infrastructure\Database\AuditWriter;
 use UOP\Infrastructure\Database\Connection;
 use UOP\Infrastructure\Database\DelegationRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaPruner;
 use UOP\Infrastructure\Database\OutboxRepository;
 use UOP\Infrastructure\Database\PersonRepository;
 use UOP\Infrastructure\Database\RelationshipRepository;
@@ -51,6 +53,8 @@ final class IdentityModule implements ModuleInterface {
 		$container->set( PersonRepository::class, static fn ( ServiceContainer $c ) => new PersonRepository( $c->get( Connection::class ), $prefix ) );
 		$container->set( RelationshipRepository::class, static fn ( ServiceContainer $c ) => new RelationshipRepository( $c->get( Connection::class ), $prefix ) );
 		$container->set( DelegationRepository::class, static fn ( ServiceContainer $c ) => new DelegationRepository( $c->get( Connection::class ), $prefix ) );
+		$container->set( GuardianClaimQuotaRepository::class, static fn ( ServiceContainer $c ) => new GuardianClaimQuotaRepository( $c->get( Connection::class ), $wpdb->options ) );
+		$container->set( GuardianClaimQuotaPruner::class, static fn ( ServiceContainer $c ) => new GuardianClaimQuotaPruner( $c->get( Connection::class ), $wpdb->options ) );
 		$container->set( AssignmentRepository::class, static fn ( ServiceContainer $c ) => new AssignmentRepository( $c->get( Connection::class ), $prefix ) );
 		$container->set( AuditWriter::class, static fn ( ServiceContainer $c ) => new AuditWriter( $c->get( Connection::class ), $prefix ) );
 		$container->set( OutboxRepository::class, static fn ( ServiceContainer $c ) => new OutboxRepository( $c->get( Connection::class ), $prefix ) );
@@ -163,8 +167,29 @@ final class IdentityModule implements ModuleInterface {
 				$c->get( TransactionManager::class ),
 				$c->get( AuditWriter::class ),
 				$c->get( OutboxRepository::class ),
-				$prefix
+				$prefix,
+				$c->get( GuardianClaimQuotaRepository::class )
 			)
+		);
+		// Tiny, site-local retention sweep; only expired Guardian quota rows.
+		// The job never runs inline with public Guardian REST requests.
+		$guardian_quota = $container->get( GuardianClaimQuotaPruner::class );
+		add_action(
+			'uop_guardian_quota_prune',
+			static function () use ( $guardian_quota ): void {
+				$guardian_quota->prune_expired( time() );
+			}
+		);
+		add_action(
+			'init',
+			static function (): void {
+				if ( function_exists( 'as_schedule_recurring_action' )
+					&& function_exists( 'as_next_scheduled_action' )
+					&& false === as_next_scheduled_action( 'uop_guardian_quota_prune', array(), 'uop' ) ) {
+					as_schedule_recurring_action( time() + 3600, 3600, 'uop_guardian_quota_prune', array(), 'uop', true );
+				}
+			},
+			25
 		);
 		CapabilityRegistry::install();
 		$dispatcher = $container->get( OutboxDispatcher::class );

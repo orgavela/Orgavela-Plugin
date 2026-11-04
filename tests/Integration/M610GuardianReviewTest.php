@@ -20,7 +20,10 @@ use UOP\Core\TransactionManager;
 use UOP\Domain\Organization\OrgScope;
 use UOP\Infrastructure\Database\AssignmentRepository;
 use UOP\Infrastructure\Database\AuditWriter;
+use UOP\Infrastructure\Database\DatabaseException;
 use UOP\Infrastructure\Database\DelegationRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaPruner;
 use UOP\Infrastructure\Database\EventRepository;
 use UOP\Infrastructure\Database\Installer;
 use UOP\Infrastructure\Database\OccurrenceRepository;
@@ -57,6 +60,7 @@ final class M610GuardianReviewTest extends TestCase {
 
 	/** Create two real independent actors and no implicit family rights. */
 	private function fixture(): array {
+		global $wpdb;
 		if ( ! post_type_exists( 'uop_event' ) ) {
 			register_post_type( 'uop_event', array( 'public' => true ) );
 		}
@@ -76,7 +80,7 @@ final class M610GuardianReviewTest extends TestCase {
 		$tx = new TransactionManager( $this->db, static function ( int $n ): void {}, static function ( \Throwable $e ): void {} );
 		$audit = new AuditWriter( $this->db, $this->prefix );
 		$outbox = new OutboxRepository( $this->db, $this->prefix );
-		$reviews = new GuardianReviewService( $people, $relationships, $delegations, $this->db, $policy, $tx, $audit, $outbox, $this->prefix );
+		$reviews = new GuardianReviewService( $people, $relationships, $delegations, $this->db, $policy, $tx, $audit, $outbox, $this->prefix, new GuardianClaimQuotaRepository( $this->db, $wpdb->options ) );
 		( new GuardianReviewController( $reviews ) )->register();
 
 		$now = gmdate( 'Y-m-d H:i:s' );
@@ -225,6 +229,233 @@ final class M610GuardianReviewTest extends TestCase {
 		);
 		self::assertSame( 'rejected', $s['relationships']->find( $this->scope, PublicId::from_string( $claim_id ) )['status'] );
 		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+	}
+
+	/**
+	 * Stale WordPress transient reads must never permit a fourth claim.
+	 * This simulates multiple workers observing the same old cache value.
+	 */
+	public function test_guardian_quota_rejects_fourth_attempt_despite_stale_transient_reads(): void {
+		global $wpdb;
+		$s = $this->fixture();
+		$before_audit = $this->tenant_count( 'audit_log' );
+		wp_set_current_user( $s['parent'] );
+		$key    = 'uop_guardian_claim_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
+		$stale  = static fn (): int => 0;
+		$target = '/uop/v1/me/guardian-claims';
+		add_filter( 'pre_transient_' . $key, $stale );
+		try {
+			for ( $i = 0; $i < 3; ++$i ) {
+				$unknown = PublicId::generate();
+				self::assertSame( 202, $this->json( 'POST', $target, array( 'subject_id' => $unknown->to_string() ) )->get_status() );
+				$quota_key = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
+				$rows      = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
+				self::assertCount( 1, $rows, 'Claim quota must persist as a database row.' );
+				self::assertStringStartsWith( ( $i + 1 ) . ':', (string) $rows[0]['option_value'], 'Attempt count must be durable after each request.' );
+			}
+			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
+			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+			$before_keys = $this->db->rows(
+				'SELECT option_name, option_value FROM %i WHERE option_name LIKE %s ORDER BY option_name ASC',
+				array( $wpdb->options, 'uop_gclaim_q2_%' )
+			);
+			self::assertSame( $this->scope->id, (int) get_option( 'uop_default_organization_id' ) );
+			self::assertSame( 202, $this->json( 'POST', $target, array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+			$after_keys = $this->db->rows(
+				'SELECT option_name, option_value FROM %i WHERE option_name LIKE %s ORDER BY option_name ASC',
+				array( $wpdb->options, 'uop_gclaim_q2_%' )
+			);
+			self::assertSame( $before_keys, $after_keys, 'An exhausted actor must not silently switch to a different quota identity.' );
+			self::assertSame( $this->scope->id, (int) get_option( 'uop_default_organization_id' ) );
+			self::assertSame( $s['parent'], get_current_user_id(), 'REST actor must remain the original claimant.' );
+			$after = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
+			self::assertCount( 1, $after );
+			self::assertStringStartsWith( '3:', (string) $after[0]['option_value'], 'The fourth request may not reset the active quota window.' );
+			self::assertSame( 0, $this->tenant_count( 'relationships' ), 'A stale transient must not bypass the three-attempt claim quota.' );
+			self::assertSame( $before_audit, $this->tenant_count( 'audit_log' ) );
+			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+		} finally {
+			remove_filter( 'pre_transient_' . $key, $stale );
+		}
+	}
+
+	/**
+	 * An independent InnoDB connection cannot spend a slot while the first
+	 * connection holds the actor's quota row. A timed-out peer must fail closed.
+	 */
+	public function test_guardian_quota_serializes_across_independent_database_connections(): void {
+		global $wpdb;
+		$s        = $this->fixture();
+		$actor_id = (int) $s['parent'];
+		$now      = time();
+		$primary  = new GuardianClaimQuotaRepository( $this->db, $wpdb->options );
+
+		// A distinct wpdb instance establishes a separate physical MySQL session.
+		$peer_wpdb = new \wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$peer_wpdb->set_prefix( $wpdb->prefix );
+		$peer_db   = new WpdbConnection( $peer_wpdb );
+		$peer      = new GuardianClaimQuotaRepository( $peer_db, $peer_wpdb->options );
+		$peer_db->execute( 'SET SESSION innodb_lock_wait_timeout = 1' );
+
+		$this->db->execute( 'START TRANSACTION' );
+		try {
+			self::assertTrue( $primary->consume( $this->scope, $actor_id, $now ) );
+			$peer_db->execute( 'START TRANSACTION' );
+			try {
+				try {
+					$peer->consume( $this->scope, $actor_id, $now );
+					self::fail( 'A second SQL connection must not pass an uncommitted quota lock.' );
+				} catch ( DatabaseException $error ) {
+					self::assertSame( 1205, $error->getCode(), 'InnoDB must report lock-wait timeout on the contested row.' );
+				}
+			} finally {
+				$peer_db->execute( 'ROLLBACK' );
+			}
+		} finally {
+			$this->db->execute( 'COMMIT' );
+		}
+
+		// After the lock is released, the peer sees the committed first slot.
+		$peer_db->execute( 'START TRANSACTION' );
+		try {
+			self::assertTrue( $peer->consume( $this->scope, $actor_id, $now ) );
+			$peer_db->execute( 'COMMIT' );
+		} catch ( \Throwable $error ) {
+			$peer_db->execute( 'ROLLBACK' );
+			throw $error;
+		}
+		$key  = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $actor_id );
+		$rows = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+		self::assertCount( 1, $rows );
+		self::assertStringStartsWith( '2:', (string) $rows[0]['option_value'] );
+		self::assertSame( 0, $this->tenant_count( 'relationships' ), 'A quota-level contention alone cannot create a guardian relationship.' );
+	}
+
+	/**
+	 * Cleanup must minimize pseudonymous retention without relaxing active
+	 * admission decisions or erasing unexpected/corrupt option values.
+	 */
+	public function test_guardian_quota_prune_preserves_active_grace_and_corrupt_rows(): void {
+		global $wpdb;
+		$s     = $this->fixture();
+		$now   = time();
+		$repo  = new GuardianClaimQuotaPruner( $this->db, $wpdb->options );
+		$keys  = array(
+			'expired' => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] ),
+			'active'  => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['admin'] ),
+			'grace'   => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['stranger'] ),
+			'corrupt' => 'uop_gclaim_q2_' . hash( 'sha256', 'corrupt:' . $s['parent'] ),
+			'decoy'   => 'uopXgclaimXq2X' . hash( 'sha256', 'decoy:' . $s['parent'] ),
+		);
+		$values = array(
+			'expired' => '3:' . ( $now - 90000 ),
+			'active'  => '3:' . ( $now + 1200 ),
+			'grace'   => '3:' . ( $now - 300 ),
+			'corrupt' => 'malformed',
+			'decoy'   => '3:' . ( $now - 90000 ),
+		);
+		try {
+			foreach ( $keys as $kind => $key ) {
+				$this->db->execute(
+					"INSERT INTO %i (option_name, option_value, autoload) VALUES (%s,%s,'off') ON DUPLICATE KEY UPDATE option_value = VALUES(option_value)",
+					array( $wpdb->options, $key, $values[ $kind ] )
+				);
+			}
+			self::assertGreaterThanOrEqual( 1, $repo->prune_expired( $now ) );
+			foreach ( $keys as $kind => $key ) {
+				$rows = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+				if ( 'expired' === $kind ) {
+					self::assertCount( 0, $rows, 'Aged-out quota should be pruned.' );
+				} else {
+					self::assertCount( 1, $rows, $kind . ' row must remain untouched.' );
+					self::assertSame( $values[ $kind ], $rows[0]['option_value'] );
+				}
+			}
+			$quota = new GuardianClaimQuotaRepository( $this->db, $wpdb->options );
+			$tx = new TransactionManager( $this->db, static function ( int $microseconds ): void {}, static function ( \Throwable $error ): void {} );
+			self::assertTrue(
+				$tx->run( fn (): bool => $quota->consume( $this->scope, $s['parent'], $now ) ),
+				'A prior expired quota may start a fresh window after pruning.'
+			);
+			self::assertFalse(
+				$tx->run( fn (): bool => $quota->consume( $this->scope, $s['admin'], $now ) ),
+				'An active exhausted quota must remain denied after cleanup.'
+			);
+			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
+			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+		} finally {
+			foreach ( $keys as $key ) {
+				$this->db->execute( 'DELETE FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+			}
+		}
+	}
+
+	/**
+	 * Expired limits reset only through the database; corrupt state denies.
+	 * No subject identifiers or personally identifying emails enter the key.
+	 */
+	public function test_guardian_quota_expiry_and_corruption_fail_closed(): void {
+		global $wpdb;
+		$s = $this->fixture();
+		wp_set_current_user( $s['parent'] );
+		$key = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
+		$url = '/uop/v1/me/guardian-claims';
+		for ( $i = 0; $i < 3; ++$i ) {
+			self::assertSame( 202, $this->json( 'POST', $url, array( 'subject_id' => PublicId::generate()->to_string() ) )->get_status() );
+		}
+		$rows = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+		self::assertCount( 1, $rows );
+		self::assertMatchesRegularExpression( '/^3:[0-9]+$/', (string) $rows[0]['option_value'] );
+		$this->db->execute( 'UPDATE %i SET option_value = %s WHERE option_name = %s', array( $wpdb->options, '3:1', $key ) );
+		self::assertSame( 202, $this->json( 'POST', $url, array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+		self::assertSame( 1, $this->tenant_count( 'relationships' ), 'Only an expired window can reset a consumed quota.' );
+		$after = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+		self::assertMatchesRegularExpression( '/^1:[0-9]+$/', (string) $after[0]['option_value'] );
+		$before_audit = $this->tenant_count( 'audit_log' );
+		$this->db->execute( 'UPDATE %i SET option_value = %s WHERE option_name = %s', array( $wpdb->options, 'malformed', $key ) );
+		self::assertSame( 503, $this->json( 'POST', $url, array( 'subject_id' => $s['other_child']->to_string() ) )->get_status() );
+		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
+		self::assertSame( $before_audit, $this->tenant_count( 'audit_log' ) );
+		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+	}
+
+	/** A duplicate private claim still consumes quota without extra events. */
+	public function test_guardian_duplicate_claim_attempts_consume_quota_without_second_relationship(): void {
+		$s = $this->fixture();
+		$before_audit = $this->tenant_count( 'audit_log' );
+		wp_set_current_user( $s['parent'] );
+		$url = '/uop/v1/me/guardian-claims';
+		for ( $i = 0; $i < 3; ++$i ) {
+			self::assertSame( 202, $this->json( 'POST', $url, array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+		}
+		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
+		self::assertSame( $before_audit + 1, $this->tenant_count( 'audit_log' ) );
+		global $wpdb;
+		$quota_key = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
+		$record = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
+		self::assertCount( 1, $record );
+		self::assertStringStartsWith( '3:', (string) $record[0]['option_value'], 'Duplicate claims must still spend one quota slot.' );
+		self::assertSame( 202, $this->json( 'POST', $url, array( 'subject_id' => $s['other_child']->to_string() ) )->get_status() );
+		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
+		self::assertSame( $before_audit + 1, $this->tenant_count( 'audit_log' ) );
+		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+	}
+
+	/** The service itself must enforce quota even without REST transport. */
+	public function test_guardian_quota_service_direct_call_is_independently_bounded(): void {
+		$s = $this->fixture();
+		$before_audit = $this->tenant_count( 'audit_log' );
+		$actor = new Actor( $s['parent'] );
+		$now   = gmdate( 'Y-m-d H:i:s' );
+		for ( $i = 0; $i < 3; ++$i ) {
+			self::assertFalse( $s['reviews']->request( $actor, $this->scope, PublicId::generate(), $now, CorrelationId::generate() ) );
+		}
+		self::assertFalse(
+			$s['reviews']->request( $actor, $this->scope, $s['child'], $now, CorrelationId::generate() ),
+			'The fourth direct request must not create a guardian relationship.'
+		);
+		self::assertSame( 0, $this->tenant_count( 'relationships' ) );
+		self::assertSame( $before_audit, $this->tenant_count( 'audit_log' ) );
 	}
 
 	/** Reviewer rejection records a decision but never grants family access. */
