@@ -20,11 +20,11 @@ final class GuardianQuotaScheduleHealth {
 	/**
 	 * Classify only aggregate queue metadata without reading any action payload.
 	 *
-	 * @param int       $now            Trusted server timestamp.
+	 * @param int   $now            Trusted server timestamp.
 	 * @param array $next_scheduled Scheduled timestamps, maximum two sampled.
 	 * @phpstan-param list<int> $next_scheduled
-	 * @param bool      $has_failed     Whether a failed action needs review.
-	 * @param bool      $has_completed  Whether at least one action has completed.
+	 * @param bool  $has_failed     Whether a failed action needs review.
+	 * @param bool  $has_completed  Whether at least one action has completed.
 	 * @return string Fixed diagnostic code with no personal or action identifiers.
 	 * @throws InvalidArgumentException For invalid timestamps.
 	 */
