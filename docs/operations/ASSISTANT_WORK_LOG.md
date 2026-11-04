@@ -2037,3 +2037,8 @@ Für den Repository-Pin-Fix wurde [Draft PR #36](https://github.com/orgavela/Org
 
 
 **GitHub-Abnahmehinweis / Projektkommunikation, 04.11.2026:** Im bestehenden [PGP-05-Master-Issue #27](https://github.com/orgavela/Orgavela-Plugin/issues/27#issuecomment-6625404763) wurde die Quellursache, der abhängige [Draft PR #36](https://github.com/orgavela/Orgavela-Plugin/pull/36), die weiterhin deaktivierten Produktionspfade und der **noch unbelegte** neue CI-Test ausdrücklich gemeldet. Keine formale Freigabe oder Merge damit behauptet.
+
+
+### 04.11.2026 – PGP-05: Erster echter Offline-GitHub-CI-Lauf auf fixiertem SHA bestanden
+
+[Actions #41793866237](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41793866237) exakt auf Commit `3b123b612e1b51eb2b1c33611fb044becdada441`: Job `isolated-fixtures` (`126453253125`) **success**, alle Schritte erfolgreich. Joblog separat ausgelesen: 4 PHP-Syntaxprüfungen, PHP-Hilfstests, **17/17** Python-Tests inklusive neuer Repository-Pin-Regression, synthetisches verschlüsseltes 3-Asset-Handoff und temporärer Schlüssel-Roundtrip mit 3 Hash-/Byte-Gegenprüfungen PASS; Produktions-Capture/Writer bleiben **DISABLED**, `remote_calls=0`, `actual_site_restore_tested=false`. **Nur Offline-Evidenz**, keine W0/PGP05-/V1-Live-Abnahme. Einziger Wartungshinweis: Checkout@v4 (Node20) wird vom Runner auf Node24 erzwungen; die upstream-verifizierte Checkout-v7.0.1-SHA `3d3c42e5aac5ba805825da76410c181273ba90b1` wird im nächsten CI-Fix übernommen und erneut getesteten HEAD liefern. Nach der Dokumentationsänderung ist der erste PASS ein früherer SHA und wird nicht als finale Folge-HEAD-Abnahme ausgegeben.
