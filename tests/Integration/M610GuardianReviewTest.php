@@ -196,6 +196,109 @@ final class M610GuardianReviewTest extends TestCase {
 	}
 
 	/**
+	 * Two separately authenticated caregivers may be independently verified
+	 * for one subject; the first relationship's revocation cannot silently
+	 * revoke or expand the second person's event-scoped authorization.
+	 */
+	public function test_two_independent_guardians_can_hold_separate_event_grants_and_revocations(): void {
+		$s       = $this->fixture();
+		$now     = gmdate( 'Y-m-d H:i:s' );
+		$second  = PublicId::generate();
+		$subject = (int) $s['people']->find( $this->scope, $s['child'] )['id'];
+		$object  = new PolicyObject( $this->scope->id, 'registration', $subject, $subject, $s['post'] );
+		$other   = new PolicyObject( $this->scope->id, 'registration', $subject, $subject, $s['post'] + 991 );
+
+		// Deliberately the SAME contact email as the first guardian and child.
+		// Neither shared contact nor a mere person link authorizes another.
+		$s['people']->create( $this->scope, $second, 'Independent caregiver', 'shared-family@example.invalid', $now );
+		self::assertTrue( $s['people']->link( $this->scope, $second, $s['stranger'], $now ) );
+		foreach ( array( $s['parent'], $s['stranger'] ) as $actor_id ) {
+			self::assertFalse( $s['policy']->can( new Actor( $actor_id ), 'registration.create', $object )->allowed );
+			self::assertFalse( $s['policy']->can( new Actor( $actor_id ), 'registration.create', $other )->allowed );
+		}
+
+		// Both claim the same person without obtaining any permission.
+		foreach ( array( $s['parent'], $s['stranger'] ) as $actor_id ) {
+			wp_set_current_user( $actor_id );
+			self::assertSame( 202, $this->json( 'POST', '/uop/v1/me/guardian-claims', array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+		}
+		self::assertSame( 2, $this->tenant_count( 'relationships' ) );
+		wp_set_current_user( $s['admin'] );
+		$queue = rest_do_request( new \WP_REST_Request( 'GET', '/uop/v1/admin/guardian-claims' ) );
+		self::assertSame( 200, $queue->get_status() );
+		$items = $queue->get_data()['items'];
+		self::assertCount( 2, $items );
+		self::assertSame( array( 'Caregiver', 'Independent caregiver' ), array_column( $items, 'claimant' ) );
+		self::assertStringNotContainsString( '@example.invalid', (string) wp_json_encode( $queue->get_data() ) );
+
+		// First approval is not inherited by the other caregiver.
+		$first = '/uop/v1/admin/guardian-claims/' . $items[0]['public_id'] . '/review';
+		$second_path = '/uop/v1/admin/guardian-claims/' . $items[1]['public_id'] . '/review';
+		$approval = array( 'decision' => 'approve', 'evidence_checked' => true, 'event_post_id' => $s['post'] );
+		self::assertSame( 200, $this->json( 'POST', $first, $approval )->get_status() );
+		self::assertTrue( $s['policy']->can( new Actor( $s['parent'] ), 'registration.create', $object )->allowed );
+		self::assertFalse( $s['policy']->can( new Actor( $s['stranger'] ), 'registration.create', $object )->allowed );
+		self::assertSame( 200, $this->json( 'POST', $second_path, $approval )->get_status() );
+		self::assertSame( 2, $this->tenant_count( 'delegations' ) );
+		foreach ( array( $s['parent'], $s['stranger'] ) as $actor_id ) {
+			self::assertTrue( $s['policy']->can( new Actor( $actor_id ), 'registration.create', $object )->allowed );
+			self::assertFalse( $s['policy']->can( new Actor( $actor_id ), 'registration.create', $other )->allowed );
+		}
+		self::assertSame( 409, $this->json( 'POST', $first, $approval )->get_status(), 'Replayed manager approval must remain rejected.' );
+
+		// Revoke only the first evidence edge, preserving the second caregiver.
+		self::assertSame(
+			1,
+			$this->db->execute(
+				'UPDATE %i SET status = %s WHERE organization_id = %d AND public_id = %s AND status = %s',
+				array( $this->prefix . 'relationships', 'revoked', $this->scope->id, PublicId::from_string( $items[0]['public_id'] )->to_binary(), 'active' )
+			)
+		);
+		self::assertFalse( $s['policy']->can( new Actor( $s['parent'] ), 'registration.create', $object )->allowed );
+		self::assertTrue( $s['policy']->can( new Actor( $s['stranger'] ), 'registration.create', $object )->allowed );
+		self::assertSame( 2, $this->tenant_count( 'delegations' ), 'History and independent grant must not be overwritten.' );
+
+		// The second time-limited permission expires independently as well.
+		$this->db->execute(
+			'UPDATE %i SET valid_to = %s WHERE organization_id = %d AND actor_user_id = %d AND scope_type = %s AND scope_id = %d',
+			array( $this->prefix . 'delegations', gmdate( 'Y-m-d H:i:s', time() - 90 ), $this->scope->id, $s['stranger'], 'event', $s['post'] )
+		);
+		self::assertFalse( $s['policy']->can( new Actor( $s['stranger'] ), 'registration.create', $object )->allowed );
+		self::assertFalse( $s['policy']->can( new Actor( $s['parent'] ), 'registration.create', $object )->allowed );
+		self::assertSame( 'revoked', $s['relationships']->find( $this->scope, PublicId::from_string( $items[0]['public_id'] ) )['status'] );
+		self::assertSame( 'active', $s['relationships']->find( $this->scope, PublicId::from_string( $items[1]['public_id'] ) )['status'] );
+	}
+
+	/**
+	 * Rejecting a competing claim is non-authorizing and must never remove an
+	 * already reviewed, independently valid caregiver's event permission.
+	 */
+	public function test_rejecting_competing_guardian_claim_cannot_revoke_existing_independent_grant(): void {
+		$s      = $this->fixture();
+		$second = PublicId::generate();
+		$now    = gmdate( 'Y-m-d H:i:s' );
+		$s['people']->create( $this->scope, $second, 'Competing caregiver', 'shared-family@example.invalid', $now );
+		self::assertTrue( $s['people']->link( $this->scope, $second, $s['stranger'], $now ) );
+		foreach ( array( $s['parent'], $s['stranger'] ) as $actor_id ) {
+			wp_set_current_user( $actor_id );
+			self::assertSame( 202, $this->json( 'POST', '/uop/v1/me/guardian-claims', array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+		}
+		wp_set_current_user( $s['admin'] );
+		$items = rest_do_request( new \WP_REST_Request( 'GET', '/uop/v1/admin/guardian-claims' ) )->get_data()['items'];
+		self::assertCount( 2, $items );
+		self::assertSame( 200, $this->json( 'POST', '/uop/v1/admin/guardian-claims/' . $items[0]['public_id'] . '/review', array( 'decision' => 'approve', 'evidence_checked' => true, 'event_post_id' => $s['post'] ) )->get_status() );
+		self::assertSame( 200, $this->json( 'POST', '/uop/v1/admin/guardian-claims/' . $items[1]['public_id'] . '/review', array( 'decision' => 'reject', 'evidence_checked' => false, 'event_post_id' => 0 ) )->get_status() );
+		$subject = (int) $s['people']->find( $this->scope, $s['child'] )['id'];
+		$object  = new PolicyObject( $this->scope->id, 'registration', $subject, $subject, $s['post'] );
+		self::assertTrue( $s['policy']->can( new Actor( $s['parent'] ), 'registration.create', $object )->allowed );
+		self::assertFalse( $s['policy']->can( new Actor( $s['stranger'] ), 'registration.create', $object )->allowed );
+		self::assertSame( 1, $this->tenant_count( 'delegations' ) );
+		self::assertSame( 'active', $s['relationships']->find( $this->scope, PublicId::from_string( $items[0]['public_id'] ) )['status'] );
+		self::assertSame( 'rejected', $s['relationships']->find( $this->scope, PublicId::from_string( $items[1]['public_id'] ) )['status'] );
+	}
+
+	/**
 	 * A reviewer linked to the represented subject is not independent.
 	 * Their manager capability must never authorize their own representation.
 	 */
