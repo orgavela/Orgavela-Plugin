@@ -331,6 +331,64 @@ final class M610GuardianReviewTest extends TestCase {
 	}
 
 	/**
+	 * Cleanup must minimize pseudonymous retention without relaxing active
+	 * admission decisions or erasing unexpected/corrupt option values.
+	 */
+	public function test_guardian_quota_prune_preserves_active_grace_and_corrupt_rows(): void {
+		global $wpdb;
+		$s     = $this->fixture();
+		$now   = time();
+		$repo  = new GuardianClaimQuotaRepository( $this->db, $wpdb->options );
+		$keys  = array(
+			'expired' => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] ),
+			'active'  => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['admin'] ),
+			'grace'   => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['stranger'] ),
+			'corrupt' => 'uop_gclaim_q2_' . hash( 'sha256', 'corrupt:' . $s['parent'] ),
+			'decoy'   => 'uopXgclaimXq2X' . hash( 'sha256', 'decoy:' . $s['parent'] ),
+		);
+		$values = array(
+			'expired' => '3:' . ( $now - 90000 ),
+			'active'  => '3:' . ( $now + 1200 ),
+			'grace'   => '3:' . ( $now - 300 ),
+			'corrupt' => 'malformed',
+			'decoy'   => '3:' . ( $now - 90000 ),
+		);
+		try {
+			foreach ( $keys as $kind => $key ) {
+				$this->db->execute(
+				"INSERT INTO %i (option_name, option_value, autoload) VALUES (%s,%s,'off') ON DUPLICATE KEY UPDATE option_value = VALUES(option_value)",
+				array( $wpdb->options, $key, $values[ $kind ] )
+				);
+			}
+			self::assertGreaterThanOrEqual( 1, $repo->prune_expired( $now ) );
+			foreach ( $keys as $kind => $key ) {
+				$rows = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+				if ( 'expired' === $kind ) {
+					self::assertCount( 0, $rows, 'Aged-out quota should be pruned.' );
+				} else {
+					self::assertCount( 1, $rows, $kind . ' row must remain untouched.' );
+					self::assertSame( $values[ $kind ], $rows[0]['option_value'] );
+				}
+			}
+			$tx = new TransactionManager( $this->db, static function ( int $microseconds ): void {}, static function ( \\Throwable $error ): void {} );
+			self::assertTrue(
+				$tx->run( fn (): bool => $repo->consume( $this->scope, $s['parent'], $now ) ),
+				'A prior expired quota may start a fresh window after pruning.'
+			);
+			self::assertFalse(
+				$tx->run( fn (): bool => $repo->consume( $this->scope, $s['admin'], $now ) ),
+				'An active exhausted quota must remain denied after cleanup.'
+			);
+			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
+			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+		} finally {
+			foreach ( $keys as $key ) {
+				$this->db->execute( 'DELETE FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+			}
+		}
+	}
+
+	/**
 	 * Expired limits reset only through the database; corrupt state denies.
 	 * No subject identifiers or personally identifying emails enter the key.
 	 */
