@@ -917,3 +917,19 @@ Die Ergebniskommunikation an die GitHub-Issues wurde ausgeführt: [W0 #16 Kommen
 **Nebenwirkung berücksichtigen:** Bei aktivem `main`-PR-Schutz darf auch der Assistent **Dokumentationsänderungen nicht mehr direkt auf `main` pushen**; künftige Commits nur im Branch/PR, kein Merge ohne Betreiberfreigabe. Die vorliegende reine Dokumentation erfolgt **vor** Aktivierung des Schutzes. Sicherheit geht vor CI-/Testgeschwindigkeit.
 
 **Abnahme/Zustand:** GH-01 erfüllt; GH-02 Project Restriction belegt, Expression per Betreiber angegeben, **Quellbranch-Schutz offen**; GH-03 Betreiberschlüssel offen; GH-04 Canary offen, GH-06 echter Snapshot GH-07 Restore weiter nicht ausgeführt. O03 `partial`, B04/R03 offen, historisches Coding **62/71**, formal M **0/8**, P4 **0/4**, Release **0/18**, PR-Merges **0**, Live UOP 0.1.0-alpha.2. Keine Kosten, keine produktive Änderung, keine Dreamloud-Aktion.
+
+---
+
+## 2026-11-04 – OV-00: Read-only GitHub-/CI-Bestandsaufnahme
+
+**Auftrag:** Die Arbeiten für OrgaVela gemäß strukturiertem V1-Plan mit OV-00 beginnen; vorhandene GitHub-PRs, exakte HEAD-Nachweise, CI, Backup-W0 und Blocker vor weiteren Implementierungen abgleichen. **Umgebung:** Verbundener GitHub-Connector; öffentliche, datenschutzbereinigte Dokumentation; keinerlei OrgaVela-/IONOS-/WP-Livezugriff, Secrets, Backup, Cron, Deployment oder Dreamloud-Aktion.
+
+**Ausgangsstand (GitHub gelesen 04.11.2026):** `orgavela/Orgavela-Plugin` `main` HEAD `0adacb427bd95dd87594e358ec9c6f2f5b38aae8`. PR #1–#6 und #11 weiterhin offen (teilweise Draft), weiterhin gestapelt/nicht integriert. PR #6 HEAD `027af05041123e59ff2802edcd1d0ac41b14e44c`; PR #11 HEAD `a34f4195371f9edf1fa24ea4abdef1fd479f2c19`; Backup PR #32 `8c4b445ea5dced969f63b0f30e0e371342f64680`; PR #33 `0d419c991d75999dd264aba2a912fedf663a1cf0`.
+
+**Belege:** PR #6 Foundation Actions [38180355859](https://github.com/orgavela/Orgavela-Plugin/actions/runs/38180355859) 8/8, HTTPS [38180355844](https://github.com/orgavela/Orgavela-Plugin/actions/runs/38180355844) PASS, Staging [38180355863](https://github.com/orgavela/Orgavela-Plugin/actions/runs/38180355863) static PASS/staging SKIPPED. PR #11 Foundation [38253835618](https://github.com/orgavela/Orgavela-Plugin/actions/runs/38253835618) 8/8 und HTTPS [38253835549](https://github.com/orgavela/Orgavela-Plugin/actions/runs/38253835549) PASS auf geprüftem HEAD; übrige Push-/CI-Checks nicht vollständig erfasst. `main` trägt alten CircleCI Pipeline-Error [#526](https://app.circleci.com/pipelines/gh/janjrre/Projekt-Wordpress-Plugin/526), Ursache nach Umzug unklar, nicht als aktueller Buildfehler bewiesen. PR #32 drei erfolgreiche CircleCI-Statuskontexte, PR #33 keine abgefragten PR-Workflows/Commitstatus; Provider-CI des Offline-Kandidaten weiterhin nicht belegt. [W0 #16](https://github.com/orgavela/Orgavela-Plugin/issues/16) und [PGP05 #27](https://github.com/orgavela/Orgavela-Plugin/issues/27) behalten offene Betriebs-/Restore-Gates.
+
+**Entscheidung und Umsetzung:** Bestandsaufnahme dokumentieren, keine vorhandenen Sicherheitsgrenzen lockern, keine CI-Reruns oder kostenpflichtige Jobs auslösen. Details mit priorisierten P0/P1/P2-Nächsten in [OV00_READONLY_BASELINE_20261104.md](OV00_READONLY_BASELINE_20261104.md), nur auf `docs/ov00-baseline-20261104` vorbereitet, nicht in `main` integriert. Keine neue Coding-, CI-, P4- oder Release-Abnahme und kein Merge/Deploy.
+
+**Nächste Arbeit:** O02/O03- und CI-Evidenzgrenzen zuerst absichern, dann P4-02/P4-03 und M6-10 mit synthetischen Negativ-/Browser-Tests fortsetzen, PR-Stack nach Abnahme integrieren. Nur spezifisch freigegebene produktive Betriebsprüfungen; keine ungeprüfte WP-Migration.
+
+**Stand unverändert:** Coding 62/71 historisch; formale M0–M7 0/8; P4 0/4; R01–R18 0/18; V1 offen. UOP Core 0.1.0-alpha.2 zuletzt bestätigt, **am 04.11.2026 nicht live neu geprüft**.
