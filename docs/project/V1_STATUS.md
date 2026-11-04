@@ -3,6 +3,12 @@
 **Stand:** 12.10.2026, initiale V1-Baseline nach Liveprüfung. **V1-Status: NICHT ABGENOMMEN.**  
 **Normativer Masterplan:** [V1_ACCEPTANCE_PLAN.md](../operations/V1_ACCEPTANCE_PLAN.md) · **Verbindliche Fortschrittsdaten:** [V1_PROGRESS.json](../operations/V1_PROGRESS.json) · **Zentrales Abnahme-Issue:** [#15](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/15) · **Ergänzende Roadmap:** [V1_MASTER_PLAN.md](V1_MASTER_PLAN.md) · **Abnahmematrix:** [V1_ACCEPTANCE_MATRIX.md](V1_ACCEPTANCE_MATRIX.md) · **Arbeitsjournal:** [ASSISTANT_WORK_LOG.md](../operations/ASSISTANT_WORK_LOG.md).
 
+## Evidenznachtrag O03/W0 – 04.11.2026 (ohne formale Abnahme)
+
+Auf [PR #46](https://github.com/orgavela/Orgavela-Plugin/pull/46), HEAD `ebe2ed3eb791e9dfc38237f5fb39bb58122285ad`, ist der wiederhergestellte **synthetische** MariaDB-11.8-Backup-/Restore-Job [#41867617337](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41867617337) vollständig **grün**. Datenbank-Dump und WordPress-Test-Dateiarchiv wurden getrennt absichtlich beschädigt, beide SHA-256-Prüfungen lehnten die Manipulationen ab. Die wiederhergestellten Originale bestanden die Checks, die zuvor leere isolierte Zieldatenbank erhielt zwei künstliche Datensätze; Index, Archivdateien und Prüfsummen stimmten. Auf dem früheren Code-Commit war bereits [#41867282907](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41867282907) grün. Der Branch ist noch nicht in `main` integriert.
+
+**Das ist ausschließlich ein GitHub-Runner-Test.** Kein reales vollständiges `orgavela.com`-Backup, kein verschlüsselter produktiver Offsite-Snapshot und keine Wiederherstellung einer echten Website sind damit belegt. `main` ist weiterhin gesperrt und der CircleCI-Providerstatus nicht auf aktuellem SHA bestätigt. **O03/W0 bleibt offen**, ebenso O04, Minderjährigen-/Datenschutzfreigaben und die Release-Gates. Kanonische Zählung **unverändert**: **62/71** historische technische Pakete, **0/8** M0–M7 abgenommen, **0/4** P4 abgenommen, **0/18** Release-Gates grün. [Maschinenlesbare Evidenz](../operations/V1_PROGRESS.json) aktualisiert, historische Messungen nicht in reale Abnahmen umgedeutet.
+
 ## Aktuelle Welle: W0 – Bestands- und Sicherheitsabnahme
 
 **Stand 12.10.2026: IN ARBEIT, noch nicht abgenommen.** [W0-Live-/Restore-Bericht](../operations/W0_BASELINE_AND_RECOVERY.md) · [Issue #16](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/16) · [verbindliche maschinenlesbare Messwerte](../operations/V1_PROGRESS.json).
