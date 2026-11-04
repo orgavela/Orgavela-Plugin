@@ -256,6 +256,11 @@ test('admin overview and audit table provide responsive navigation and keyboard-
     await visit(page, '/wp-admin/admin.php?page=uop-overview', { waitUntil: 'domcontentloaded' });
     const consoleRoot = page.locator('.uop-m6-console');
     await expect(consoleRoot.getByRole('navigation', { name: 'UOP Administration' })).toBeVisible();
+    // Read-only queue health must be manager-visible without any record IDs.
+    const quotaHealth = consoleRoot.locator('p[role="status"]', { hasText: 'Guardian quota cleanup:' });
+    await expect(quotaHealth).toHaveCount(1);
+    await expect(quotaHealth).toBeVisible();
+    expect(await consoleRoot.textContent()).not.toContain('uop_gclaim_q2_');
     await noOffscreenUopControls(page, consoleRoot, 'admin overview at ' + width + 'px');
   }
   await page.setViewportSize({ width: 320, height: 850 });
