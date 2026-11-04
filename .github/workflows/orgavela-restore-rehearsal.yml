@@ -7,6 +7,10 @@ on:
       - '.github/workflows/orgavela-restore-rehearsal.yml'
       - 'scripts/ci/orgavela-synthetic-restore.sh'
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/orgavela-restore-rehearsal.yml'
+      - 'scripts/ci/orgavela-synthetic-restore.sh'
 
 permissions:
   contents: read
@@ -17,7 +21,13 @@ concurrency:
 
 jobs:
   synthetic-restore:
-    if: github.repository == 'janjrre/Projekt-Wordpress-Plugin' && github.ref == 'refs/heads/main'
+    if: >-
+      ${{
+        github.repository == 'orgavela/Orgavela-Plugin' &&
+        ((github.event_name == 'pull_request') ||
+         (github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')))
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -36,12 +46,29 @@ jobs:
       RESTORE_TEST_DATABASE_PASSWORD: synthetic-restore-ci-only
     steps:
       - name: Check out read-only committed fixture
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
       - name: Check restore script syntax
         shell: bash
         run: bash -n scripts/ci/orgavela-synthetic-restore.sh
+      - name: Prove repository and PR identity checks fail closed (no DB access)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Each command must exit 2 before attempting any DB operation.
+          set +e
+          GITHUB_REPOSITORY='foreign/not-orgavela' bash scripts/ci/orgavela-synthetic-restore.sh >/dev/null 2>&1
+          wrong_repo=$?
+          GITHUB_ACTIONS='false' bash scripts/ci/orgavela-synthetic-restore.sh >/dev/null 2>&1
+          outside_ci=$?
+          GITHUB_REF='refs/heads/untrusted' bash scripts/ci/orgavela-synthetic-restore.sh >/dev/null 2>&1
+          bad_ref=$?
+          set -e
+          test "$wrong_repo" -eq 2
+          test "$outside_ci" -eq 2
+          test "$bad_ref" -eq 2
+          echo 'Synthetic restore CI guardrails rejected invalid repository, runner, and ref.'
       - name: Install local client tools
         shell: bash
         run: |
