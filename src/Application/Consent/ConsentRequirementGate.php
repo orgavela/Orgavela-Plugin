@@ -34,7 +34,7 @@ final class ConsentRequirementGate {
 	 * @param array  $scope  Trusted immutable event/registration/consent scope.
 	 * @phpstan-param array<string,mixed> $scope
 	 * @param array  $records Exactly current role candidates, from repository.
-	 * @phpstan-param list<array<string,mixed>> $records
+	 * @phpstan-param array<array-key,mixed> $records
 	 * @return bool Whether all requested role lanes are independently effective.
 	 *
 	 * @throws InvalidArgumentException On unknown/malformed caller data.
