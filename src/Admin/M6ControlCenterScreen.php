@@ -136,7 +136,7 @@ final class M6ControlCenterScreen {
 		$health = Installer::health();
 		echo '<p role="status"><strong>' . esc_html( (string) $health['label'] ) . '</strong></p>';
 		// Managers see only coarse queue health: no action IDs, people or tokens.
-		$quota_state = GuardianQuotaScheduleHealth::inspect( time() );
+		$quota_state  = GuardianQuotaScheduleHealth::inspect( time() );
 		$quota_labels = array(
 			'ok'          => __( 'Guardian quota cleanup: scheduled and previously completed.', 'uop-core' ),
 			'first_run'   => __( 'Guardian quota cleanup: scheduled, first run pending.', 'uop-core' ),
@@ -147,7 +147,7 @@ final class M6ControlCenterScreen {
 			'failed'      => __( 'Guardian quota cleanup: a failed action needs operator review.', 'uop-core' ),
 			'unavailable' => __( 'Guardian quota cleanup: scheduler status unavailable.', 'uop-core' ),
 		);
-		$quota_label = $quota_labels[ $quota_state ] ?? $quota_labels['unavailable'];
+		$quota_label  = $quota_labels[ $quota_state ] ?? $quota_labels['unavailable'];
 		echo '<p role="status"><strong>' . esc_html( $quota_label ) . '</strong></p>';
 		if ( 'ok' !== $quota_state ) {
 			echo '<p class="uop-m6-console__warning">' . esc_html__( 'Review Action Scheduler status before relying on automated retention. This indicator does not verify an external cron trigger.', 'uop-core' ) . '</p>';

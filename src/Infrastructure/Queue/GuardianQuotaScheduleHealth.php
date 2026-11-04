@@ -21,7 +21,8 @@ final class GuardianQuotaScheduleHealth {
 	 * Classify only aggregate queue metadata without reading any action payload.
 	 *
 	 * @param int       $now            Trusted server timestamp.
-	 * @param list<int> $next_scheduled Scheduled timestamps, maximum two sampled.
+	 * @param array $next_scheduled Scheduled timestamps, maximum two sampled.
+	 * @phpstan-param list<int> $next_scheduled
 	 * @param bool      $has_failed     Whether a failed action needs review.
 	 * @param bool      $has_completed  Whether at least one action has completed.
 	 * @return string Fixed diagnostic code with no personal or action identifiers.
@@ -67,10 +68,32 @@ final class GuardianQuotaScheduleHealth {
 			return 'unavailable';
 		}
 		try {
-			$filter = array( 'hook' => self::HOOK, 'group' => self::GROUP, 'per_page' => 2 );
-			$pending = as_get_scheduled_actions( array_merge( $filter, array( 'status' => 'pending' ) ), 'ids' );
-			$failed = as_get_scheduled_actions( array_merge( $filter, array( 'status' => 'failed', 'per_page' => 1 ) ), 'ids' );
-			$completed = as_get_scheduled_actions( array_merge( $filter, array( 'status' => 'complete', 'per_page' => 1 ) ), 'ids' );
+			$filter    = array(
+				'hook'     => self::HOOK,
+				'group'    => self::GROUP,
+				'per_page' => 2,
+			);
+			$pending   = as_get_scheduled_actions( array_merge( $filter, array( 'status' => 'pending' ) ), 'ids' );
+			$failed    = as_get_scheduled_actions(
+				array_merge(
+					$filter,
+					array(
+						'status'   => 'failed',
+						'per_page' => 1,
+					)
+				),
+				'ids'
+			);
+			$completed = as_get_scheduled_actions(
+				array_merge(
+					$filter,
+					array(
+						'status'   => 'complete',
+						'per_page' => 1,
+					)
+				),
+				'ids'
+			);
 			if ( ! is_array( $pending ) || ! is_array( $failed ) || ! is_array( $completed ) ) {
 				return 'unavailable';
 			}
