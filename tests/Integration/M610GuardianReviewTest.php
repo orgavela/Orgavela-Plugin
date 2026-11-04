@@ -191,6 +191,42 @@ final class M610GuardianReviewTest extends TestCase {
 		self::assertCount( 1, $reads->registration_subjects_for_event( new Actor( $s['parent'] ), $this->scope, $s['event_id'] ) );
 	}
 
+	/**
+	 * A reviewer linked to the represented subject is not independent.
+	 * Their manager capability must never authorize their own representation.
+	 */
+	public function test_reviewer_linked_to_subject_cannot_approve_own_guardian_claim(): void {
+		$s   = $this->fixture();
+		$now = gmdate( 'Y-m-d H:i:s' );
+		self::assertTrue( $s['people']->link( $this->scope, $s['child'], $s['admin'], $now ) );
+		wp_set_current_user( $s['parent'] );
+		self::assertSame(
+			202,
+			$this->json( 'POST', '/uop/v1/me/guardian-claims', array( 'subject_id' => $s['child']->to_string() ) )->get_status()
+		);
+		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+		wp_set_current_user( $s['admin'] );
+		$queue = rest_do_request( new \\WP_REST_Request( 'GET', '/uop/v1/admin/guardian-claims' ) );
+		self::assertSame( 200, $queue->get_status() );
+		self::assertCount( 1, $queue->get_data()['items'] );
+		$claim_id = $queue->get_data()['items'][0]['public_id'];
+		$path     = '/uop/v1/admin/guardian-claims/' . $claim_id . '/review';
+		$before   = $this->tenant_count( 'audit_log' );
+		$approval = $this->json( 'POST', $path, array( 'decision' => 'approve', 'evidence_checked' => true, 'event_post_id' => $s['post'] ) );
+		self::assertSame( 409, $approval->get_status(), 'A reviewer linked to the subject cannot approve their own guardian claim.' );
+		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+		self::assertSame( $before, $this->tenant_count( 'audit_log' ) );
+		self::assertSame( 'pending', $s['relationships']->find( $this->scope, PublicId::from_string( $claim_id ) )['status'] );
+
+		// A conflicted reviewer may still dismiss the stale request, never grant.
+		self::assertSame(
+			200,
+			$this->json( 'POST', $path, array( 'decision' => 'reject', 'evidence_checked' => false, 'event_post_id' => 0 ) )->get_status()
+		);
+		self::assertSame( 'rejected', $s['relationships']->find( $this->scope, PublicId::from_string( $claim_id ) )['status'] );
+		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+	}
+
 	/** Reviewer rejection records a decision but never grants family access. */
 	public function test_rejection_and_rate_limits_cannot_grant_family_rights(): void {
 		$s = $this->fixture();
