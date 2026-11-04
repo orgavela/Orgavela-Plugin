@@ -356,8 +356,8 @@ final class M610GuardianReviewTest extends TestCase {
 		try {
 			foreach ( $keys as $kind => $key ) {
 				$this->db->execute(
-				"INSERT INTO %i (option_name, option_value, autoload) VALUES (%s,%s,'off') ON DUPLICATE KEY UPDATE option_value = VALUES(option_value)",
-				array( $wpdb->options, $key, $values[ $kind ] )
+					"INSERT INTO %i (option_name, option_value, autoload) VALUES (%s,%s,'off') ON DUPLICATE KEY UPDATE option_value = VALUES(option_value)",
+					array( $wpdb->options, $key, $values[ $kind ] )
 				);
 			}
 			self::assertGreaterThanOrEqual( 1, $repo->prune_expired( $now ) );
@@ -370,7 +370,7 @@ final class M610GuardianReviewTest extends TestCase {
 					self::assertSame( $values[ $kind ], $rows[0]['option_value'] );
 				}
 			}
-			$tx = new TransactionManager( $this->db, static function ( int $microseconds ): void {}, static function ( \\Throwable $error ): void {} );
+			$tx = new TransactionManager( $this->db, static function ( int $microseconds ): void {}, static function ( \Throwable $error ): void {} );
 			self::assertTrue(
 				$tx->run( fn (): bool => $repo->consume( $this->scope, $s['parent'], $now ) ),
 				'A prior expired quota may start a fresh window after pruning.'
