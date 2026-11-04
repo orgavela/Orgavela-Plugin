@@ -1,12 +1,16 @@
 # O04 – Unabhängiger Guardian-Queue-Trigger und Betriebsabnahme (Entwurf)
 
-**Stand:** 04.11.2026 · **Status:** Nur CI-validierter Kandidat, kein eingerichteter Hosting-Cron. Gilt für das eigenständige **OrgaVela / UOP Core**-Projekt, nicht für Dreamloud.
+**Stand:** 04.11.2026 · **Status:** WP-CLI-Kandidat in CI verifiziert; unabhängiger Cron des bestehenden IONOS-Hosts noch nicht geprüft. Gilt für **OrgaVela**, nicht für Dreamloud.
 
-## Hosting- und Freigabesituation
+## Verifizierter IONOS-Ist-Stand und noch offene Freigabe
 
-Die separat dokumentierte WordPress.com-Atomic-Staginginstallation von OrgaVela war zuletzt wegen einer inkompatiblen latin1-Verbindung **nicht aktivierbar**. Die ältere IONOS-Stagingplanung betrifft einen **nicht freigegebenen zusätzlichen Webspace** und erlaubt ausdrücklich keinen UOP-Zugriff auf Dreamloud-Produktivressourcen. Keine dieser Umgebungen ist als aktives Cron-Ziel bestätigt.
+Die tatsächlich über OrgaVela-MCP verbundene Website ist **https://orgavela.com** (WordPress 7.1.4, PHP 8.3.36, MariaDB 11.8.8, utf8mb4). Dort ist **UOP Core 0.1.0-alpha.2 aktiv**. Die frühere inkompatible latin1-Verbindung gehört ausschließlich zur getrennten WordPress.com-Atomic-Testwebsite; sie ist **keine Blockade von orgavela.com**. Detailnachweise stehen unter `docs/operations/o04-orgavela-live-host-baseline.md`.
 
-**Vor einer Host-Aktion:** Betreiber muss eine eigene, isolierte, ohne Zusatzkosten nutzbare und mit UOPs Datenbankanforderungen kompatible WordPress-Installation belegen, inklusive Shell/WP-CLI und unabhängigem Cron-/Job-Planer. Keine zusätzlichen Verträge ohne Freigabe, kein Workaround an der Datenbankzeichencodierung und keine Verbindung zu Dreamloud.
+`DISABLE_WP_CRON=true` und mehrfach überfällige WordPress-Jobs wurden read-only festgestellt. **Weder vorhandene IONOS-Cron-Einträge noch die tatsächliche Shell-/WP-CLI-Verfügbarkeit, Alarmierung und ein voller Backup-/Restore-Test wurden über die WordPress-Verbindung bestätigt.** Ein vorhandener WordPress-Host ist kein Nachweis eines funktionierenden externen Cron-Dienstes.
+
+Vor Eingriffen auf dieser Installation: tatsächlichen Hostingvertrag, eigenständige Ressourcen/Isolation von Dreamloud, Cron-Konfiguration und vollständige Backup-/Restore-Nachweise absichern. Keine zusätzlichen Verträge, keine Workarounds an der WordPress-Datenbankverbindung und keine automatischen Produktionsmigrationen.
+
+**Wichtige IONOS-Unterscheidung:** Hosting-Control-Center-Cronjobs sind reine HTTP-GET-Aufrufe und können keine `--hooks/--group`-WP-CLI-Filter ausführen. IONOS dokumentiert zudem 60 Sekunden Laufzeitlimit und empfiehlt mindestens fünf Minuten Abstand. Für den unten getesteten **selektiv gescopten** WP-CLI-Befehl ist ein tatsächlich verfügbarer *serverseitiger Shell-/Cron-Zugang* erforderlich. Der alternativ mögliche HTTP-Aufruf `https://orgavela.com/wp-cron.php` verarbeitet **alle** fälligen WordPress-Jobs, nicht nur Guardian-Retention; vor Einrichtung müssen ausstehende Aktionen und Benachrichtigungswirkungen geprüft werden. Wir haben den produktiven HTTP-Endpunkt **nicht** ausgelöst.
 
 ## Nachgewiesenes CLI-Prinzip (noch nicht auf einem Host freigegeben)
 
@@ -14,7 +18,7 @@ Action Scheduler unterstützt die Filter --hooks und --group. Der gezielte Komma
 
     wp action-scheduler run --hooks=uop_guardian_quota_prune --group=uop --batch-size=1 --batches=1 --path=/ABSOLUTER/PFAD/ZUM/ISOLIERTEN/ORGAVELA-WORDPRESS
 
-Der WordPress-Pfad ist ein **Platzhalter**, keine vorhandene Installation. Ein solcher Aufruf muss ohne Website-Besucher funktionieren und benötigt keinen öffentlich erreichbaren Wartungs-Endpunkt. Durch die Hook-/Gruppenfilter soll nur die Guardian-Retention laufen. **Andere UOP-Jobs** (Outbox, E-Mail etc.) werden damit nicht erledigt und brauchen einen gesondert geregelten Betriebsweg.
+Der WordPress-Pfad ist ein **nicht ermittelter Shell-Pfad** der bereits bestehenden OrgaVela-Installation, kein bestätigter CLI-Zugang. Ein solcher Aufruf muss ohne Website-Besucher funktionieren und benötigt keinen öffentlich erreichbaren Wartungs-Endpunkt. Durch die Hook-/Gruppenfilter soll nur die Guardian-Retention laufen. **Andere UOP-Jobs** (Outbox, E-Mail etc.) werden damit nicht erledigt und brauchen einen gesondert geregelten Betriebsweg.
 
 ### Technische Voraussetzung: vollständiger Action-Scheduler-Datenspeicher
 
