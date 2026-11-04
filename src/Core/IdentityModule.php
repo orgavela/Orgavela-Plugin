@@ -169,6 +169,26 @@ final class IdentityModule implements ModuleInterface {
 				$c->get( GuardianClaimQuotaRepository::class )
 			)
 		);
+		// Tiny, site-local retention sweep; only expired Guardian quota rows.
+		// The job never runs inline with public Guardian REST requests.
+		$guardian_quota = $container->get( GuardianClaimQuotaRepository::class );
+		add_action(
+			'uop_guardian_quota_prune',
+			static function () use ( $guardian_quota ): void {
+				$guardian_quota->prune_expired( time() );
+			}
+		);
+		add_action(
+			'init',
+			static function (): void {
+				if ( function_exists( 'as_schedule_recurring_action' )
+					&& function_exists( 'as_next_scheduled_action' )
+					&& false === as_next_scheduled_action( 'uop_guardian_quota_prune', array(), 'uop' ) ) {
+					as_schedule_recurring_action( time() + 3600, 3600, 'uop_guardian_quota_prune', array(), 'uop', true );
+				}
+			},
+			25
+		);
 		CapabilityRegistry::install();
 		$dispatcher = $container->get( OutboxDispatcher::class );
 		$dispatcher->register_hooks();
