@@ -3,8 +3,16 @@
 # This is NOT a backup or a restore of orgavela.com.
 set -euo pipefail
 umask 077
-[[ "${GITHUB_REPOSITORY:-}" == "janjrre/Projekt-Wordpress-Plugin" ]] || exit 2
-[[ "${GITHUB_REF:-}" == "refs/heads/main" ]] || exit 2
+# This job is exclusively the disposable GitHub CI; never run against
+# the real OrgaVela hosting DB or any site outside this repository.
+[[ "${GITHUB_ACTIONS:-}" == "true" ]] || exit 2
+[[ "${GITHUB_REPOSITORY:-}" == "orgavela/Orgavela-Plugin" ]] || exit 2
+if [[ "${GITHUB_EVENT_NAME:-}" == "pull_request" ]]; then
+  [[ "${GITHUB_REF:-}" =~ ^refs/pull/[0-9]+/merge$ ]] || exit 2
+else
+  [[ "${GITHUB_EVENT_NAME:-}" == "push" || "${GITHUB_EVENT_NAME:-}" == "workflow_dispatch" ]] || exit 2
+  [[ "${GITHUB_REF:-}" == "refs/heads/main" ]] || exit 2
+fi
 [[ -n "${RESTORE_TEST_DATABASE_PASSWORD:-}" ]] || {
   echo '::error::Synthetic test database password missing'; exit 2;
 }
