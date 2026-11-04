@@ -24,19 +24,35 @@ function action(command) {
 }
 async function login(page, username) {
   verifyIsolated();
-  await page.goto('/wp-login.php');
-  await page.locator('#user_login').fill(username);
-  await page.locator('#user_pass').fill(process.env.WP_ADMIN_PASSWORD);
-  await page.locator('#wp-submit').click();
-  // A negative check on wp-login.php? can succeed before WordPress has even
-  // started its redirect. Require a completed, authenticated admin landing.
-  await page.waitForURL(url => url.pathname.startsWith('/wp-admin/'), {
-    // Commit verifies WordPress's real authenticated redirect. Requiring the
-    // admin bar below independently verifies the parsed, authenticated page;
-    // a slow optional DOMContentLoaded event cannot itself grant a pass.
-    waitUntil: 'commit', timeout: 20000,
-  });
-  await expect(page.locator('#wpadminbar')).toBeVisible({ timeout: 15000 });
+  // Retry only a still-present WordPress login form after a transport stall.
+  // Credential errors and unexpected redirects always fail the security test.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await page.goto('/wp-login.php', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.locator('#user_login').fill(username);
+    await page.locator('#user_pass').fill(process.env.WP_ADMIN_PASSWORD);
+    try {
+      await page.locator('#wp-submit').click();
+      await page.waitForURL(url => url.pathname.startsWith('/wp-admin/'), {
+        waitUntil: 'domcontentloaded', timeout: 35000,
+      });
+      // Both a true authenticated redirect and the live admin toolbar
+      // are required; the retry cannot turn a denied login green.
+      await expect(page.locator('#wpadminbar')).toBeVisible({ timeout: 15000 });
+      await page.waitForLoadState('load', { timeout: 20000 });
+      return;
+    } catch (error) {
+      const rejection = await page.locator('#login_error').textContent().catch(() => '');
+      if (rejection) {
+        throw new Error('WordPress rejected disposable test login for ' + username + ': ' + rejection.trim());
+      }
+      const stillOnLogin = new URL(page.url()).pathname === '/wp-login.php' &&
+        await page.locator('#loginform').isVisible().catch(() => false);
+      if (!stillOnLogin || attempt === 1) {
+        throw new Error('Disposable login did not complete for ' + username +
+          '; URL=' + page.url() + '; attempt=' + (attempt + 1) + '; cause=' + String(error));
+      }
+    }
+  }
 }
 async function memberForm(page) {
   await page.goto('/?page_id=' + process.env.UOP_M610_MEMBER_PAGE);
