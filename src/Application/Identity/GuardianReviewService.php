@@ -171,7 +171,9 @@ final class GuardianReviewService {
 					throw new RuntimeException( 'Guardian request subject no longer exists.' );
 				}
 				if ( 'approve' === $decision && ( ! $from || 'active' !== $from['status'] || 'active' !== $to['status']
-				|| $grantee < 1 || $grantee === $reviewer->user_id || ! get_user_by( 'id', $grantee ) ) ) {
+				|| $grantee < 1 || $grantee === $reviewer->user_id
+				|| (int) ( $to['wp_user_id'] ?? 0 ) === $reviewer->user_id
+				|| ! get_user_by( 'id', $grantee ) ) ) {
 					throw new RuntimeException( 'Guardian claim must be reviewed for two distinct active identities.' );
 				}
 				if ( 'approve' === $decision ) {
