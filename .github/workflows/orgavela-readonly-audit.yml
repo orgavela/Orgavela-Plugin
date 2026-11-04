@@ -17,6 +17,7 @@ on:
     paths:
       - '.github/workflows/orgavela-readonly-audit.yml'
       - 'scripts/ci/orgavela-readonly-audit.sh'
+      - '.circleci/config.yml'
 
 permissions:
   contents: read
@@ -40,6 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n scripts/ci/orgavela-readonly-audit.sh
+          ruby -e 'require "yaml"; YAML.safe_load(File.read(".circleci/config.yml"), aliases: true)'
           grep -Fq "orgavela/Orgavela-Plugin" scripts/ci/orgavela-readonly-audit.sh
           grep -Fq "orgavela.com" scripts/ci/orgavela-readonly-audit.sh
           grep -Fq "ORGAVELA_CRON_DISPATCH_EXECUTED=no" scripts/ci/orgavela-readonly-audit.sh
