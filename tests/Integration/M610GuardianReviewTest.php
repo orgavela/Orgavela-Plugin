@@ -20,6 +20,7 @@ use UOP\Core\TransactionManager;
 use UOP\Domain\Organization\OrgScope;
 use UOP\Infrastructure\Database\AssignmentRepository;
 use UOP\Infrastructure\Database\AuditWriter;
+use UOP\Infrastructure\Database\DatabaseException;
 use UOP\Infrastructure\Database\DelegationRepository;
 use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
 use UOP\Infrastructure\Database\EventRepository;
@@ -275,6 +276,57 @@ final class M610GuardianReviewTest extends TestCase {
 		} finally {
 			remove_filter( 'pre_transient_' . $key, $stale );
 		}
+	}
+
+	/**
+	 * An independent InnoDB connection cannot spend a slot while the first
+	 * connection holds the actor's quota row. A timed-out peer must fail closed.
+	 */
+	public function test_guardian_quota_serializes_across_independent_database_connections(): void {
+		global $wpdb;
+		$s        = $this->fixture();
+		$actor_id = (int) $s['parent'];
+		$now      = time();
+		$primary  = new GuardianClaimQuotaRepository( $this->db, $wpdb->options );
+
+		// A distinct wpdb instance establishes a separate physical MySQL session.
+		$peer_wpdb = new \wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$peer_db   = new WpdbConnection( $peer_wpdb );
+		$peer      = new GuardianClaimQuotaRepository( $peer_db, $peer_wpdb->options );
+		$peer_db->execute( 'SET SESSION innodb_lock_wait_timeout = 1' );
+
+		$this->db->execute( 'START TRANSACTION' );
+		try {
+			self::assertTrue( $primary->consume( $this->scope, $actor_id, $now ) );
+			$peer_db->execute( 'START TRANSACTION' );
+			try {
+				try {
+					$peer->consume( $this->scope, $actor_id, $now );
+					self::fail( 'A second SQL connection must not pass an uncommitted quota lock.' );
+				} catch ( DatabaseException $error ) {
+					self::assertSame( 1205, $error->getCode(), 'InnoDB must report lock-wait timeout on the contested row.' );
+				}
+			} finally {
+				$peer_db->execute( 'ROLLBACK' );
+			}
+		} finally {
+			$this->db->execute( 'COMMIT' );
+		}
+
+		// After the lock is released, the peer sees the committed first slot.
+		$peer_db->execute( 'START TRANSACTION' );
+		try {
+			self::assertTrue( $peer->consume( $this->scope, $actor_id, $now ) );
+			$peer_db->execute( 'COMMIT' );
+		} catch ( \Throwable $error ) {
+			$peer_db->execute( 'ROLLBACK' );
+			throw $error;
+		}
+		$key  = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $actor_id );
+		$rows = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $key ) );
+		self::assertCount( 1, $rows );
+		self::assertStringStartsWith( '2:', (string) $rows[0]['option_value'] );
+		self::assertSame( 0, $this->tenant_count( 'relationships' ), 'A quota-level contention alone cannot create a guardian relationship.' );
 	}
 
 	/**
