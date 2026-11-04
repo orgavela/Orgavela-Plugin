@@ -2013,3 +2013,17 @@ Sicherung+immutableReadbacks+isolierterWordPress/MariaDB-Restore, erst dann Betr
 CP5 unverändert10/10, kein fehlendes Kriterium. V1 offen62/71historisch,M0–M7 0/8,
 P4 0/4,R0/18; PR32Draft/unmerged,alpha.2zuletztbelegt. Kein Backup/Deploy/Merge/
 Schedule/Kauf. Veröffentlichungssource/PR/Reviewbelege im nachfolgenden Logeintrag.
+
+---
+
+## 2026-11-04 – W0/O03 PGP-05: Repo-Pin nach Organisationsmigration korrigiert
+
+**Auftrag:** OrgaVela-Entwicklungsarbeiten nach OV-00/W0 fortsetzen, kostenlos verfügbare Tools und Skills verwenden, keine Kosten und keine Sicherheits-/Abnahmeumgehung.
+
+**Ausgangsbeleg:** GitHub-Connector bestätigt `orgavela/orgavela-backups` als `private` mit `push/admin` und Branch `main`. Der `PGP-05`-Offline-Collector im Draft [PR #33](https://github.com/orgavela/Orgavela-Plugin/pull/33) steht auf `0d419c991d75999dd264aba2a912fedf663a1cf0`. `scripts/ci/production_backup/github_api.py` enthielt noch `janjrre/orgavela-backups`. Die Abweichung ist eine technische Fehlkonfiguration der fest eingebauten Writer-Zielbindung; sie rechtfertigt **keine** freie oder dynamische URL-Auswahl.
+
+**Umsetzung ausschließlich in einem gestapelten Fix-Zweig:** `fix/pgp05-backup-repo-pin-20261104` vom exakten PR-#33-HEAD erstellt; Konstante auf `orgavela/orgavela-backups` geändert (Commit `e4ac7e763ebd46c227689da124bce5c904670038`), Regressionstest ergänzt (Commit `d532633094eca2cae49ce6600f8231595190fe82`); separaten datensparsamen Bericht [PGP05_BACKUP_REPOSITORY_PIN_FIX_20261104.md](PGP05_BACKUP_REPOSITORY_PIN_FIX_20261104.md) angelegt (Commit `2e1d980368005f43c6341eaeb59465b669f6ad75`). Die Negativtests verlangen exaktes eigenes privates Repo und verweigern die alte bzw. öffentliche Source-URL **vor** jedem Netzwerkaufruf. Die produktiven Entry Points bleiben absichtlich gesperrt (`Exit 78`).
+
+**Prüfstatus:** Codebezug und harte Zielbindung statisch kontrolliert; **kein** neuer Provider-/Python-/PHP-End-to-End-Lauf auf dem frischen Fix-SHA bestätigt. Teststatus bis zu einem echten Lauf `unverified`, vorherige PR33-Tests nur historisch. Keine produktive SSH-/WP-/DB-Sitzung, keine Secrets, kein Recovery-Key, kein Backup, Upload, Restore, Merge oder kostenpflichtiger Lauf.
+
+**Nächster Nachweis:** synthetische Python/PHP/OpenPGP/Fixture-CI mit **genau** neuem Fix-HEAD und ohne Secrets/Contexts; dann Review und Integration als abhängiger PR in den PGP-05-Stack. W0/O03-/Release-Gates bleiben ausnahmslos offen. V1-Cockpit unverändert: implementiert historisch 62/71, M 0/8, P4 0/4, R 0/18.
