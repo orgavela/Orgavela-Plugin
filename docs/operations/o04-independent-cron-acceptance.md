@@ -45,3 +45,12 @@ Die wegwerfbare WP-/MariaDB-CI arbeitet ausdrücklich mit DISABLE_WP_CRON=true, 
 ## Offene Freigaben
 
 **O04 bleibt fachlich offen**, bis tatsächlicher kompatibler Host, unabhängiger (kostenloser) Job-Planer, regelmäßige Ausführung, Monitoring/Alarmierung und Wiederanlauf geprüft und dokumentiert sind. W0/O03 Recovery, Datenschutz/Legal, unabhängige echte Guardian-Prüfung und sichere private Referenzvergabe bleiben separate Gate-Blocker. Kein Merge, kein Deploy und keine zusätzlichen Kosten.
+
+
+## SHA-genaues RED/GREEN-Protokoll (04.11.2026)
+
+- **RED:** [PR-Foundation #41843619161](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41843619161), PHP 8.3/MariaDB: Action Scheduler erhielt die drei fälligen CI-Aktionen, lehnte aber den gegrenzten WP-CLI-Run mit Hinweis auf eine nicht existierende Gruppe ab. Nicht durch Entfernen des Gruppenfilters repariert.
+- **Ursache und technische Maßnahme:** Der hybride Übergangsstore kann beim gruppengefilterten CLI-Verfahren noch den alten WordPress-Post-Store abfragen. Die CI wird deshalb ausschließlich auf einer frischen, absichtlich wegwerfbaren Datenbank auf den vollständig migrierten ActionScheduler_DBStore eingestellt. Auf einem späteren Host müssen Backups/Restore und Migrationsgenehmigung **vor** jedem solchen Vorgang separat belegt sein.
+- **GREEN Source-HEAD b21795d44900a9e47599942a4dd5dea327f96b04:** [Foundation Push #41844374035](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41844374035) **8/8 erfolgreich**; [Foundation PR #41844383421](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41844383421) ebenfalls **8/8 erfolgreich**. Testjob PHP 8.3/MariaDB **41 Unit-Tests/5.410 Assertions**, **154 Integrationen/1.944 Assertions**.
+- **Positive Sicherheitsevidenz:** Das WP-CLI-Protokoll berichtet eine einzige gefundene fällige Aktion. Die separate Verify-Fixture bestätigte den erfolgreichen Abschluss ausschließlich der Guardian-Aktion in Gruppe uop, Löschung des synthetischen alten Quota-Datensatzes, weiterhin pending befindliche beiden Fremdaktionen und unveränderten gesunden lesenden Scheduler-Zustand.
+- Dieser Dokumentationsnachtrag erzeugt einen neuen Commit; die obigen verifizierten Resultate beziehen sich auf den **Source-HEAD**, nicht automatisch auf den späteren Dokumentations-HEAD.
