@@ -8,11 +8,15 @@ on:
         required: true
         type: choice
         default: sftp
-        options: [sftp, probe, schema, backup-preflight]
+        options: [sftp, probe, schema, backup-preflight, cron]
   push:
     branches: [main]
     paths:
       - '.github/audit-requests/orgavela-readonly.json'
+  pull_request:
+    paths:
+      - '.github/workflows/orgavela-readonly-audit.yml'
+      - 'scripts/ci/orgavela-readonly-audit.sh'
 
 permissions:
   contents: read
@@ -22,8 +26,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Untrusted pull requests never receive protected IONOS SSH credentials.
+  static-safety:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate read-only audit syntax and guardrails, without remote access
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/ci/orgavela-readonly-audit.sh
+          grep -Fq "orgavela/Orgavela-Plugin" scripts/ci/orgavela-readonly-audit.sh
+          grep -Fq "orgavela.com" scripts/ci/orgavela-readonly-audit.sh
+          grep -Fq "ORGAVELA_CRON_DISPATCH_EXECUTED=no" scripts/ci/orgavela-readonly-audit.sh
+          grep -Fq "ORGAVELA_CRON_MIGRATION_EXECUTED=no" scripts/ci/orgavela-readonly-audit.sh
+          if grep -Eq '^[[:space:]]*(wp[[:space:]]+(cron[[:space:]]+event[[:space:]]+run|action-scheduler[[:space:]]+run)|crontab[[:space:]]+-)' scripts/ci/orgavela-readonly-audit.sh; then
+            echo "::error::Readonly SSH audit contains a scheduler execution or crontab mutation."
+            exit 1
+          fi
   readonly-audit:
-    if: github.repository == 'janjrre/Projekt-Wordpress-Plugin' && github.ref == 'refs/heads/main'
+    if: github.repository == 'orgavela/Orgavela-Plugin' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     environment: orgavela-ionos
@@ -57,8 +83,8 @@ jobs:
           else
             operation="$MANUAL_OPERATION"
           fi
-          [[ "$operation" == 'sftp' || "$operation" == 'probe' || "$operation" == 'schema' || "$operation" == 'backup-preflight' ]] || {
-            echo "::error::Only sftp/probe/schema/backup-preflight read-only operations are permitted."; exit 1;
+          [[ "$operation" == 'sftp' || "$operation" == 'probe' || "$operation" == 'schema' || "$operation" == 'backup-preflight' || "$operation" == 'cron' ]] || {
+            echo "::error::Only sftp/probe/schema/backup-preflight/cron read-only operations are permitted."; exit 1;
           }
           printf 'AUDIT_OPERATION=%s\n' "$operation" >> "$GITHUB_ENV"
       - name: Install SSH transport (runner only)
