@@ -19,6 +19,7 @@ use UOP\Domain\Organization\OrgScope;
 use UOP\Infrastructure\Database\AuditWriter;
 use UOP\Infrastructure\Database\Connection;
 use UOP\Infrastructure\Database\DelegationRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
 use UOP\Infrastructure\Database\OutboxRepository;
 use UOP\Infrastructure\Database\PersonRepository;
 use UOP\Infrastructure\Database\RelationshipRepository;
@@ -40,6 +41,7 @@ final class GuardianReviewService {
 	 * @param AuditWriter            $audit         Append-only evidence.
 	 * @param OutboxRepository       $outbox        Domain events.
 	 * @param string                 $prefix        Trusted site table prefix.
+	 * @param GuardianClaimQuotaRepository $quota    Transactional claim attempt quota.
 	 */
 	public function __construct(
 		private PersonRepository $people,
@@ -50,7 +52,8 @@ final class GuardianReviewService {
 		private TransactionManager $tx,
 		private AuditWriter $audit,
 		private OutboxRepository $outbox,
-		private string $prefix
+		private string $prefix,
+		private GuardianClaimQuotaRepository $quota
 	) {}
 
 	/**
@@ -72,38 +75,38 @@ final class GuardianReviewService {
 		if ( ! $linked || 'active' !== $linked['status'] ) {
 			return false;
 		}
-		// Per-account abuse guard: at most three claims in a day, including
-		// malformed/unknown subject IDs. This is not an IP identity shortcut.
-		$key   = 'uop_guardian_claim_' . hash( 'sha256', $scope->id . ':' . $claimant->user_id );
-		$count = (int) get_transient( $key );
-		if ( $count >= 3 ) {
-			return false;
-		}
-		set_transient( $key, $count + 1, DAY_IN_SECONDS );
-		$target = $this->people->find( $scope, $subject );
-		if ( ! $target || 'active' !== $target['status'] || (int) $target['id'] === (int) $linked['id'] ) {
-			return false;
-		}
-		try {
-			return $this->tx->run(
-				function () use ( $claimant, $scope, $linked, $target, $now, $correlation ): bool {
+		return $this->tx->run(
+			function () use ( $claimant, $scope, $subject, $now, $correlation ): bool {
+				// Consume before resolving any subject UUID, even unknown subjects.
+				// The quota row remains locked through the claim transaction; no
+				// WordPress transient or PHP-worker cache controls authorization.
+				if ( ! $this->quota->consume( $scope, $claimant->user_id, time() ) ) {
+					return false;
+				}
+				$linked = $this->people->by_user( $scope, $claimant->user_id );
+				$target = $this->people->find( $scope, $subject );
+				if ( ! $linked || 'active' !== $linked['status'] || ! $target || 'active' !== $target['status']
+					|| (int) $target['id'] === (int) $linked['id'] ) {
+					return false;
+				}
+				try {
 					$uuid = PublicId::generate();
 					$this->relationships->request_guardian( $scope, $uuid, (int) $linked['id'], (int) $target['id'], $now );
-					$event  = PublicId::generate();
-					$object = new PolicyObject( $scope->id, 'relationship', (int) $target['id'], (int) $target['id'] );
-					$this->audit->append( $scope, $claimant, 'guardian.requested', $object, 'success', $correlation, $event );
-					$this->outbox->append( $scope, $event, 'person', (int) $target['id'], 'guardian.requested', $correlation, array( 'public_id' => $uuid->to_string() ) );
-					return true;
+				} catch ( \\UOP\\Infrastructure\\Database\\DatabaseException $error ) {
+					// Duplicate claims consume a slot, but create no additional
+					// relationship, audit entry, event or permission.
+					if ( 1062 === $error->getCode() ) {
+						return false;
+					}
+					throw $error;
 				}
-			);
-		} catch ( \UOP\Infrastructure\Database\DatabaseException $error ) {
-			// Only a duplicate relationship is an idempotent, opaque claim.
-			// Storage/transaction failures must not be reported as accepted.
-			if ( 1062 === $error->getCode() ) {
-				return false;
+				$event  = PublicId::generate();
+				$object = new PolicyObject( $scope->id, 'relationship', (int) $target['id'], (int) $target['id'] );
+				$this->audit->append( $scope, $claimant, 'guardian.requested', $object, 'success', $correlation, $event );
+				$this->outbox->append( $scope, $event, 'person', (int) $target['id'], 'guardian.requested', $correlation, array( 'public_id' => $uuid->to_string() ) );
+				return true;
 			}
-			throw $error;
-		}
+		);
 	}
 
 	/**
