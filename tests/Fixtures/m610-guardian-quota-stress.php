@@ -81,7 +81,7 @@ if ( 'verify' === $command ) {
 		throw new RuntimeException( 'Concurrent REST quota bypass or missing legitimate claim.' );
 	}
 	$grants = $db->rows(
-		'SELECT COUNT(*) AS n FROM %i WHERE organization_id = %d AND grantee_user_id = %d',
+		'SELECT COUNT(*) AS n FROM %i WHERE organization_id = %d AND actor_user_id = %d',
 		array( $prefix . 'delegations', $scope->id, (int) $user->ID )
 	);
 	if ( 0 !== (int) $grants[0]['n'] ) {
