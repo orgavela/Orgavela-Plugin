@@ -253,6 +253,10 @@ final class M610GuardianReviewTest extends TestCase {
 			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
 			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
 			self::assertSame( 202, $this->json( 'POST', $target, array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+			self::assertSame( $s['parent'], get_current_user_id(), 'REST actor must remain the original claimant.' );
+			$after = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
+			self::assertCount( 1, $after );
+			self::assertStringStartsWith( '3:', (string) $after[0]['option_value'], 'The fourth request may not reset the active quota window.' );
 			self::assertSame( 0, $this->tenant_count( 'relationships' ), 'A stale transient must not bypass the three-attempt claim quota.' );
 			self::assertSame( 0, $this->tenant_count( 'audit_log' ) );
 			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
@@ -300,6 +304,11 @@ final class M610GuardianReviewTest extends TestCase {
 		}
 		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
 		self::assertSame( 1, $this->tenant_count( 'audit_log' ) );
+		global $wpdb;
+		$quota_key = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
+		$record = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
+		self::assertCount( 1, $record );
+		self::assertStringStartsWith( '3:', (string) $record[0]['option_value'], 'Duplicate claims must still spend one quota slot.' );
 		self::assertSame( 202, $this->json( 'POST', $url, array( 'subject_id' => $s['other_child']->to_string() ) )->get_status() );
 		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
 		self::assertSame( 1, $this->tenant_count( 'audit_log' ) );
