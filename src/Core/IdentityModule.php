@@ -22,6 +22,7 @@ use UOP\Infrastructure\Database\AssignmentRepository;
 use UOP\Infrastructure\Database\AuditWriter;
 use UOP\Infrastructure\Database\Connection;
 use UOP\Infrastructure\Database\DelegationRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
 use UOP\Infrastructure\Database\OutboxRepository;
 use UOP\Infrastructure\Database\PersonRepository;
 use UOP\Infrastructure\Database\RelationshipRepository;
@@ -51,6 +52,7 @@ final class IdentityModule implements ModuleInterface {
 		$container->set( PersonRepository::class, static fn ( ServiceContainer $c ) => new PersonRepository( $c->get( Connection::class ), $prefix ) );
 		$container->set( RelationshipRepository::class, static fn ( ServiceContainer $c ) => new RelationshipRepository( $c->get( Connection::class ), $prefix ) );
 		$container->set( DelegationRepository::class, static fn ( ServiceContainer $c ) => new DelegationRepository( $c->get( Connection::class ), $prefix ) );
+		$container->set( GuardianClaimQuotaRepository::class, static fn ( ServiceContainer $c ) => new GuardianClaimQuotaRepository( $c->get( Connection::class ), $wpdb->options ) );
 		$container->set( AssignmentRepository::class, static fn ( ServiceContainer $c ) => new AssignmentRepository( $c->get( Connection::class ), $prefix ) );
 		$container->set( AuditWriter::class, static fn ( ServiceContainer $c ) => new AuditWriter( $c->get( Connection::class ), $prefix ) );
 		$container->set( OutboxRepository::class, static fn ( ServiceContainer $c ) => new OutboxRepository( $c->get( Connection::class ), $prefix ) );
@@ -163,7 +165,8 @@ final class IdentityModule implements ModuleInterface {
 				$c->get( TransactionManager::class ),
 				$c->get( AuditWriter::class ),
 				$c->get( OutboxRepository::class ),
-				$prefix
+				$prefix,
+				$c->get( GuardianClaimQuotaRepository::class )
 			)
 		);
 		CapabilityRegistry::install();
