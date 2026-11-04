@@ -23,6 +23,7 @@ use UOP\Infrastructure\Database\AuditWriter;
 use UOP\Infrastructure\Database\DatabaseException;
 use UOP\Infrastructure\Database\DelegationRepository;
 use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaPruner;
 use UOP\Infrastructure\Database\EventRepository;
 use UOP\Infrastructure\Database\Installer;
 use UOP\Infrastructure\Database\OccurrenceRepository;
@@ -338,7 +339,7 @@ final class M610GuardianReviewTest extends TestCase {
 		global $wpdb;
 		$s     = $this->fixture();
 		$now   = time();
-		$repo  = new GuardianClaimQuotaRepository( $this->db, $wpdb->options );
+		$repo  = new GuardianClaimQuotaPruner( $this->db, $wpdb->options );
 		$keys  = array(
 			'expired' => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] ),
 			'active'  => 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['admin'] ),
