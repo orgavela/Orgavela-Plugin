@@ -163,11 +163,11 @@ jobs:
           # even for a group already written to its DBStore. In this
           # DISPOSABLE CI database only, complete the default migration and
           # demand the normal custom-table store before the scoped CLI run.
-          store="$(wp eval 'echo get_class(\\ActionScheduler::store());' --path="$WP_ROOT")"
+          store="$(wp eval 'echo get_class(ActionScheduler::store());' --path="$WP_ROOT")"
           if [ "$store" = "ActionScheduler_HybridStore" ]; then
             wp action-scheduler migrate --batch-size=100 --path="$WP_ROOT"
           fi
-          store="$(wp eval 'echo get_class(\\ActionScheduler::store());' --path="$WP_ROOT")"
+          store="$(wp eval 'echo get_class(ActionScheduler::store());' --path="$WP_ROOT")"
           if [ "$store" != "ActionScheduler_DBStore" ]; then
             echo "Action Scheduler group-scoped CLI needs a fully migrated DBStore; found: $store"
             exit 1
