@@ -291,6 +291,7 @@ final class M610GuardianReviewTest extends TestCase {
 
 		// A distinct wpdb instance establishes a separate physical MySQL session.
 		$peer_wpdb = new \wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$peer_wpdb->set_prefix( $wpdb->prefix );
 		$peer_db   = new WpdbConnection( $peer_wpdb );
 		$peer      = new GuardianClaimQuotaRepository( $peer_db, $peer_wpdb->options );
 		$peer_db->execute( 'SET SESSION innodb_lock_wait_timeout = 1' );
