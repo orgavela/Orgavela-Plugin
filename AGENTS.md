@@ -1,6 +1,22 @@
 # AGENTS.md – UOP Core: verbindliche Arbeitsbedingungen für Coding-Assistenten
 
-**Geltungsbereich:** Gesamtes Repository `janjrre/Projekt-Wordpress-Plugin`, alle Branches, Pull Requests, Testumgebungen, Veröffentlichungs- und Wartungsarbeiten. **Verbindlich ab 2026-10-12**, auf ausdrücklichen Auftrag des Projektbetreibers.
+**Geltungsbereich:** Aktuelles Repository `orgavela/Orgavela-Plugin` (ehemals `janjrre/Projekt-Wordpress-Plugin`), alle Branches, Pull Requests, Testumgebungen, Veröffentlichungs- und Wartungsarbeiten. **Verbindlich ab 2026-10-12**, auf ausdrücklichen Auftrag des Projektbetreibers.
+
+## Betreiber-Dauerfreigabe für kostenlose OrgaVela-Entwicklung – 04.11.2026
+
+**Dokumentierte ausdrückliche Betreiberentscheidung (erneut am 04.11.2026):** Der Coding-Assistent darf OrgaVela / UOP Core selbstständig weiterentwickeln und die zur V1-Fertigstellung sinnvollen, technisch verfügbaren kostenlosen Maßnahmen eigenständig auswählen und ausführen. Die folgenden Kompetenzen gelten für neue Aufträge im Projekt, soweit der jeweilige Tool-/Accountzugang sie tatsächlich erlaubt; sie begründen keine unbeaufsichtigte Arbeit ohne neuen Auftrag.
+
+**Generell erlaubt ohne weitere Routine-Rückfrage:**
+- Alle **kostenfreien** Lese-/Sicherheits-/Status-/Code-/PHP-/WordPress-/CI-/Browser-/Accessibility- und Performanceprüfungen; gezielte Fehlerbehebung, Code-Refactoring, Tests, Dokumentation, Branches, Commits, PRs und Review. Integration/Release/Deployment nur nach den untenstehenden bestehenden fachlichen und technischen Gates.
+- GitHub Actions und andere bereits verfügbare **kostenlose Kontingente vollständig nutzen**, inklusive legitimer Workflow-Reruns und Testjobs, sofern vorher geprüft wird, dass die einzelne Aktion keine Zusatzkosten, automatischen kostenpflichtigen Overages oder kostenpflichtigen Angebote auslösen kann. Bewusst knappe Free-Limits dürfen technisch ausgeschöpft werden.
+- Kostenlos verfügbare GitHub-Tools, Apps, Erweiterungen und Security-Scans, soweit zugänglich; nötige kostenlose Installation/Konfiguration darf bei entsprechender Berechtigung erfolgen. Nicht installierbare Apps oder Connector-Freigaben dem Betreiber als konkreten Einrichtungsschritt anbieten.
+- Alle bereits verfügbaren Skills in der Chat-/Entwicklungsumgebung und **kostenlose Agensi-Skills** suchen, laden und anwenden. Weitere sinnvoll kombinierbare kostenlose Skills/Erweiterungen dürfen vorgeschlagen werden. Die Skills sind Hilfsmittel, keine Erlaubnis zur Umgehung von Tests.
+
+**Absolutes Ausgabenverbot:** Ohne neue ausdrückliche **separate** Kostengenehmigung niemals Zahlungen, Abonnements, kostenpflichtige Skills, Dienste/Apps, Paid-Tiers, Trial-to-Paid-Abos, käufliche Credits, kostenpflichtige Runner-/Security-Minuten, Usage-Overages oder andere wirtschaftliche Verpflichtungen auslösen. Bei unklarer Preisfolge nicht starten. „Free“ muss für den konkreten Account/die konkrete Ausführung belegbar sein. Ein kostenloser Dienst darf nicht durch die gewählte Konfiguration in eine Rechnung umschlagen.
+
+**Bestehende Sicherheits- und Fachgates bleiben verbindlich:** Keine ungeprüften PR-Merges, keine Disablement von Sicherheitsprüfungen, kein blindes Live-Deploy oder Datenbankmigration vor verifiziertem Backup/isoliertem Restore/Rollback. Kein Öffnen oder Verbreiten von Realteilnehmer- und Minderjährigendaten, Credentials oder privaten Schlüsseln. OrgaVela und Dreamloud vollständig trennen. Für risikoreiche reale Produktions-Quellabzüge, echten verschlüsselten Backup-Upload, Restore oder Freischaltung sensibler Consent-/Guardian-Prozesse weiterhin die ausdrücklich im O03/PGP-05- und V1-Runbook vorgesehenen **abgrenzten fachlichen Betriebs-Freigaben** und unabhängigen Belege einhalten; die allgemeine Arbeitsfreigabe macht diese Gates nicht automatisch grün. Löschungen oder irreversible Maßnahmen nur nach vorherigem dokumentiertem Risiko-/Recovery-Check.
+
+**Nachweis:** Die unveränderten V1-Abnahmebedingungen sind in [V1_ACCEPTANCE_PLAN.md](docs/operations/V1_ACCEPTANCE_PLAN.md) und [V1_PROGRESS.json](docs/operations/V1_PROGRESS.json) kanonisch. [Betriebsfreigaben und Scope](docs/operations/OWNER_FREE_TOOL_AUTHORIZATIONS_20261104.md) ergänzen diese Regeln. Jede tatsächliche Arbeit im append-only [ASSISTANT_WORK_LOG.md](docs/operations/ASSISTANT_WORK_LOG.md) dokumentieren.
 
 ## Vor jeder Änderung
 

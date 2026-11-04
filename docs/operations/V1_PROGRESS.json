@@ -1,8 +1,8 @@
 {
   "schema": "uop-v1-progress-v1",
   "project": "UOP Core / OrgaVela",
-  "snapshot_date": "2026-10-12",
-  "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
+  "snapshot_date": "2026-11-04",
+  "snapshot_basis": "2026-11-04 OrgaVela-only connected WordPress read-only metadata check plus GitHub checks. Technical runtime and transient cron counts refreshed; historical 2026-10-12 schema audit remains earlier evidence, not newly run. O03 PGP-04 synthetic pass; PGP-05 real capture/isolated restore remain blocked. Project owner confirms autonomous free tooling and use of all free allowances subject to strictly no extra cost and existing security gates. No live changes, CI dispatch, real backup or production deployment performed.",
   "plan_path": "docs/operations/V1_ACCEPTANCE_PLAN.md",
   "source_refs": [
     "docs/specification/phase-3-specification-freeze.md",
@@ -178,7 +178,7 @@
       "circleci_pilot_provider_success": true,
       "google_drive_backup_strategy_active": false,
       "google_drive_workflow_removed": true,
-      "github_backup_target_proposed": "janjrre/orgavela-backups (verified private via GitHub get_repo, main, push/admin permission, 2026-10-13)",
+      "github_backup_target_proposed": "orgavela/orgavela-backups (GitHub connector 2026-11-04: private, main, push/admin access verified; historical janjrre path migrated)",
       "github_backup_target_private_verified": true,
       "github_backup_repository_created": true,
       "github_backup_release_assets_uploaded": false,
@@ -202,11 +202,13 @@
       "source_github_main_branch_protected": false,
       "source_github_main_branch_protection_probe": "GitHub GET /branches/main protected=false; GET /rulesets [] on 2026-10-13. /branches/main/protection requires inaccessible admin permission (403).",
       "source_github_branch_ruleset_count": 0,
-      "github_backup_secret_storage_authorized": false
+      "github_backup_secret_storage_authorized": false,
+      "github_backup_target_current": "orgavela/orgavela-backups"
     },
     {
       "id": "O04",
-      "status": "blocked"
+      "status": "blocked",
+      "recent_cron_read": "2026-11-04 WordPress built-in cron disabled; 19 events; 0 then 1 overdue in two snapshots; external scheduler unverified"
     },
     {
       "id": "O05",
@@ -320,8 +322,8 @@
     "plugin": "UOP Core",
     "version": "0.1.0-alpha.2",
     "status": "active",
-    "wordpress_version": "7.1.3",
-    "php_version": "8.3.33",
+    "wordpress_version": "7.1.4",
+    "php_version": "8.3.36",
     "database": "MariaDB 11.8.8",
     "charset": "utf8mb4",
     "uop_db_version": 2,
@@ -335,7 +337,7 @@
     "discourage_search_engines": false,
     "backup_restore_verified": false,
     "real_participant_data_allowed": false,
-    "cron_overdue_events": 2,
+    "cron_overdue_events": 1,
     "cron_total_events": 19,
     "privacy_policy_page": "configured but draft/not visitor accessible",
     "wp_environment_type": "production (WordPress setting, not product release status)",
@@ -349,7 +351,7 @@
     "uop_schema_site_health_result": "good; live WP-CLI invocation of alpha.2 Installer::health(), Run 38264354774",
     "published_uop_events": 0,
     "published_sample_pages": 1,
-    "cron_overdue_snapshot_note": "Read-only WordPress MCP snapshots 2026-10-12: previously 5/19 overdue, later 2/19; external cron still unverified",
+    "cron_overdue_snapshot_note": "Read-only OrgaVela MCP 2026-11-04: cron-test/list overdue 0, immediately subsequent full listing overdue 1 (time-dependent); DISABLE_WP_CRON remains true; no independent evidence of external host cron. Historical 2026-10-12 snapshots 5 then 2.",
     "wp_mcp_sitehealth_route_allowed": false,
     "wp_mcp_uop_route_allowed": false,
     "php_error_log_available": false,
@@ -440,13 +442,19 @@
     "circleci_uop_free_credits_verified": false,
     "circleci_uop_pipeline_ci01_verified": true,
     "backup_storage_decision_2026_10_13": "GitHub private release-assets-only, separate repo, plus IONOS provider backups; Drive superseded",
-    "github_backup_repository_proposed": "janjrre/orgavela-backups",
+    "github_backup_repository_proposed": "orgavela/orgavela-backups",
     "github_backup_repository_private_verified": true,
     "github_backup_repository_created": true,
     "github_release_ciphertext_canary_uploaded": false,
     "google_drive_backup_previously_created_folder_unused": true,
     "google_drive_backup_connector_no_longer_part_of_strategy": true,
-    "google_drive_backup_github_workflow_removed": true
+    "google_drive_backup_github_workflow_removed": true,
+    "last_read_only_live_check": "2026-11-04",
+    "last_live_check_scope": "mosmcp__plugin-get; core__get-environment-info; mosmcp__site-get-server-info; mosmcp__cron-test; mosmcp__cron-list-events; mosmcp__site-get-search-visibility; no fresh schema/backup/host access",
+    "plugin_auto_update_flag_observed": true,
+    "site_debug_false_display_flag_true": true,
+    "physical_schema_check_currently_reverified": false,
+    "github_backup_repository_current": "orgavela/orgavela-backups"
   },
   "integration": {
     "main_contains_merged_feature_stack": false,
@@ -587,17 +595,16 @@
     "https_static_assets_verified": true
   },
   "immediate_next": [
-    "SECURITY BLOCKER: operator must protect `main` of PUBLIC `janjrre/Projekt-Wordpress-Plugin` using GitHub Settings > Branches > classic protection (require PR, no admin bypass, force pushes and deletion disallowed); GitHub API currently reports protected=false and zero rulesets",
-    "Reverify public source repo main branch protected=true, verify who can push/merge and PR/fork CircleCI context-exposure risk; operator-reported expression restriction is not independent CircleCI UI/API proof",
-    "Confirm CircleCI Free usage and effective Context project/expression restrictions; no tokens/secrets until these are verified",
-    "Operator creates securely retained offline private age decryption key, two independent secure recovery copies, and supplies ONLY public age recipient",
-    "Then restrict expiring fine-grained PAT to private janjrre/orgavela-backups Contents read/write, store only in properly protected CircleCI Context, test encrypted synthetic release with full redownload/hash/local decryption",
-    "Only after synthetic success create real consistent encrypted OrgaVela WP file+MariaDB backup, verify full redownload and isolated no-egress restore, then schedule backups and consider O03/B04 gates"
+    "Read-only evidence: verify IONOS OrgaVela contract backup inventory/recovery points and distinct least-privilege source identity; no production content export, database migration or restore until O03 gates pass",
+    "Confirm existing OrgaVela public source main branch protection and trusted CI/secret isolation after organization migration; old 2026-10-13 unprotected observation is historical",
+    "Inspect PR #33 PGP-05 offline collector's synthetic provider-CI feasibility and free usage before any trigger; no real backups, secrets or production entrypoints",
+    "Continue P4-02/P4-03 and M6-10 synthetic browser/security test work on dependent PRs with CI tied to exact SHA; avoid premature PR merges",
+    "Keep all work and selected tools strictly free; autonomous free usage authorized 2026-11-04 in AGENTS.md and OWNER_FREE_TOOL_AUTHORIZATIONS_20261104.md"
   ],
   "update_policy": "Before each UOP response, review plan, GitHub changes, statuses and evidence; append worklog, change plan/progress if facts changed; always link entire plan and show concise cockpit. No automatic background updates without an active task.",
   "tracker_issue": 15,
   "tracker_url": "https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/15",
-  "masterplan_version": "2.11",
+  "masterplan_version": "2.12",
   "companion_documents": [
     "docs/project/V1_MASTER_PLAN.md",
     "docs/project/V1_STATUS.md",
