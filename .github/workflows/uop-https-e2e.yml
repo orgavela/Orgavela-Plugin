@@ -17,6 +17,8 @@ on:
       - 'tests/Browser/m610-responsive-a11y.spec.js'
       - 'tests/Fixtures/m610-members-seed.php'
       - 'tests/Fixtures/m610-members-helper.php'
+      - 'tests/Fixtures/m610-guardian-quota-stress.php'
+      - 'tests/Browser/m610-guardian-quota.spec.js'
   workflow_dispatch:
 
 permissions:
@@ -73,6 +75,7 @@ jobs:
           node --check tests/Fixtures/m610-https-proxy.mjs
           php -l tests/Fixtures/m610-members-seed.php
           php -l tests/Fixtures/m610-members-helper.php
+          php -l tests/Fixtures/m610-guardian-quota-stress.php
       - name: Install disposable WordPress with independent database
         env:
           COMPOSER_ROOT_VERSION: 0.1.0-alpha.2
@@ -97,6 +100,7 @@ jobs:
           wp plugin activate uop-core --path="$WP_ROOT"
           wp eval-file tests/Fixtures/m610-live-seed.php --path="$WP_ROOT"
           wp eval-file tests/Fixtures/m610-members-seed.php --path="$WP_ROOT"
+          UOP_GUARDIAN_QUOTA_ACTION=seed wp eval-file tests/Fixtures/m610-guardian-quota-stress.php --path="$WP_ROOT"
           page_id="$(wp option get uop_m610_ci_page --path="$WP_ROOT")"
           [[ "$page_id" =~ ^[0-9]+$ ]]
           echo "UOP_M610_PAGE_ID=$page_id" >> "$GITHUB_ENV"
@@ -169,7 +173,7 @@ jobs:
           UOP_HTTPS_E2E: '1'
         run: |
           npx playwright install --with-deps chromium
-          npx playwright test tests/Browser/m610-https.spec.js tests/Browser/m610-live-guest.spec.js tests/Browser/m610-members-admin.spec.js tests/Browser/m610-responsive-a11y.spec.js
+          npx playwright test tests/Browser/m610-https.spec.js tests/Browser/m610-live-guest.spec.js tests/Browser/m610-members-admin.spec.js tests/Browser/m610-responsive-a11y.spec.js tests/Browser/m610-guardian-quota.spec.js
       - name: Upload browser and WordPress diagnostics (never email contents)
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
