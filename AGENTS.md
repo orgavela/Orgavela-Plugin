@@ -1,6 +1,6 @@
 # AGENTS.md – UOP Core: verbindliche Arbeitsbedingungen für Coding-Assistenten
 
-**Geltungsbereich:** Gesamtes Repository `janjrre/Projekt-Wordpress-Plugin`, alle Branches, Pull Requests, Testumgebungen, Veröffentlichungs- und Wartungsarbeiten. **Verbindlich ab 2026-10-12**, auf ausdrücklichen Auftrag des Projektbetreibers.
+**Geltungsbereich:** Aktuelles Repository `orgavela/Orgavela-Plugin` (ehemals `janjrre/Projekt-Wordpress-Plugin`), alle Branches, Pull Requests, Testumgebungen, Veröffentlichungs- und Wartungsarbeiten. **Verbindlich ab 2026-10-12**, auf ausdrücklichen Auftrag des Projektbetreibers.
 
 ## Betreiber-Dauerfreigabe für kostenlose OrgaVela-Entwicklung – 04.11.2026
 
