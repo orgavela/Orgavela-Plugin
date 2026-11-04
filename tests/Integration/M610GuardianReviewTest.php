@@ -371,13 +371,14 @@ final class M610GuardianReviewTest extends TestCase {
 					self::assertSame( $values[ $kind ], $rows[0]['option_value'] );
 				}
 			}
+			$quota = new GuardianClaimQuotaRepository( $this->db, $wpdb->options );
 			$tx = new TransactionManager( $this->db, static function ( int $microseconds ): void {}, static function ( \Throwable $error ): void {} );
 			self::assertTrue(
-				$tx->run( fn (): bool => $repo->consume( $this->scope, $s['parent'], $now ) ),
+				$tx->run( fn (): bool => $quota->consume( $this->scope, $s['parent'], $now ) ),
 				'A prior expired quota may start a fresh window after pruning.'
 			);
 			self::assertFalse(
-				$tx->run( fn (): bool => $repo->consume( $this->scope, $s['admin'], $now ) ),
+				$tx->run( fn (): bool => $quota->consume( $this->scope, $s['admin'], $now ) ),
 				'An active exhausted quota must remain denied after cleanup.'
 			);
 			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
