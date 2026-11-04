@@ -12,6 +12,7 @@ use UOP\Application\Query\M6OperationsReadService;
 use UOP\Domain\Organization\OrgScope;
 use UOP\Infrastructure\Database\Installer;
 use UOP\Infrastructure\Database\M5OperationsRepository;
+use UOP\Infrastructure\Queue\GuardianQuotaScheduleHealth;
 
 /** Existing M3/M5 commands remain their own source of truth and permissions. */
 final class M6ControlCenterScreen {
@@ -134,6 +135,23 @@ final class M6ControlCenterScreen {
 		$this->heading( __( 'System health', 'uop-core' ), __( 'The existing WordPress Site Health schema check remains authoritative.', 'uop-core' ) );
 		$health = Installer::health();
 		echo '<p role="status"><strong>' . esc_html( (string) $health['label'] ) . '</strong></p>';
+		// Managers see only coarse queue health: no action IDs, people or tokens.
+		$quota_state  = GuardianQuotaScheduleHealth::inspect( time() );
+		$quota_labels = array(
+			'ok'          => __( 'Guardian quota cleanup: scheduled and previously completed.', 'uop-core' ),
+			'first_run'   => __( 'Guardian quota cleanup: scheduled, first run pending.', 'uop-core' ),
+			'missing'     => __( 'Guardian quota cleanup: scheduled action missing.', 'uop-core' ),
+			'duplicate'   => __( 'Guardian quota cleanup: multiple pending actions detected.', 'uop-core' ),
+			'overdue'     => __( 'Guardian quota cleanup: scheduled action is overdue.', 'uop-core' ),
+			'gap'         => __( 'Guardian quota cleanup: next action is unusually far away.', 'uop-core' ),
+			'failed'      => __( 'Guardian quota cleanup: a failed action needs operator review.', 'uop-core' ),
+			'unavailable' => __( 'Guardian quota cleanup: scheduler status unavailable.', 'uop-core' ),
+		);
+		$quota_label  = $quota_labels[ $quota_state ] ?? $quota_labels['unavailable'];
+		echo '<p role="status"><strong>' . esc_html( $quota_label ) . '</strong></p>';
+		if ( 'ok' !== $quota_state ) {
+			echo '<p class="uop-m6-console__warning">' . esc_html__( 'Review Action Scheduler status before relying on automated retention. This indicator does not verify an external cron trigger.', 'uop-core' ) . '</p>';
+		}
 		if ( 'good' !== $health['status'] ) {
 			echo '<p class="uop-m6-console__warning">' . esc_html__( 'Database schema or migration state needs attention. Review WordPress Site Health before changing settings.', 'uop-core' ) . '</p>';
 		}
