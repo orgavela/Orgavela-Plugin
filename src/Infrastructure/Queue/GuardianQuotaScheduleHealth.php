@@ -42,7 +42,7 @@ final class GuardianQuotaScheduleHealth {
 			return 'duplicate';
 		}
 		$next = $next_scheduled[0];
-		if ( ! is_int( $next ) || $next < 1 ) {
+		if ( $next < 1 ) {
 			return 'unavailable';
 		}
 		if ( $next < $now - self::MAX_DELAY ) {
