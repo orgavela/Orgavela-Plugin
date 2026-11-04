@@ -99,8 +99,10 @@ final class ConsentRequirementGate {
 	/**
 	 * Strictly require only the trusted allowlisted tuple columns.
 	 *
-	 * @param array<string,mixed> $value Input.
-	 * @param list<string>        $keys  Required keys.
+	 * @param array $value Input.
+	 * @param array $keys  Required keys.
+	 * @phpstan-param array<string,mixed> $value
+	 * @phpstan-param list<string> $keys
 	 * @throws InvalidArgumentException When any input field is extra/missing.
 	 */
 	private static function validate_keys( array $value, array $keys ): void {
