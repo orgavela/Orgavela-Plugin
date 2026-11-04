@@ -933,3 +933,29 @@ Die Ergebniskommunikation an die GitHub-Issues wurde ausgeführt: [W0 #16 Kommen
 **Nächste Arbeit:** O02/O03- und CI-Evidenzgrenzen zuerst absichern, dann P4-02/P4-03 und M6-10 mit synthetischen Negativ-/Browser-Tests fortsetzen, PR-Stack nach Abnahme integrieren. Nur spezifisch freigegebene produktive Betriebsprüfungen; keine ungeprüfte WP-Migration.
 
 **Stand unverändert:** Coding 62/71 historisch; formale M0–M7 0/8; P4 0/4; R01–R18 0/18; V1 offen. UOP Core 0.1.0-alpha.2 zuletzt bestätigt, **am 04.11.2026 nicht live neu geprüft**.
+
+---
+
+## 2026-11-04 – W0: Betreiber-Dauerfreigaben + neuer OrgaVela Live-Read
+
+**Arbeitsauftrag:** Nach OV-00 die Arbeiten ohne kostenpflichtige Maßnahmen fortsetzen und die erweiterten Betreiberfreigaben erneut verbindlich in GitHub dokumentieren: eigenständige OrgaVela-Entwicklung, Verwendung sämtlicher bereits vorhandener Tools/Skills, kostenlose GitHub-Tools/Apps, kostenlose Agensi-Skills und sinnvolle zusätzliche kostenlose Erweiterungen sowie ausdrückliche Freigabe, das vollständige verfügbare kostenlose GitHub-Kontingent auszuschöpfen. Keine Ausgaben/Overages.
+
+**Ausgangslage:** `main` zuletzt `0adacb427bd95dd87594e358ec9c6f2f5b38aae8`; Fortsetzung des offen gebliebenen **Draft PR #35** `docs/ov00-baseline-20261104`, keine neuen Releases/Merges. V1: 62/71 Implementierungshistorie, M 0/8, P4 0/4, R 0/18; W0/O03 weiterhin offen. Die vorbestehenden PGP-05-Operator-Holds, IONOS-Backupinventur, Datenintegritäts- und Zugriffsprüfung gelten weiter.
+
+**Ansatz und Entscheidung:** Unbeschränkte kostenlose Arbeit innerhalb der technischen Berechtigung ist erlaubt; jegliche Kosten, zugehörige overages oder Testangebote mit späterer Zahlung bleiben verboten. Die Freigabe ist **keine** automatische V1-/PGP05-/realer Backup-/Risikozugriff-Abnahme. Eine gesonderte Ausführungsfreigabe an einem bestimmten produktiven Secret-/Recovery-Gate wird bei dessen Einbaugrenze nicht fingiert. Bestehende dokumentierte Quality-/Security-/Privacy-/Rollback-/Migrationsstopps bleiben erhalten. Das öffentliche Repository speichert nur abstrahierte, secretsfreie Prüfdaten.
+
+**Ausgeführte Aktionen auf dem Dokumentationsbranch:**
+- `AGENTS.md` Betreiber-Dauerfreigaben um kostenfreie autonome Tools/CI/Skills, Kostenverbot und Schutzgates ergänzt, Commit `b19a2799e50fea8da13c8c015be656c28158a6f9`.
+- `docs/operations/OWNER_FREE_TOOL_AUTHORIZATIONS_20261104.md` erstellt, Commit `056808793c60db3a04024643f632f707cb6e52a1`.
+- `docs/operations/W0_LIVE_READ_EVIDENCE_20261104.md` erstellt, Commit `54b1b641a5e04e9ecb3c05c3f656e89262d779a1`.
+- `docs/operations/V1_PROGRESS.json` Runtime-/Cron-/Repo-Stand auf Live-Snapshot aktualisiert, Zähler unverändert, Commit `d0663e104a9d890778a31e30184cd53a50071e97`.
+- `docs/operations/V1_ACCEPTANCE_PLAN.md` von v2.11 auf v2.12 aktualisiert und datierten Freigabe-/W0-Nachtrag angehängt, Commit `2a282211e72a9b92b2789634e5c80ed1ae853043`.
+- `docs/project/V1_STATUS.md` datierte neue Diagnose und Freigaben ergänzt, Commit `114e501ed1345d9e23f7d11e2116a31a81abfde5`.
+
+**Realer read-only Diagnosebefund (OrgaVela WordPress MCP, 04.11.2026):** `uop-core/uop-core.php` aktiv `0.1.0-alpha.2`, WordPress 7.1.4, PHP 8.3.36, MariaDB 11.8.8, utf8mb4, HTTPS; WordPress`DISABLE_WP_CRON=true`, Loopback 200, 19 Events, erst 0 dann 1 overdue im Folgesnapshot; externer Hosting-Cron nicht verifiziert. Sichtbarkeit `discourage_search_engines=false`, kein globales noindex. UOP Plugin Auto-Update-Flag beobachtet true. **Keine** UOP-Schema-SQL-Wiederholung, kein IONOS-SFTP-/Backup-/Restore-Zugriff. Historischer Schema-Audit #38264354774 gilt weiterhin als früherer Beleg, keine neue formale Abnahme. GitHub Connector bestätigt `orgavela/orgavela-backups` als **private**, `main` und Schreib-/Adminrechte.
+
+**Prüfgrenze:** Live-Reads sind Momentaufnahmen. Kein Beleg für externes Cron-Scheduling oder gesamtes physisches DB-Schema heute, kein menschliches Rechts-/Security-/Accessibility-Signoff, keine neuen CI-Testläufe, GitHub-Merges, Releases, Datenexporte, öffentlichen Änderungen oder Kosten. Konfigurationen wurden nicht verändert.
+
+**Abnahme:** W0 bleibt **offen**; O03 und PGP-05 realer Capture/Restore **nicht erfüllt**. Keine Fortschrittszähler erhöht: implementiert 62/71, M0–M7 0/8, P4 0/4, R01–R18 0/18. Aktive WP-Version im Live-Read 7.1.4/PHP 8.3.36, UOP 0.1.0-alpha.2.
+
+**Nächste Schritte:** Branch-Diff/JSON-Konsistenz prüfen, PR #35 fortführen, Master-Issue #15 per redigierter Freigabe-/Nachweismeldung aktualisieren, sichere W0/PGP-05 Provider-CI-Gates (kostenfrei/secretsicher) und M6/P4 Negativfälle bearbeiten.
