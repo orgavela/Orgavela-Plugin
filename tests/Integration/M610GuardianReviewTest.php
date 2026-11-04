@@ -236,6 +236,7 @@ final class M610GuardianReviewTest extends TestCase {
 	public function test_guardian_quota_rejects_fourth_attempt_despite_stale_transient_reads(): void {
 		global $wpdb;
 		$s = $this->fixture();
+		$before_audit = $this->tenant_count( 'audit_log' );
 		wp_set_current_user( $s['parent'] );
 		$key    = 'uop_guardian_claim_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
 		$stale  = static fn (): int => 0;
@@ -269,7 +270,7 @@ final class M610GuardianReviewTest extends TestCase {
 			self::assertCount( 1, $after );
 			self::assertStringStartsWith( '3:', (string) $after[0]['option_value'], 'The fourth request may not reset the active quota window.' );
 			self::assertSame( 0, $this->tenant_count( 'relationships' ), 'A stale transient must not bypass the three-attempt claim quota.' );
-			self::assertSame( 0, $this->tenant_count( 'audit_log' ) );
+			self::assertSame( $before_audit, $this->tenant_count( 'audit_log' ) );
 			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
 		} finally {
 			remove_filter( 'pre_transient_' . $key, $stale );
@@ -308,13 +309,14 @@ final class M610GuardianReviewTest extends TestCase {
 	/** A duplicate private claim still consumes quota without extra events. */
 	public function test_guardian_duplicate_claim_attempts_consume_quota_without_second_relationship(): void {
 		$s = $this->fixture();
+		$before_audit = $this->tenant_count( 'audit_log' );
 		wp_set_current_user( $s['parent'] );
 		$url = '/uop/v1/me/guardian-claims';
 		for ( $i = 0; $i < 3; ++$i ) {
 			self::assertSame( 202, $this->json( 'POST', $url, array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
 		}
 		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
-		self::assertSame( 1, $this->tenant_count( 'audit_log' ) );
+		self::assertSame( $before_audit + 1, $this->tenant_count( 'audit_log' ) );
 		global $wpdb;
 		$quota_key = 'uop_gclaim_q2_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
 		$record = $this->db->rows( 'SELECT option_value FROM %i WHERE option_name = %s', array( $wpdb->options, $quota_key ) );
@@ -322,13 +324,14 @@ final class M610GuardianReviewTest extends TestCase {
 		self::assertStringStartsWith( '3:', (string) $record[0]['option_value'], 'Duplicate claims must still spend one quota slot.' );
 		self::assertSame( 202, $this->json( 'POST', $url, array( 'subject_id' => $s['other_child']->to_string() ) )->get_status() );
 		self::assertSame( 1, $this->tenant_count( 'relationships' ) );
-		self::assertSame( 1, $this->tenant_count( 'audit_log' ) );
+		self::assertSame( $before_audit + 1, $this->tenant_count( 'audit_log' ) );
 		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
 	}
 
 	/** The service itself must enforce quota even without REST transport. */
 	public function test_guardian_quota_service_direct_call_is_independently_bounded(): void {
 		$s = $this->fixture();
+		$before_audit = $this->tenant_count( 'audit_log' );
 		$actor = new Actor( $s['parent'] );
 		$now   = gmdate( 'Y-m-d H:i:s' );
 		for ( $i = 0; $i < 3; ++$i ) {
@@ -339,7 +342,7 @@ final class M610GuardianReviewTest extends TestCase {
 			'The fourth direct request must not create a guardian relationship.'
 		);
 		self::assertSame( 0, $this->tenant_count( 'relationships' ) );
-		self::assertSame( 0, $this->tenant_count( 'audit_log' ) );
+		self::assertSame( $before_audit, $this->tenant_count( 'audit_log' ) );
 	}
 
 	/** Reviewer rejection records a decision but never grants family access. */
