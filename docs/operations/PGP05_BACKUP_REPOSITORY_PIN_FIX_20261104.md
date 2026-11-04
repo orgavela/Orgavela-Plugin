@@ -21,3 +21,12 @@ Die lokale Provider-/Offline-Writer-Bibliothek `scripts/ci/production_backup/git
 **Nachweisweg / nächster Schritt:** Kostenfreien synthetischen Provider- oder isolierten GitHub-CI-Test auf dem exakten neuen SHA ausführen. Nur die bestehenden Fixture-/Abwehr-/Crypto-Tests ohne Secrets/Contexts. Nach einem grünen Ergebnis im abhängigen PR reviewen und in korrekter Stack-Reihenfolge integrieren. Reale W0/O03- und PGP-05-Gates bleiben separat offen.
 
 **V1 unverändert:** 62/71 implementiert (historisch), M0–M7 0/8, P4 0/4, R01–R18 0/18.
+
+
+## Zusätzliche kostenlose CI-Absicherung (04.11.2026)
+
+Neuer GitHub-Actions-Workflow `.github/workflows/pgp05-offline-regression.yml` (Commits `960520d258f73a6f8dedd0617a7a7b8da0000b71` und `1592bd6d03cf888c66b401005eb5bb1ecc99c048`): nur auf Push zu exakt den benannten PGP-05-Entwicklungsbranches, Pfadfilter ausschließlich auf Offline-Collector/Testdateien/Workflow. Öffentliches Repository mit Standard-`ubuntu-24.04`-Runner (laut GitHub-Abrechnungsdokumentation kostenlos), Job-Timeout 12 Minuten, `permissions: contents: read`, Checkout an feste SHA gebunden und `persist-credentials: false`. Kein Environment, keine Token-/Contextanforderung, kein Upload von Artifacts, Cache, Release oder WP-/IONOS-Aufruf.
+
+Das Jobskript prüft zuerst die exakte neue Repository-Konstante, dass Python-Writer/Capture-Entry-Points `78` zurückgeben und dass Quell- und Writer-Credentials getrennt bleiben; anschließend alle bestehenden synthetischen Unit-, PHP-Hilfs-, Fixture-/OpenPGP-/Temporary-Key-Roundtrip-Tests. **GitHub-Workflow-Ausführung/Status auf dem neuen Commit war über den GitHub-Connector mit PR-run-only-Filter nicht nachweisbar:** Deshalb *CI-Ergebnis offen*; keine Kennzahl auf PASS setzen. Kein Self-hosted-/Larger-Runner und keine kostenpflichtigen Optionen.
+
+**Stack-Zustand:** [abhängiger Draft PR #36](https://github.com/orgavela/Orgavela-Plugin/pull/36) gegen den weiter ungemergten PR #33. Fachliche PGP05/Backup-/Restore-Freigabe bleibt gesperrt. Der Workflow selbst ist ein Prüfwerkzeug, keine produktive Aktivierung.
