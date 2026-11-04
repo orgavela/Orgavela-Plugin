@@ -32,26 +32,6 @@ final class GuardianClaimQuotaRepository {
 	}
 
 	/**
-	 * Prune only aged-out well-formed quota records, not active or corrupt rows.
-	 * A second 24-hour grace period protects the expiry boundary.
-	 *
-	 * @param int $now Trusted server Unix timestamp.
-	 * @return int Number of deleted records, capped at 100 per run.
-	 * @throws InvalidArgumentException For invalid timestamps.
-	 * @throws DatabaseException On storage failure.
-	 */
-	public function prune_expired( int $now ): int {
-		if ( $now < self::WINDOW_SECONDS + 1 ) {
-			throw new InvalidArgumentException( 'Invalid guardian quota prune clock.' );
-		}
-		$prefix = 'uop_gclaim_q2_';
-		return $this->db->execute(
-			"DELETE FROM %i WHERE option_name LIKE %s AND LEFT(option_name, 14) = %s AND option_value REGEXP %s AND CAST(SUBSTRING_INDEX(option_value, ':', -1) AS UNSIGNED) <= %d LIMIT 100",
-			array( $this->options_table, $prefix . '%', $prefix, '^[0-3]:[0-9]{1,12}$', $now - self::WINDOW_SECONDS )
-		);
-	}
-
-	/**
 	 * Atomically consume one claim attempt, whether the subject exists or not.
 	 * Call only *inside* the owning TransactionManager::run() transaction.
 	 * An existing options row is explicitly locked before inspecting its value;
