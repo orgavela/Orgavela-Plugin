@@ -21,6 +21,7 @@ use UOP\Domain\Organization\OrgScope;
 use UOP\Infrastructure\Database\AssignmentRepository;
 use UOP\Infrastructure\Database\AuditWriter;
 use UOP\Infrastructure\Database\DelegationRepository;
+use UOP\Infrastructure\Database\GuardianClaimQuotaRepository;
 use UOP\Infrastructure\Database\EventRepository;
 use UOP\Infrastructure\Database\Installer;
 use UOP\Infrastructure\Database\OccurrenceRepository;
@@ -57,6 +58,7 @@ final class M610GuardianReviewTest extends TestCase {
 
 	/** Create two real independent actors and no implicit family rights. */
 	private function fixture(): array {
+		global $wpdb;
 		if ( ! post_type_exists( 'uop_event' ) ) {
 			register_post_type( 'uop_event', array( 'public' => true ) );
 		}
@@ -76,7 +78,7 @@ final class M610GuardianReviewTest extends TestCase {
 		$tx = new TransactionManager( $this->db, static function ( int $n ): void {}, static function ( \Throwable $e ): void {} );
 		$audit = new AuditWriter( $this->db, $this->prefix );
 		$outbox = new OutboxRepository( $this->db, $this->prefix );
-		$reviews = new GuardianReviewService( $people, $relationships, $delegations, $this->db, $policy, $tx, $audit, $outbox, $this->prefix );
+		$reviews = new GuardianReviewService( $people, $relationships, $delegations, $this->db, $policy, $tx, $audit, $outbox, $this->prefix, new GuardianClaimQuotaRepository( $this->db, $wpdb->options ) );
 		( new GuardianReviewController( $reviews ) )->register();
 
 		$now = gmdate( 'Y-m-d H:i:s' );
