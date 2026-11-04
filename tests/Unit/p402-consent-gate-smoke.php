@@ -5,9 +5,9 @@
  * Run: php tests/Unit/p402-consent-gate-smoke.php
  * Only synthetic integer identities and immutable scope placeholders.
  */
-require dirname( __DIR__, 2 ) . '/src/Domain/Consent/ConsentRequirementGate.php';
+require dirname( __DIR__, 2 ) . '/src/Application/Consent/ConsentRequirementGate.php';
 
-use UOP\Domain\Consent\ConsentRequirementGate;
+use UOP\Application\Consent\ConsentRequirementGate;
 
 $gate = new ConsentRequirementGate();
 $scope = array(
