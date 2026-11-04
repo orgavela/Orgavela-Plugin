@@ -19,8 +19,11 @@ final class GuardianClaimQuotaRepository {
 	private const WINDOW_SECONDS = 86400;
 
 	/**
+	 * Set up site-local quota storage without introducing new tables.
+	 *
 	 * @param Connection $db            Shared transactional connection.
 	 * @param string     $options_table Trusted site-local InnoDB wp_options table.
+	 * @throws InvalidArgumentException For an invalid options table identity.
 	 */
 	public function __construct( private Connection $db, private string $options_table ) {
 		if ( ! preg_match( '/^[A-Za-z0-9_]+options$/D', $options_table ) ) {
