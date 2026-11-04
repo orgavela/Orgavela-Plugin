@@ -159,6 +159,19 @@ jobs:
           # Restrict work to our Guardian hook and UOP group: decoys prove
           # unrelated plugin work and other UOP hooks remain untouched.
           wp plugin activate uop-core --path="$WP_ROOT"
+          # Action Scheduler's temporary HybridStore can reject --group
+          # even for a group already written to its DBStore. In this
+          # DISPOSABLE CI database only, complete the default migration and
+          # demand the normal custom-table store before the scoped CLI run.
+          store="$(wp eval 'echo get_class(\\ActionScheduler::store());' --path="$WP_ROOT")"
+          if [ "$store" = "ActionScheduler_HybridStore" ]; then
+            wp action-scheduler migrate --batch-size=100 --path="$WP_ROOT"
+          fi
+          store="$(wp eval 'echo get_class(\\ActionScheduler::store());' --path="$WP_ROOT")"
+          if [ "$store" != "ActionScheduler_DBStore" ]; then
+            echo "Action Scheduler group-scoped CLI needs a fully migrated DBStore; found: $store"
+            exit 1
+          fi
           UOP_O04_EXTERNAL_CI=1 UOP_O04_EXTERNAL_MODE=seed wp eval-file tests/Fixtures/o04-external-cli-cron-probe.php --path="$WP_ROOT"
           wp action-scheduler run --hooks=uop_guardian_quota_prune --group=uop --batch-size=1 --batches=1 --path="$WP_ROOT"
           UOP_O04_EXTERNAL_CI=1 UOP_O04_EXTERNAL_MODE=verify wp eval-file tests/Fixtures/o04-external-cli-cron-probe.php --path="$WP_ROOT"

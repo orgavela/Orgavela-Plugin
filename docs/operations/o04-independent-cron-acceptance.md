@@ -16,6 +16,14 @@ Action Scheduler unterstützt die Filter --hooks und --group. Der gezielte Komma
 
 Der WordPress-Pfad ist ein **Platzhalter**, keine vorhandene Installation. Ein solcher Aufruf muss ohne Website-Besucher funktionieren und benötigt keinen öffentlich erreichbaren Wartungs-Endpunkt. Durch die Hook-/Gruppenfilter soll nur die Guardian-Retention laufen. **Andere UOP-Jobs** (Outbox, E-Mail etc.) werden damit nicht erledigt und brauchen einen gesondert geregelten Betriebsweg.
 
+### Technische Voraussetzung: vollständiger Action-Scheduler-Datenspeicher
+
+Ein erster **bewusst roter** CI-Lauf auf Source-Commit 382bc9c belegte einen eigenen Migrationszustand: Der interne Queue-Runner funktionierte, aber der gruppengefilterte WP-CLI-Lauf meldete, dass Gruppe uop nicht existiere, obwohl neue Aktionen dieser Gruppe gespeichert waren. Ursache kann der vorübergehende ActionScheduler_HybridStore während der Migration von alten Post-Records zur Custom-Table-Datenbank sein. **Den Gruppenfilter auf keinen Fall zur vermeintlichen Behebung entfernen.**
+
+Die korrigierte, streng isolierte GitHub-CI prüft jetzt den echten Active Store und schließt **nur in der wegwerfbaren WordPress-Testdatenbank** bei Bedarf eine eingebaute Action-Scheduler-Migration ab. Anschließend muss ein frisch gestarteter Prozess als Store **ActionScheduler_DBStore** sehen; anderenfalls schlägt die CI sicher fehl. Erst danach wird die per Hook **und** Gruppe begrenzte Queue ausgeführt.
+
+Auf einem späteren Betreiber-Host gilt **keine automatische Migrationsfreigabe**: Nur den Store read-only prüfen und bei HybridStore oder sonstiger Inkompatibilität **STOP**. Migration braucht vorher eigene Datensicherung, Recovery-Test, Wartungsfenster und explizite Freigabe. Damit ist der reale Hosting-/O04-Status weiter offen.
+
 ## Abnahmereihenfolge nach Freigabe eines kompatiblen Hosts
 
 1. **Isolation und Voraussetzungen:** WordPress-URL, eigener Webspace, Datenbank, Laufzeit, InnoDB und utf8mb4, PHP >= 8.3 sowie UOP-Aktivierungscheck verifizieren. Keine realen Personendaten für den Pilot.
