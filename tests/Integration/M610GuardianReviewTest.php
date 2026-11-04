@@ -227,6 +227,33 @@ final class M610GuardianReviewTest extends TestCase {
 		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
 	}
 
+	/**
+	 * Stale WordPress transient reads must never permit a fourth claim.
+	 * This simulates multiple workers observing the same old cache value.
+	 */
+	public function test_guardian_quota_rejects_fourth_attempt_despite_stale_transient_reads(): void {
+		$s = $this->fixture();
+		wp_set_current_user( $s['parent'] );
+		$key    = 'uop_guardian_claim_' . hash( 'sha256', $this->scope->id . ':' . $s['parent'] );
+		$stale  = static fn (): int => 0;
+		$target = '/uop/v1/me/guardian-claims';
+		add_filter( 'pre_transient_' . $key, $stale );
+		try {
+			for ( $i = 0; $i < 3; ++$i ) {
+				$unknown = PublicId::generate();
+				self::assertSame( 202, $this->json( 'POST', $target, array( 'subject_id' => $unknown->to_string() ) )->get_status() );
+			}
+			self::assertSame( 0, $this->tenant_count( 'relationships' ) );
+			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+			self::assertSame( 202, $this->json( 'POST', $target, array( 'subject_id' => $s['child']->to_string() ) )->get_status() );
+			self::assertSame( 0, $this->tenant_count( 'relationships' ), 'A stale transient must not bypass the three-attempt claim quota.' );
+			self::assertSame( 0, $this->tenant_count( 'audit_log' ) );
+			self::assertSame( 0, $this->tenant_count( 'delegations' ) );
+		} finally {
+			remove_filter( 'pre_transient_' . $key, $stale );
+		}
+	}
+
 	/** Reviewer rejection records a decision but never grants family access. */
 	public function test_rejection_and_rate_limits_cannot_grant_family_rights(): void {
 		$s = $this->fixture();
