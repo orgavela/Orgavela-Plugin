@@ -959,3 +959,7 @@ Die Ergebniskommunikation an die GitHub-Issues wurde ausgeführt: [W0 #16 Kommen
 **Abnahme:** W0 bleibt **offen**; O03 und PGP-05 realer Capture/Restore **nicht erfüllt**. Keine Fortschrittszähler erhöht: implementiert 62/71, M0–M7 0/8, P4 0/4, R01–R18 0/18. Aktive WP-Version im Live-Read 7.1.4/PHP 8.3.36, UOP 0.1.0-alpha.2.
 
 **Nächste Schritte:** Branch-Diff/JSON-Konsistenz prüfen, PR #35 fortführen, Master-Issue #15 per redigierter Freigabe-/Nachweismeldung aktualisieren, sichere W0/PGP-05 Provider-CI-Gates (kostenfrei/secretsicher) und M6/P4 Negativfälle bearbeiten.
+
+### 04.11.2026 – W0-Nachtrag: GitHub-Issue-Nachweise
+
+**Auch ohne Merge in `main` sichtbar dokumentiert:** Betreiber-Dauerfreigaben und Live-W0-Nachweise als öffentlicher, secretsfreier Kommentar im zentralen [Issue #15](https://github.com/orgavela/Orgavela-Plugin/issues/15#issuecomment-6625164514) veröffentlicht (Kommentar-ID `6625164514`); gezielter W0-Delta-/Blockerbericht außerdem in [Issue #16](https://github.com/orgavela/Orgavela-Plugin/issues/16#issuecomment-6625176002) (Kommentar-ID `6625176002`). Die ausführlichen AGENTS-/Masterplan-/W0-/JSON-Dateiänderungen verbleiben im separaten Draft PR #35, **kein Merge oder produktiver Eingriff**. Offene Gates und Zähler unverändert.
