@@ -5,14 +5,14 @@ on:
     branches:
       - feat/p4-02-independent-consent-gate-20261104
     paths:
-      - 'src/Domain/Consent/ConsentRequirementGate.php'
+      - 'src/Application/Consent/ConsentRequirementGate.php'
       - 'tests/Unit/p402-consent-gate-smoke.php'
       - '.github/workflows/p402-consent-gate-offline.yml'
   pull_request:
     branches:
       - feat/p4-age-evidence
     paths:
-      - 'src/Domain/Consent/ConsentRequirementGate.php'
+      - 'src/Application/Consent/ConsentRequirementGate.php'
       - 'tests/Unit/p402-consent-gate-smoke.php'
       - '.github/workflows/p402-consent-gate-offline.yml'
 permissions:
@@ -31,6 +31,6 @@ jobs:
         run: |
           set -euo pipefail
           php -v | head -1
-          php -l src/Domain/Consent/ConsentRequirementGate.php
+          php -l src/Application/Consent/ConsentRequirementGate.php
           php -l tests/Unit/p402-consent-gate-smoke.php
           php tests/Unit/p402-consent-gate-smoke.php
