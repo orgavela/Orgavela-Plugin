@@ -206,7 +206,7 @@ final class M610GuardianReviewTest extends TestCase {
 		);
 		self::assertSame( 0, $this->tenant_count( 'delegations' ) );
 		wp_set_current_user( $s['admin'] );
-		$queue = rest_do_request( new \\WP_REST_Request( 'GET', '/uop/v1/admin/guardian-claims' ) );
+		$queue = rest_do_request( new \WP_REST_Request( 'GET', '/uop/v1/admin/guardian-claims' ) );
 		self::assertSame( 200, $queue->get_status() );
 		self::assertCount( 1, $queue->get_data()['items'] );
 		$claim_id = $queue->get_data()['items'][0]['public_id'];
