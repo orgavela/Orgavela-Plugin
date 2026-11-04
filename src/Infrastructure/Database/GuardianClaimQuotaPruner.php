@@ -33,7 +33,7 @@ final class GuardianClaimQuotaPruner {
 	 *
 	 * @param int $now Trusted server Unix timestamp.
 	 * @return int Removed rows, bounded by 100.
-	 * @throws \Exception On invalid clock or database failure.
+	 * @throws InvalidArgumentException On an invalid server clock.
 	 */
 	public function prune_expired( int $now ): int {
 		if ( $now < self::WINDOW_SECONDS + 1 ) {
