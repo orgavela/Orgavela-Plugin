@@ -49,3 +49,14 @@
 5. Bei fehlender Initialisierung, Registrierung, Action-Status oder SQL-Endzustand **CI hart fehlschlagen lassen**. Ein direktes do_action() ist kein gleichwertiger Scheduler-Dispatch-Nachweis.
 
 **Betriebsgate weiter OFFEN:** Noch kein Nachweis, dass IONOS einen von echten Besuchern unabhängigen, autorisierten periodischen Trigger ausführt; außerdem fehlen Monitoring gegen überfällige/fehlgeschlagene Aktionen, Alarmierung, Wiederanlauf nach Ausfällen, Privacy-Sign-off für dauerhaft korrupte Quotazeilen und echte Produktionsergebnisse. Grüner GitHub-Workflow erfüllt O04 daher **nicht**.
+
+
+## O04 – Lesendes Scheduler-Monitoring im berechtigten Control Center (Entwurf)
+
+Die UOP-Control-Center-Seite ist bereits nur für Nutzer mit organisationsgebundener Konfigurationsberechtigung zugänglich. Der zusätzliche Guardian-Status liest **ausschließlich Action-Scheduler-Metadaten** für die feste Hook-/Gruppenkombination: Anzahl ausstehender Aktionen (auf zwei begrenzt), Vorhandensein fehlgeschlagener und bereits abgeschlossener Aktionen sowie den geplanten Termin der nächsten Aktion. **Weder Aktions-IDs noch Quota-Schlüssel, Personen-IDs, E-Mails, Actions-Payload oder Logs** werden angezeigt. Der Aufruf löst keine Wartungsaktion aus.
+
+Die Diagnose unterscheidet **ok** (eine geplante nächste Aktion, bereits mindestens ein erfolgreicher Lauf), **first_run** (noch kein erfolgreicher Lauf), **missing**, **duplicate**, **overdue** (mehr als zwei Stunden überfällig), **gap** (mehr als zwei Stunden bis zur nächsten geplanten Aktion), **failed** sowie **unavailable** (Scheduler nicht lesbar oder beschädigt). Eine gescheiterte Aktion bleibt ein Warnsignal, auch wenn später eine andere erfolgreich war; der Betreiber muss die Ursache prüfen.
+
+Ein normales **ok** bedeutet ausschließlich, dass die Warteschlange in diesem Moment plausibel aussieht und bereits eine Aktion abgeschlossen wurde. **Kein Beweis**, dass externer Cron korrekt konfiguriert, abgesichert, überwacht und auch ohne Website-Besucher dauerhaft ausgeführt wird. Benötigte Betriebsnachweise und Alarmierung bleiben als O04-Gate offen. Die Diagnose wird nur beim Öffnen der geschützten Admin-Übersicht lesend erzeugt; sie verschickt weder Nachrichten noch legt sie neue personenbezogene Records an.
+
+Automatische Tests müssen sämtliche Warn-/Fehlzustände und den Statuswechsel von **first_run** zu **ok** bei einer tatsächlich durch Action Scheduler abgeschlossenen synthetischen Testaktion abdecken. Dieser Abschnitttitel und der Dokumentationsentwurf stellen keine Produktivfreigabe dar.
