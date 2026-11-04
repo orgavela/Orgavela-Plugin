@@ -7,6 +7,7 @@ on:
     paths:
       - 'src/Application/Consent/ConsentRequirementGate.php'
       - 'tests/Unit/p402-consent-gate-smoke.php'
+      - 'tests/Unit/P402ConsentRequirementGateTest.php'
       - '.github/workflows/p402-consent-gate-offline.yml'
   pull_request:
     branches:
@@ -14,6 +15,7 @@ on:
     paths:
       - 'src/Application/Consent/ConsentRequirementGate.php'
       - 'tests/Unit/p402-consent-gate-smoke.php'
+      - 'tests/Unit/P402ConsentRequirementGateTest.php'
       - '.github/workflows/p402-consent-gate-offline.yml'
 permissions:
   contents: read
@@ -33,4 +35,5 @@ jobs:
           php -v | head -1
           php -l src/Application/Consent/ConsentRequirementGate.php
           php -l tests/Unit/p402-consent-gate-smoke.php
+          php -l tests/Unit/P402ConsentRequirementGateTest.php
           php tests/Unit/p402-consent-gate-smoke.php
