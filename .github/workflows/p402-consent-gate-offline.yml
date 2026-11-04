@@ -1,0 +1,36 @@
+# Strictly isolated P4-02 prototype, no WP/DB runtime, no secrets or remote calls.
+name: P402 consent role gate offline
+on:
+  push:
+    branches:
+      - feat/p4-02-independent-consent-gate-20261104
+    paths:
+      - 'src/Domain/Consent/ConsentRequirementGate.php'
+      - 'tests/Unit/p402-consent-gate-smoke.php'
+      - '.github/workflows/p402-consent-gate-offline.yml'
+  pull_request:
+    branches:
+      - feat/p4-age-evidence
+    paths:
+      - 'src/Domain/Consent/ConsentRequirementGate.php'
+      - 'tests/Unit/p402-consent-gate-smoke.php'
+      - '.github/workflows/p402-consent-gate-offline.yml'
+permissions:
+  contents: read
+jobs:
+  domain-facts-only:
+    if: github.repository == 'orgavela/Orgavela-Plugin' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'orgavela/Orgavela-Plugin')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: PHP syntax check and synthetic independent-actor regression
+        run: |
+          set -euo pipefail
+          php -v | head -1
+          php -l src/Domain/Consent/ConsentRequirementGate.php
+          php -l tests/Unit/p402-consent-gate-smoke.php
+          php tests/Unit/p402-consent-gate-smoke.php
