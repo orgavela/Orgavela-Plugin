@@ -1,0 +1,74 @@
+name: O04 read-only cron inventory - operator-authorized one-shot
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/o04-readonly-cron-one-shot-dispatch.yml
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/o04-readonly-cron-one-shot-dispatch.yml
+
+permissions:
+  contents: read
+
+jobs:
+  static-safety:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Audit dispatch target and permissions without using credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -ryaml -rdate -e '
+            conf = YAML.safe_load(File.read(".github/workflows/o04-readonly-cron-one-shot-dispatch.yml"), permitted_classes: [Date, Time], aliases: true)
+            raise "Workflow-level token must stay read-only" unless conf.fetch("permissions") == {"contents"=>"read"}
+            dispatch = conf.fetch("jobs").fetch("dispatch-readonly-cron")
+            guard = dispatch.fetch("if")
+            %w[push main orgavela/Orgavela-Plugin].each { |w| raise "Missing dispatch guard: #{w}" unless guard.include?(w) }
+            raise "Dispatch must not bind IONOS environment" if dispatch.key?("environment")
+            script = dispatch.fetch("steps").last.fetch("run")
+            raise "Wrong fixed workflow" unless script.include?("orgavela-readonly-audit.yml/dispatches")
+            raise "Wrong operation" unless script.include?("inputs[operation]=cron")
+            raise "Unexpected extra external API dispatch" unless script.scan("gh api").length == 1
+            puts "O04 one-shot workflow bound to protected main, one read-only cron dispatch, no IONOS environment."
+          '
+
+  dispatch-readonly-cron:
+    if: >-
+      github.event_name == 'push' &&
+      github.repository == 'orgavela/Orgavela-Plugin' &&
+      github.ref == 'refs/heads/main' &&
+      startsWith(github.event.head_commit.message, 'ops(o04): one-time dispatch read-only OrgaVela cron inventory')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create narrowly scoped OrgaVela GitHub App installation token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.ORGAVELA_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ORGAVELA_APP_PRIVATE_KEY }}
+          owner: orgavela
+          repositories: Orgavela-Plugin
+          permission-actions: write
+          permission-contents: read
+
+      - name: Dispatch already-reviewed read-only cron mode through normal workflow_dispatch
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "repos/orgavela/Orgavela-Plugin/actions/workflows/orgavela-readonly-audit.yml/dispatches" \
+            -f ref=main \
+            -f "inputs[operation]=cron" >/dev/null
+          echo "O04 read-only cron inventory workflow dispatched on protected main."
+          echo "The dispatch is not proof of a successful SSH/IONOS audit."
