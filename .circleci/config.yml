@@ -48,6 +48,13 @@ jobs:
               exit 1
             fi
       - run:
+          name: Independent O08 cron monitor offline safety tests
+          command: |
+            set -euo pipefail
+            bash -n scripts/ci/orgavela-cron-status-evaluate.sh
+            bash -n scripts/ci/orgavela-cron-evaluator-tests.sh
+            bash scripts/ci/orgavela-cron-evaluator-tests.sh
+      - run:
           name: Actual PHP plugin quality checks when source is in the branch
           command: |
             set -euo pipefail

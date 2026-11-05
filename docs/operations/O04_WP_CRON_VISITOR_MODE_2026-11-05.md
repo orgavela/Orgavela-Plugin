@@ -50,3 +50,12 @@ Die negativen Tests enthalten zusätzlich `wpcron-disabled`, `wpcron-missing`, `
 - **O03/O06/O07/O09/O10/O11/O12:** Backup/Restore, Datenschutz, vollständige Feature-CI und Release-Abnahmen bleiben eigene Voraussetzungen. Keine Produktivfreigabe durch die Cron-Aktivierung.
 
 Nach zwei bis sieben Tagen ohne Rückstände kann eine **weitere positive Zwischenbewertung** sinnvoll sein, aber weder ein Datenbankeintrag noch ein dauerhaft zuverlässig arbeitender externer Trigger werden allein dadurch bewiesen. `V1_PROGRESS.json` bleibt die kanonische technische Statusquelle.
+
+
+## 5. Unabhängige Wiederholbarkeit des O08-Sicherheitstests
+
+Der ursprünglich direkt in `.github/workflows/orgavela-readonly-audit.yml` eingebettete kleine Fixture-Test wurde zusätzlich als **rein lokaler, von beiden CI-Providern ausführbarer** Test `scripts/ci/orgavela-cron-evaluator-tests.sh` extrahiert. Dieser Test hat **zwei** gesunde synthetische Messungen und **18** negative Varianten, darunter unerlaubtes Abschalten von WP-Cron, fehlende und doppelte Felder, überfällige WordPress- und Action-Scheduler-Hooks, kürzlich gescheiterte Aktionen, falsche OrgaVela-Zielidentität und fingierte Cron-Ausführung.
+
+GitHub Actions führt sowohl `shellcheck` als auch alle synthetischen Negativfälle aus; der echte CircleCI-Provider führt **denselben Test** als separaten Schritt der `source-integrity`-Pipeline aus. Damit können künftige Änderungen nicht allein durch einen grünen PHP-Parsercheck als funktionierende O08-Überwachung erscheinen.
+
+Auch ein positives Ergebnis dieser beiden Offline-Prüfungen ist **keine** nachgewiesene Live-Cron-Ausführung oder Alarmzustellung. O04 bleibt `blocked`, O08 `partial`, formale Releaseentscheidung `NO-GO`. Die Testskripte nutzen keine echten Datensätze, SSH-Keys, WordPress-Secrets oder Netzwerkzugriffe.
