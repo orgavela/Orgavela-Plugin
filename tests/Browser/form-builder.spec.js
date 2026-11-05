@@ -48,8 +48,8 @@ test('form builder supports accessible keyboard reorder, saving and immutable pu
   // the stale local draft must show a conflict instead of overwriting it.
   const formUuid = await page.getByLabel('Existing forms').inputValue();
   await page.evaluate(async uuid => {
-    const fresh = await window.wp.apiFetch({ path: '/uop/v1/forms/' + uuid });
-    await window.wp.apiFetch({
+    const fresh = await globalThis.wp.apiFetch({ path: '/uop/v1/forms/' + uuid });
+    await globalThis.wp.apiFetch({
       path: '/uop/v1/forms/' + uuid + '/draft',
       method: 'PUT',
       data: { revision: fresh.revision, draft: fresh.draft },
