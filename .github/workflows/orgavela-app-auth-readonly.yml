@@ -6,6 +6,8 @@ on:
       - test/orgavela-app-auth-readonly-20261105
     paths:
       - .github/workflows/orgavela-app-auth-readonly.yml
+      - docs/operations/o09-github-app-readonly-audit.md
+      - docs/operations/ASSISTANT_WORK_LOG.md
   workflow_dispatch:
 
 permissions:
