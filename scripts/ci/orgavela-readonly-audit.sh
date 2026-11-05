@@ -185,6 +185,22 @@ if (!preg_match('/^[A-Za-z0-9_]+$/D', $table)) {
         };
         echo 'ORGAVELA_AS_PENDING_OVERDUE_BUCKET=' . $get_bucket('pending', true) . "\n";
         echo 'ORGAVELA_AS_FAILED_BUCKET=' . $get_bucket('failed', false) . "\n";
+        // Last-attempt timestamps are used only for aggregate recent-failure
+        // monitoring. No action IDs, hooks, arguments or timestamps leave IONOS.
+        $recent_failed = $wpdb->get_var(
+            $wpdb->prepare(
+                'SELECT COUNT(*) FROM %i WHERE status = %s AND last_attempt_gmt >= (UTC_TIMESTAMP() - INTERVAL 1 DAY)',
+                $table,
+                'failed'
+            )
+        );
+        if (!is_numeric($recent_failed)) {
+            $recent_bucket = 'unknown';
+        } else {
+            $recent = (int) $recent_failed;
+            $recent_bucket = $recent === 0 ? 'none' : ($recent <= 10 ? '1-10' : ($recent <= 100 ? '11-100' : 'over-100'));
+        }
+        echo 'ORGAVELA_AS_FAILED_LAST24H_BUCKET=' . $recent_bucket . "\n";
     }
 }
 echo "ORGAVELA_CRON_EXTERNAL_TRIGGER=not-verifiable-from-wordpress\n";
@@ -337,7 +353,7 @@ $1 == "ORGAVELA_CRON_WP_OPTION" && $2 ~ /^(valid|invalid)$/ { print; next }
 $1 == "ORGAVELA_CRON_QUEUE_EVENT" && $2 ~ /^(unavailable|missing|multiple|scheduled-ahead|due-within-5m|overdue-5-15m|overdue-over-15m)$/ { print; next }
 $1 == "ORGAVELA_CRON_OTHER_OVERDUE_BUCKET" && $2 ~ /^(none|1-2|3-10|over-10)$/ { print; next }
 $1 == "ORGAVELA_AS_STORE" && $2 ~ /^(present|unavailable)$/ { print; next }
-$1 ~ /^ORGAVELA_AS_(PENDING_OVERDUE_BUCKET|FAILED_BUCKET)$/ && $2 ~ /^(none|1-10|11-100|over-100|unknown)$/ { print; next }
+$1 ~ /^ORGAVELA_AS_(PENDING_OVERDUE_BUCKET|FAILED_BUCKET|FAILED_LAST24H_BUCKET)$/ && $2 ~ /^(none|1-10|11-100|over-100|unknown)$/ { print; next }
 $1 == "ORGAVELA_CRON_EXTERNAL_TRIGGER" && $2 == "not-verifiable-from-wordpress" { print; next }
 $1 == "ORGAVELA_CRON_DISPATCH_EXECUTED" && $2 == "no" { print; next }
 $1 == "ORGAVELA_CRON_MIGRATION_EXECUTED" && $2 == "no" { print; next }
@@ -354,3 +370,27 @@ $1 == "ORGAVELA_BACKUP_PROVIDER_SNAPSHOTS" && $2 == "not-verifiable-over-shell" 
 $1 == "ORGAVELA_BACKUP_EXPORT_EXECUTED" && $2 == "no" { print; next }
 $1 == "ORGAVELA_BACKUP_RESTORE_EXECUTED" && $2 == "no" { print; next }
 ' "$tmp/out"
+
+# O08: optional alert-only evaluation. Never retries or executes a queue job.
+# The scheduled read-only run fails on fresh failures, stalled queues, or
+# unknown/invalid telemetry; historical failed actions remain informational.
+if [[ "${ORGAVELA_MONITOR_STRICT:-0}" == '1' && "$mode" == 'cron' ]]; then
+  if ! grep -Fqx 'ORGAVELA_AS_FAILED_LAST24H_BUCKET=none' "$tmp/out"; then
+    echo '::error::O08: Recent Action Scheduler failures or unverifiable 24h failure count. No queue job was executed.'
+    exit 1
+  fi
+  if ! grep -Fqx 'ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none' "$tmp/out"; then
+    echo '::error::O08: Pending Action Scheduler backlog over 10 minutes or unreadable count. No queue job was executed.'
+    exit 1
+  fi
+  if ! grep -Eq '^ORGAVELA_CRON_QUEUE_EVENT=(scheduled-ahead|due-within-5m)$' "$tmp/out"; then
+    echo '::error::O08: Queue hook missing, stale, duplicated or unreadable. External IONOS cron remains unverified.'
+    exit 1
+  fi
+  if ! grep -Fqx 'ORGAVELA_CRON_WP_OPTION=valid' "$tmp/out" ||
+     ! grep -Fqx 'ORGAVELA_AS_STORE=present' "$tmp/out"; then
+    echo '::error::O08: WordPress cron/Action Scheduler store not verifiably readable.'
+    exit 1
+  fi
+  echo 'ORGAVELA_O08_MONITOR=read-only-snapshot-ok'
+fi
