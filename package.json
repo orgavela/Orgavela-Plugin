@@ -1,0 +1,20 @@
+{
+  "name": "uop-core",
+  "version": "0.1.0-alpha.2",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "build": "node bin/build.mjs",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^16.0.0",
+    "@playwright/test": "^1.55.0"
+  }
+}
