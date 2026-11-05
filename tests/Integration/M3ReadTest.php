@@ -109,5 +109,26 @@ final class M3ReadTest extends TestCase {
         $publishRequest->set_body(wp_json_encode(['revision' => 1]));
         $deniedPublish = rest_do_request($publishRequest);
         self::assertSame(403, $deniedPublish->get_status(), 'Member must not publish forms.');
+
+        // Archived records are not live M3 resources, even for managers.
+        // Keep the policy boundary fail-closed on reads as well as writes.
+        wp_set_current_user($manager);
+        $this->db->execute(
+            'UPDATE %i SET archived_at = %s WHERE organization_id = %d AND public_id = %s',
+            [$this->prefix . 'forms', '2030-01-02 00:00:00', $this->scope->id, $created->to_binary()]
+        );
+        self::assertNull($read->form(new Actor($manager), $this->scope, $created));
+        self::assertSame([], $read->forms(new Actor($manager), $this->scope));
+        $archivedForm = rest_do_request(new \WP_REST_Request('GET', $formPath));
+        self::assertSame(403, $archivedForm->get_status(), 'Archived form drafts must stay inaccessible.');
+
+        $this->db->execute(
+            'UPDATE %i SET status = %s, archived_at = %s WHERE organization_id = %d AND public_id = %s',
+            [$this->prefix . 'persons', 'archived', '2030-01-02 00:00:00', $this->scope->id, $subject->to_binary()]
+        );
+        self::assertNull($read->profile(new Actor($manager), $this->scope, $subject));
+        $archivedProfile = rest_do_request($profileReq);
+        self::assertSame(403, $archivedProfile->get_status(), 'Archived profile data must stay inaccessible.');
+
     }
 }

@@ -60,7 +60,7 @@ final class M3ReadService {
 		$this->require_manager( $actor, $scope, 'form.manage' );
 		$result = array();
 		foreach ( $this->forms->page( $scope, new PageRequest( 100 ) ) as $row ) {
-			if ( ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $row['id'] ) )->allowed ) {
+			if ( null !== $row['archived_at'] || ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $row['id'] ) )->allowed ) {
 				continue;
 			}
 			$result[] = array(
@@ -84,7 +84,7 @@ final class M3ReadService {
 	 */
 	public function form( Actor $actor, OrgScope $scope, PublicId $uuid ): ?array {
 		$row = $this->forms->find( $scope, $uuid );
-		if ( ! $row || ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $row['id'] ) )->allowed ) {
+		if ( ! $row || null !== $row['archived_at'] || ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $row['id'] ) )->allowed ) {
 			return null;
 		}
 		$draft = json_decode( (string) $row['draft_schema_json'], true, 64, JSON_THROW_ON_ERROR );
@@ -178,7 +178,7 @@ final class M3ReadService {
 	 */
 	public function profile( Actor $actor, OrgScope $scope, PublicId $uuid ): ?array {
 		$person = $this->people->find( $scope, $uuid );
-		if ( ! $person ) {
+		if ( ! $person || 'active' !== $person['status'] || null !== $person['archived_at'] ) {
 			return null;
 		}
 		$object = new PolicyObject( $scope->id, 'person', (int) $person['id'] );
