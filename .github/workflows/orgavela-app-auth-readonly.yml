@@ -1,0 +1,39 @@
+name: OrgaVela GitHub App - read-only authentication test
+
+on:
+  push:
+    branches:
+      - test/orgavela-app-auth-readonly-20261105
+    paths:
+      - .github/workflows/orgavela-app-auth-readonly.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-installation:
+    name: Verify OrgaVela App (read-only)
+    if: github.repository == 'orgavela/Orgavela-Plugin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create narrowly scoped installation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.ORGAVELA_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ORGAVELA_APP_PRIVATE_KEY }}
+          owner: orgavela
+          repositories: Orgavela-Plugin
+          permission-contents: read
+
+      - name: Verify repository and file access
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.full_name')" = "orgavela/Orgavela-Plugin"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/contents/docs/operations/V1_PROGRESS.json" --jq '.path')" = "docs/operations/V1_PROGRESS.json"
+          echo "PASS: OrgaVela GitHub App token works with contents:read in Orgavela-Plugin."
