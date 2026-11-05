@@ -52,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         php: ['8.3', '8.4', '8.5']
         db: ['mysql:8.0', 'mariadb:10.11']
@@ -61,7 +62,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: uop_disposable_test
           MYSQL_DATABASE: uop_test
-        ports: ['3306:3306']
+        ports: ['3306']
         options: >-
           --health-cmd="mysqladmin ping -h localhost -puop_disposable_test"
           --health-interval=10s --health-timeout=5s --health-retries=12
@@ -83,6 +84,7 @@ jobs:
       - name: Install disposable WordPress
         env:
           WP_VERSION: ${{ matrix.php == '8.3' && '6.9' || '7.1.4' }}
+          DB_PORT: ${{ job.services.database.ports[3306] }}
         run: |
           echo "WP_ROOT=/tmp/uop-wordpress" >> "$GITHUB_ENV"
           echo "UOP_TEST_ALLOW_DATABASE=1" >> "$GITHUB_ENV"
@@ -90,7 +92,7 @@ jobs:
           echo "::add-mask::$password"
           echo "WP_ADMIN_PASSWORD=$password" >> "$GITHUB_ENV"
           wp core download --version="$WP_VERSION" --path=/tmp/uop-wordpress
-          wp config create --path=/tmp/uop-wordpress --dbname=uop_test --dbuser=root --dbpass=uop_disposable_test --dbhost=127.0.0.1 --dbcharset=utf8mb4 --dbprefix=uop_ci_
+          wp config create --path=/tmp/uop-wordpress --dbname=uop_test --dbuser=root --dbpass=uop_disposable_test --dbhost="127.0.0.1:$DB_PORT" --dbcharset=utf8mb4 --dbprefix=uop_ci_
           wp config set WP_DEBUG true --raw --path=/tmp/uop-wordpress
           wp config set WP_DEBUG_LOG true --raw --path=/tmp/uop-wordpress
           wp config set DISABLE_WP_CRON true --raw --path=/tmp/uop-wordpress
@@ -128,7 +130,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: uop_disposable_test
           MYSQL_DATABASE: uop_artifact
-        ports: ['3306:3306']
+        ports: ['3306']
         options: >-
           --health-cmd="mysqladmin ping -h localhost -puop_disposable_test"
           --health-interval=10s --health-timeout=5s --health-retries=12
@@ -144,7 +146,7 @@ jobs:
           coverage: none
       - run: |
           wp core download --version=6.9 --path=/tmp/wordpress
-          wp config create --path=/tmp/wordpress --dbname=uop_artifact --dbuser=root --dbpass=uop_disposable_test --dbhost=127.0.0.1 --dbcharset=utf8mb4
+          wp config create --path=/tmp/wordpress --dbname=uop_artifact --dbuser=root --dbpass=uop_disposable_test --dbhost="127.0.0.1:${{ job.services.database.ports[3306] }}" --dbcharset=utf8mb4
           wp core install --path=/tmp/wordpress --url=http://example.invalid --title=Artifact --admin_user=test_admin --admin_password="$(openssl rand -hex 20)" --admin_email=test@example.invalid --skip-email
           wp plugin install "$PWD/uop-core.zip" --activate --path=/tmp/wordpress
           wp plugin deactivate uop-core --path=/tmp/wordpress
