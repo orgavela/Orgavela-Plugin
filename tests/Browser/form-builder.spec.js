@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('form builder supports accessible keyboard reorder, saving and immutable publish', async ({ page }) => {
-  test.setTimeout(90000);
+  test.setTimeout(120000);
   const loginPage = await page.request.get('/wp-login.php');
   const login = await page.request.post('/wp-login.php', {
     form: {
@@ -34,6 +34,8 @@ test('form builder supports accessible keyboard reorder, saving and immutable pu
   await expect(page.getByRole('heading', { name: 'Keyboard Form' })).toBeVisible({ timeout: 30000 });
   await page.getByRole('button', { name: 'Add field' }).click();
   await expect(page.locator('.uop-m3__form-fields li')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Remove: Name', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Remove: New field', exact: true })).toBeVisible();
   const upButton = page.getByRole('button', { name: 'Move field up: New field' });
   await upButton.focus();
   await expect(upButton).toBeFocused();
@@ -41,8 +43,34 @@ test('form builder supports accessible keyboard reorder, saving and immutable pu
   await expect(page.locator('.uop-m3__form-fields li').first()).toContainText('New field');
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByRole('status')).toContainText('Draft saved', { timeout: 30000 });
+
+  // Simulate another editor saving the revision while this browser is open:
+  // the stale local draft must show a conflict instead of overwriting it.
+  const formUuid = await page.getByLabel('Existing forms').inputValue();
+  await page.evaluate(async uuid => {
+    const fresh = await window.wp.apiFetch({ path: '/uop/v1/forms/' + uuid });
+    await window.wp.apiFetch({
+      path: '/uop/v1/forms/' + uuid + '/draft',
+      method: 'PUT',
+      data: { revision: fresh.revision, draft: fresh.draft },
+    });
+  }, formUuid);
+  await page.getByLabel('Label', { exact: true }).first().fill('Stale browser label');
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('alert')).toContainText('Draft changed', { timeout: 30000 });
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  const formSelector = page.getByLabel('Existing forms');
+  await expect(formSelector).toBeVisible({ timeout: 15000 });
+  await formSelector.selectOption(formUuid);
+  await expect(page.getByRole('heading', { name: 'Keyboard Form' })).toBeVisible();
   await page.getByRole('button', { name: 'Publish immutable version' }).click();
   await expect(page.getByRole('status')).toContainText('Immutable version published', { timeout: 30000 });
+  await page.setViewportSize({ width: 320, height: 720 });
+  const panel = page.locator('.uop-m3__panel');
+  await expect(panel).toBeVisible();
+  const overflow = await panel.evaluate(element => element.scrollWidth - element.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
   await page.goto('/wp-admin/plugins.php');
   await plugin.getByRole('link', { name: 'Deactivate UOP Core', exact: true }).click();
 });

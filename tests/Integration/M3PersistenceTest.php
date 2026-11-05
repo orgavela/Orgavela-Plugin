@@ -75,6 +75,47 @@ final class M3PersistenceTest extends TestCase {
         self::assertNull($s['fields']->find(new OrgScope($this->scope->id+100),$field));
     }
 
+
+    public function test_archived_person_cannot_be_edited_even_if_status_remains_active(): void {
+        $s = $this->services();
+        $now = '2030-01-01 10:00:00';
+        $person = PublicId::generate();
+        $s['people']->create($this->scope, $person, 'Archived fixture', null, $now);
+        $field = $s['profile']->define($s['actor'], $this->scope, [
+            'key' => 'fixture_note', 'type' => 'text', 'label' => 'Fixture note', 'sensitivity' => 'personal',
+        ], $now, CorrelationId::generate());
+        $s['profile']->replace_value($s['actor'], $this->scope, $person, $field, 'original', $now, CorrelationId::generate());
+        $p = $s['people']->find($this->scope, $person);
+        $f = $s['fields']->find($this->scope, $field);
+        self::assertSame('active', $p['status']);
+        $this->db->execute(
+            'UPDATE %i SET archived_at = %s WHERE organization_id = %d AND public_id = %s',
+            [$this->prefix . 'persons', '2030-01-02 00:00:00', $this->scope->id, $person->to_binary()]
+        );
+        try {
+            $s['profile']->replace_value($s['actor'], $this->scope, $person, $field, 'tampered', $now, CorrelationId::generate());
+            self::fail('Archived profile accepted a service-level write.');
+        } catch (RuntimeException $e) {
+            self::assertStringContainsString('unavailable', $e->getMessage());
+        }
+        $values = new ProfileValueRepository($this->db, $this->prefix);
+        self::assertSame([], $values->for_person($this->scope, (int) $p['id']));
+        self::assertSame([], $values->for_person_page($this->scope, (int) $p['id']));
+        try {
+            $values->replace($this->scope, (int) $p['id'], (int) $f['id'], [
+                ['slot' => 'value_string', 'value' => 'tampered', 'ordinal' => 0],
+            ], $now);
+            self::fail('Repository accepted archived-profile write.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('active', $e->getMessage());
+        }
+        $stored = $this->db->rows(
+            'SELECT value_string FROM %i WHERE person_id = %d AND field_id = %d',
+            [$this->prefix . 'profile_values', (int) $p['id'], (int) $f['id']]
+        );
+        self::assertSame(['original'], array_column($stored, 'value_string'));
+    }
+
     public function test_form_revision_immutability_and_consent_pins(): void {
         $s=$this->services();
         $draft=['schema_version'=>1,'fields'=>[['key'=>'name','type'=>'text','label'=>'Name','required'=>true]]];

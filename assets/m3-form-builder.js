@@ -120,7 +120,7 @@
 			const length = draft.fields.length;
 			const prefix = fieldId(field.key + '-' + index, 'required');
 			const options = selectable.includes(field.type) ? h('label', { className: 'uop-m3__control' },
-				t('Options (one per line)', 'uop-core'),
+				t('Options (one per line)', 'uop-core') + ': ' + field.label,
 				h('textarea', {
 					value: (field.options || []).join('\n'), rows: 3, disabled: busy,
 					onChange: ev => edit(items => { items[index].options = ev.target.value.split('\n').map(v => v.trim()).filter(Boolean); })
@@ -153,7 +153,7 @@
 							draft.fields.map((item, i) => h('option', { key: i, value: i }, i + 1))
 						)
 					),
-					h('button', { type: 'button', disabled: busy || length === 1, onClick: () => edit(items => items.splice(index, 1)) }, t('Remove', 'uop-core'))
+					h('button', { type: 'button', disabled: busy || length === 1, 'aria-label': t('Remove', 'uop-core') + ': ' + field.label, onClick: () => edit(items => items.splice(index, 1)) }, t('Remove', 'uop-core'))
 				)
 			),
 			h('div', { className: 'uop-m3__cols' },
@@ -168,13 +168,13 @@
 			options,
 			field.type === 'consent' ? fieldControl(field, index, 'consent_definition_public_id', t('Consent definition UUID', 'uop-core')) : null,
 			others.length ? h('div', { className: 'uop-m3__cols' },
-				h('label', { className: 'uop-m3__control' }, t('Visible when another field equals', 'uop-core'),
+				h('label', { className: 'uop-m3__control' }, t('Visible when another field equals', 'uop-core') + ': ' + field.label,
 					h('select', { disabled: busy, value: dependent, onChange: ev => setCondition(ev.target.value, shown) },
 						h('option', { value: '' }, t('Always visible', 'uop-core')),
 						others.map(other => h('option', { key: other.key, value: other.key }, other.label))
 					)
 				),
-				dependent ? h('label', { className: 'uop-m3__control' }, t('Expected value', 'uop-core'),
+				dependent ? h('label', { className: 'uop-m3__control' }, t('Expected value', 'uop-core') + ': ' + field.label,
 					h('input', { disabled: busy, value: shown, onChange: ev => setCondition(dependent, ev.target.value) })
 				) : null
 			) : null,

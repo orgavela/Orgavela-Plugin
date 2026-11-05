@@ -18,3 +18,12 @@
 .uop-m3__hint {color:#50575e;font-size:13px}
 .uop-m3__heading {margin:0;font-size:17px}
 @media (max-width:600px) {.uop-m3__toolbar,.uop-m3__field {padding:12px}.uop-m3__field-tools {width:100%}}
+
+/* Narrow screens: keep the whole editor reflowable without clipping controls. */
+.uop-m3 {grid-template-columns:minmax(0,1fr)}
+.uop-m3__toolbar,.uop-m3__panel,.uop-m3__field {min-width:0;overflow-wrap:anywhere}
+.uop-m3__cols {grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr))}
+.uop-m3__control {min-width:0}
+.uop-m3__control textarea {width:100%;max-width:100%;box-sizing:border-box}
+.uop-m3 textarea:focus-visible {outline:3px solid #2271b1;outline-offset:2px}
+@media (max-width:600px) {.uop-m3 button {min-width:44px;min-height:44px}}

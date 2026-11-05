@@ -96,7 +96,7 @@ final class ProfileService {
 			function () use ( $actor, $scope, $person_id, $field_id, $input, $utc_now, $correlation ): void {
 				$person = $this->people->find( $scope, $person_id );
 				$field  = $this->fields->find( $scope, $field_id );
-				if ( ! $person || ! $field || 'active' !== $field['status'] ) {
+				if ( ! $person || 'active' !== $person['status'] || null !== $person['archived_at'] || ! $field || 'active' !== $field['status'] ) {
 					throw new RuntimeException( 'Profile field unavailable.' );
 				}
 				$policy = new FieldDefinition( (string) $field['field_key'], (string) $field['sensitivity'], (bool) $field['subject_view'], (bool) $field['subject_edit'], (bool) $field['delegate_view'], (bool) $field['delegate_edit'] );

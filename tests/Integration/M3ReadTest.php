@@ -236,6 +236,10 @@ final class M3ReadTest extends TestCase {
             }
             $values->replace($this->scope, (int) $personRow['id'], (int) $fieldRow['id'], $items, $now);
         }
+        $legacy = $values->for_person($this->scope, (int) $personRow['id']);
+        self::assertCount(1010, $legacy, 'Legacy readers must never silently truncate at 1000 values.');
+        self::assertArrayNotHasKey('id', $legacy[0], 'Legacy DTO must not expose database IDs.');
+        self::assertSame($options, array_column(array_slice($legacy, -10), 'value_string'));
         $policy = new PolicyService($people, new DelegationRepository($this->db, $this->prefix), new AssignmentRepository($this->db, $this->prefix), static fn(int $id, string $cap): bool => $id === $manager);
         $reads = new M3ReadService($people, $fields, $values, new EventRepository($this->db, $this->prefix), new OccurrenceRepository($this->db, $this->prefix), new FormRepository($this->db, $this->prefix), $policy, new ProjectionService($policy));
         $profile = $reads->profile(new Actor($manager), $this->scope, $person);

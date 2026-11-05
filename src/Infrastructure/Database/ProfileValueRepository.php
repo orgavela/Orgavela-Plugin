@@ -8,6 +8,7 @@
 namespace UOP\Infrastructure\Database;
 
 use InvalidArgumentException;
+use RuntimeException;
 use UOP\Domain\Organization\OrgScope;
 
 /** Exactly one typed value slot per row and an ordinal for multiselect. */
@@ -33,7 +34,7 @@ final class ProfileValueRepository {
 	 */
 	public function replace( OrgScope $scope, int $person_id, int $field_id, array $values, string $utc_now ): void {
 		$owned = $this->db->rows(
-			"SELECT p.id FROM %i p INNER JOIN %i f ON f.organization_id = p.organization_id WHERE p.organization_id = %d AND p.id = %d AND f.id = %d AND p.status = 'active' AND f.status = 'active' LIMIT 1",
+			"SELECT p.id FROM %i p INNER JOIN %i f ON f.organization_id = p.organization_id WHERE p.organization_id = %d AND p.id = %d AND f.id = %d AND p.status = 'active' AND p.archived_at IS NULL AND f.status = 'active' LIMIT 1",
 			array( $this->prefix . 'persons', $this->prefix . 'profile_fields', $scope->id, $person_id, $field_id )
 		);
 		if ( ! $owned ) {
@@ -60,15 +61,35 @@ final class ProfileValueRepository {
 	 * @param OrgScope $scope Trusted organization.
 	 * @param int      $person_id Internal subject ID already scoped in the application.
 	 * @return list<array<string, mixed>>
+	 * @throws InvalidArgumentException If the scoped subject ID is invalid.
+	 * @throws RuntimeException If the bounded read exceeds 10,000 values.
 	 */
 	public function for_person( OrgScope $scope, int $person_id ): array {
-		return $this->db->rows(
-			"SELECT v.field_id, v.ordinal, v.value_string, v.value_text, v.value_decimal, v.value_date, v.value_boolean FROM %i v INNER JOIN %i f ON f.id = v.field_id INNER JOIN %i p ON p.id = v.person_id WHERE p.organization_id = %d AND f.organization_id = %d AND p.id = %d AND p.status = 'active' AND f.status = 'active' ORDER BY v.field_id, v.ordinal LIMIT 1000",
-			array( $this->prefix . 'profile_values', $this->prefix . 'profile_fields', $this->prefix . 'persons', $scope->id, $scope->id, $person_id )
+		$result = array();
+		$after  = 0;
+		for ( $batch = 0; $batch <= 100; ++$batch ) {
+			$rows = $this->for_person_page( $scope, $person_id, $after );
+			if ( 100 === $batch && $rows ) {
+				throw new RuntimeException( 'Profile values exceed the safe legacy read limit.' );
+			}
+			foreach ( $rows as $row ) {
+				$after = (int) $row['id'];
+				unset( $row['id'] );
+				$result[] = $row;
+			}
+			if ( count( $rows ) < 100 ) {
+				break;
+			}
+		}
+		usort(
+			$result,
+			static function ( array $a, array $b ): int {
+				$field_order = (int) $a['field_id'] <=> (int) $b['field_id'];
+				return 0 !== $field_order ? $field_order : (int) $a['ordinal'] <=> (int) $b['ordinal'];
+			}
 		);
+		return $result;
 	}
-
-
 	/**
 	 * Read an indexed 100-row keyset of active, scoped profile values.
 	 * Application projections must process all pages before returning data.
