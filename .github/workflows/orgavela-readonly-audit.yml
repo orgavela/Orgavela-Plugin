@@ -1,10 +1,13 @@
 name: OrgaVela - strictly read-only SSH health audit
 
 on:
+  # Daily observation only; this is not an IONOS cron replacement.
+  schedule:
+    - cron: '17 7 * * *'
   workflow_dispatch:
     inputs:
       operation:
-        description: "Read-only SFTP, SSH, UOP schema, or O03 backup metadata preflight"
+        description: "Read-only SFTP/SSH/schema/backup/cron inventory (scheduled cron observation never dispatches queue)"
         required: true
         type: choice
         default: sftp
@@ -17,6 +20,7 @@ on:
     paths:
       - '.github/workflows/orgavela-readonly-audit.yml'
       - 'scripts/ci/orgavela-readonly-audit.sh'
+      - 'scripts/ci/orgavela-cron-status-evaluate.sh'
       - '.circleci/config.yml'
 
 permissions:
@@ -50,6 +54,51 @@ jobs:
             echo "::error::Readonly SSH audit contains a scheduler execution or crontab mutation."
             exit 1
           fi
+      - name: O08 scheduler status evaluation - offline negative tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/ci/orgavela-cron-status-evaluate.sh
+          command -v shellcheck
+          shellcheck -S error scripts/ci/orgavela-cron-status-evaluate.sh
+          fixture="$(mktemp)"
+          trap 'rm -f "$fixture"' EXIT
+          cat > "$fixture" <<'STATUS'
+          ORGAVELA_AUDIT_TARGET=verified
+          ORGAVELA_AUDIT_PLUGIN_VERSION=alpha2
+          ORGAVELA_CRON_WP_OPTION=valid
+          ORGAVELA_AS_STORE=present
+          ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none
+          ORGAVELA_AS_FAILED_LAST24H_BUCKET=none
+          ORGAVELA_CRON_QUEUE_EVENT=scheduled-ahead
+          ORGAVELA_CRON_DISPATCH_EXECUTED=no
+          ORGAVELA_CRON_MIGRATION_EXECUTED=no
+          STATUS
+          bash scripts/ci/orgavela-cron-status-evaluate.sh "$fixture"
+          for mutation in recent-failed old-pending queue-overdue missing missing-target unexpected-execution duplicate; do
+            case "$mutation" in
+              recent-failed) sed -i 's/ORGAVELA_AS_FAILED_LAST24H_BUCKET=none/ORGAVELA_AS_FAILED_LAST24H_BUCKET=1-10/' "$fixture" ;;
+              old-pending) sed -i 's/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=1-10/' "$fixture" ;;
+              queue-overdue) sed -i 's/ORGAVELA_CRON_QUEUE_EVENT=scheduled-ahead/ORGAVELA_CRON_QUEUE_EVENT=overdue-over-15m/' "$fixture" ;;
+              missing) sed -i '/^ORGAVELA_AS_STORE=/d' "$fixture" ;;
+              missing-target) sed -i 's/ORGAVELA_AUDIT_TARGET=verified/ORGAVELA_AUDIT_TARGET=unknown/' "$fixture" ;;
+              unexpected-execution) sed -i 's/ORGAVELA_CRON_DISPATCH_EXECUTED=no/ORGAVELA_CRON_DISPATCH_EXECUTED=yes/' "$fixture" ;;
+              duplicate) echo 'ORGAVELA_AUDIT_TARGET=verified' >> "$fixture" ;;
+            esac
+            if bash scripts/ci/orgavela-cron-status-evaluate.sh "$fixture" >/dev/null 2>&1; then
+              echo "::error::O08 safety evaluator accepted forbidden fixture: $mutation"
+              exit 1
+            fi
+            sed -i 's/ORGAVELA_AS_FAILED_LAST24H_BUCKET=1-10/ORGAVELA_AS_FAILED_LAST24H_BUCKET=none/' "$fixture"
+            sed -i 's/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=1-10/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none/' "$fixture"
+            sed -i 's/ORGAVELA_CRON_QUEUE_EVENT=overdue-over-15m/ORGAVELA_CRON_QUEUE_EVENT=scheduled-ahead/' "$fixture"
+            # Restore fixture for next deliberately isolated negative condition.
+            if [[ "$mutation" == 'missing' ]]; then echo 'ORGAVELA_AS_STORE=present' >> "$fixture"; fi
+            if [[ "$mutation" == 'missing-target' ]]; then sed -i 's/ORGAVELA_AUDIT_TARGET=unknown/ORGAVELA_AUDIT_TARGET=verified/' "$fixture"; fi
+            if [[ "$mutation" == 'unexpected-execution' ]]; then sed -i 's/ORGAVELA_CRON_DISPATCH_EXECUTED=yes/ORGAVELA_CRON_DISPATCH_EXECUTED=no/' "$fixture"; fi
+            if [[ "$mutation" == 'duplicate' ]]; then sed -i '$d' "$fixture"; fi
+          done
+          bash scripts/ci/orgavela-cron-status-evaluate.sh "$fixture"
       - name: PHP diagnostic snippets parse cleanly (no execution)
         shell: bash
         run: |
@@ -78,9 +127,10 @@ jobs:
       IONOS_AUDIT_SSH_USER: ${{ secrets.IONOS_SSH_USER }}
       SSHPASS: ${{ secrets.IONOS_SSH_PASSWORD }}
       IONOS_AUDIT_WP_ROOT: ${{ vars.IONOS_WP_ROOT || '/public' }}
+      ORGAVELA_MONITOR_STRICT: ${{ github.event_name == 'schedule' && '1' || '0' }}
     steps:
       - name: Checkout only trusted main workflow and read-only script
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
       - name: Validate checked-in SSH script syntax
@@ -92,7 +142,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_EVENT_NAME" == 'push' ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == 'schedule' ]]; then
+            operation='cron'
+          elif [[ "$GITHUB_EVENT_NAME" == 'push' ]]; then
             request='.github/audit-requests/orgavela-readonly.json'
             [[ -f "$request" ]] || exit 1
             operation="$(jq -er '.operation // empty' "$request")"
