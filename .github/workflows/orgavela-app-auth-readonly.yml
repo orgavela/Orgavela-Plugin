@@ -27,6 +27,8 @@ jobs:
           owner: orgavela
           repositories: Orgavela-Plugin
           permission-contents: read
+          permission-administration: read
+          permission-statuses: read
 
       - name: Verify expected GitHub App identity
         shell: bash
@@ -46,3 +48,26 @@ jobs:
           test "$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.full_name')" = "orgavela/Orgavela-Plugin"
           test "$(gh api "repos/${GITHUB_REPOSITORY}/contents/docs/operations/V1_PROGRESS.json" --jq '.path')" = "docs/operations/V1_PROGRESS.json"
           echo "PASS: OrgaVela GitHub App token works with contents:read in Orgavela-Plugin."
+
+      - name: Diagnose locked main and CircleCI without changes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          protection="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main/protection")"
+          printf '%s' "$protection" | jq -r '
+            "MAIN_BRANCH_LOCKED=" + ((.lock_branch.enabled // false) | tostring),
+            "ENFORCE_ADMINS=" + ((.enforce_admins.enabled // false) | tostring),
+            "REQUIRED_STATUS_CHECKS=" + ((.required_status_checks.contexts // []) | join(",")),
+            "REQUIRED_PR_REVIEWS=" + ((.required_pull_request_reviews != null) | tostring)
+          '
+          rulesets="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets?includes_parents=true")"
+          printf '%s' "$rulesets" | jq -r '"APPLICABLE_RULESETS=" + (length | tostring)'
+          if gh api "repos/${GITHUB_REPOSITORY}/contents/.circleci/config.yml?ref=main" >/dev/null 2>&1; then
+            echo "CIRCLECI_CONFIG_MAIN=present"
+          else
+            echo "CIRCLECI_CONFIG_MAIN=missing_or_not_readable"
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/commits/main/status" \
+            --jq '.statuses[] | select(.context == "CircleCI Pipeline") | "CIRCLECI_MAIN_STATE=" + .state + " CIRCLECI_MAIN_DESCRIPTION=" + .description'
