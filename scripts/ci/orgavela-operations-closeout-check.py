@@ -78,7 +78,18 @@ def validate(matrix: dict[str, Any], progress: dict[str, Any]) -> tuple[int, lis
     if not isinstance(r_green, int) or r_green < 0 or r_green > 18:
         errors.append("Invalid release acceptance measurement")
 
-    release_complete = accepted_count == 12 and r_green == 18
+    milestone_total = metrics.get("milestone_count")
+    milestone_accepted = metrics.get("milestones_formally_v1_accepted")
+    p4_total = metrics.get("p4_packages")
+    p4_accepted = metrics.get("p4_packages_fully_accepted")
+    if not isinstance(milestone_total, int) or milestone_total != 8 or not isinstance(milestone_accepted, int):
+        errors.append("Invalid milestone acceptance count")
+    if not isinstance(p4_total, int) or p4_total != 4 or not isinstance(p4_accepted, int):
+        errors.append("Invalid P4 acceptance count")
+    release_complete = (
+        accepted_count == 12 and r_green == 18 and
+        milestone_accepted == milestone_total and p4_accepted == p4_total
+    )
     if matrix.get("formal_release_decision") not in {"GO", "NO_GO"}:
         errors.append("Formal release decision must be GO or NO_GO")
     if matrix.get("formal_release_decision") == "GO" and not release_complete:
@@ -135,8 +146,11 @@ def main() -> int:
         print(f"{row['id']}={row['status']}; accepted={str(row['accepted']).lower()}")
     if args.self_test:
         negative_self_test(matrix, progress)
+    measure = progress["measurements"]
     if args.strict_release and (count < 12 or
-                                progress["measurements"]["release_gates_formally_green"] != 18 or
+                                measure["release_gates_formally_green"] != 18 or
+                                measure["milestones_formally_v1_accepted"] != measure["milestone_count"] or
+                                measure["p4_packages_fully_accepted"] != measure["p4_packages"] or
                                 matrix["formal_release_decision"] != "GO"):
         print("::error::V1 release blocked: O01..O12 and R01..R18 require formal acceptance.")
         return 1
