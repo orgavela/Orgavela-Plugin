@@ -56,8 +56,14 @@ jobs:
         run: |
           set -euo pipefail
           protection="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main/protection")"
+          branch_protected="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main" --jq '.protected')"
+          echo "MAIN_BRANCH_PROTECTED=${branch_protected}"
           printf '%s' "$protection" | jq -r '
-            "MAIN_BRANCH_LOCKED=" + ((.lock_branch.enabled // false) | tostring),
+            "MAIN_BRANCH_LOCK_FIELD_PRESENT=" + (has("lock_branch") | tostring),
+            "MAIN_BRANCH_LOCKED=" + (if has("lock_branch") then ((.lock_branch.enabled // false) | tostring) else "unknown" end),
+            "PUSH_RESTRICTIONS_PRESENT=" + ((.restrictions != null) | tostring),
+            "REQUIRED_LINEAR_HISTORY=" + ((.required_linear_history.enabled // false) | tostring),
+            "REQUIRED_CONVERSATION_RESOLUTION=" + ((.required_conversation_resolution.enabled // false) | tostring),
             "ENFORCE_ADMINS=" + ((.enforce_admins.enabled // false) | tostring),
             "REQUIRED_STATUS_CHECKS=" + ((.required_status_checks.contexts // []) | join(",")),
             "REQUIRED_PR_REVIEWS=" + ((.required_pull_request_reviews != null) | tostring)
