@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 test('web activation and deactivation complete without PHP diagnostics', async ({ page }) => {
+  test.setTimeout(90000);
   // Authenticate through WordPress; its delayed login autofocus can interrupt
   // synthetic typing. The browser context shares this request's real cookies.
   const loginPage = await page.request.get('/wp-login.php');

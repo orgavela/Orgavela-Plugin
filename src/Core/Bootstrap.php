@@ -97,6 +97,8 @@ final class Bootstrap {
 		$modules   = new ModuleRegistry();
 		$modules->add( new FoundationModule() );
 		$modules->add( new IdentityModule() );
+		$modules->add( new EventModule() );
+		$modules->add( new M3Module() );
 		self::$kernel = new Kernel( $container, $modules );
 		self::$kernel->boot();
 	}

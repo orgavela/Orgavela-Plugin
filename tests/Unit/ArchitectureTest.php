@@ -37,6 +37,6 @@ final class ArchitectureTest extends TestCase {
             self::assertDoesNotMatchRegularExpression('/SELECT\s+(?:\w+\.)?\*/i', file_get_contents($file->getPathname()));
         }
         self::assertGreaterThan(0, $count);
-        foreach (['People','Events','Forms','Registration','Capacity','Consent','Privacy','Payments','Documents','Tasks','Signatures'] as $domain) self::assertDirectoryDoesNotExist($root . '/Domain/' . $domain);
+        foreach (['People','Registration','Capacity','Consent','Privacy','Payments','Documents','Tasks','Signatures'] as $domain) self::assertDirectoryDoesNotExist($root . '/Domain/' . $domain);
     }
 }

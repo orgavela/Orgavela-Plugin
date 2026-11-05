@@ -1,0 +1,20 @@
+.uop-m3 {max-width:1040px;margin:20px 0 48px;display:grid;gap:18px}
+.uop-m3__toolbar,.uop-m3__panel,.uop-m3__field {background:#fff;border:1px solid #c3c4c7;border-radius:8px;padding:18px}
+.uop-m3__toolbar {display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px}
+.uop-m3__panel {display:grid;gap:16px}
+.uop-m3__form-fields {display:grid;gap:12px;list-style:none;margin:0;padding:0}
+.uop-m3__field {border-left:4px solid #2271b1;display:grid;gap:12px}
+.uop-m3__field[aria-grabbed="true"] {outline:3px solid #2271b1}
+.uop-m3__field-header {display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.uop-m3__field-tools {display:flex;gap:6px;flex-wrap:wrap}
+.uop-m3__cols {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.uop-m3__control {display:grid;gap:5px;min-width:160px}
+.uop-m3__control input:not([type=checkbox]),.uop-m3__control select {max-width:100%;width:100%}
+.uop-m3__actions {display:flex;flex-wrap:wrap;gap:12px}
+.uop-m3 button {min-width:32px;min-height:34px}
+.uop-m3 button:focus-visible,.uop-m3 input:focus-visible,.uop-m3 select:focus-visible {outline:3px solid #2271b1;outline-offset:2px}
+.uop-m3__alert {border-left:4px solid #d63638;background:#fcf0f1;padding:12px;font-weight:600}
+.uop-m3__status {border-left:4px solid #00a32a;background:#edfaef;padding:10px}
+.uop-m3__hint {color:#50575e;font-size:13px}
+.uop-m3__heading {margin:0;font-size:17px}
+@media (max-width:600px) {.uop-m3__toolbar,.uop-m3__field {padding:12px}.uop-m3__field-tools {width:100%}}
