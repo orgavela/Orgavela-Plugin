@@ -65,7 +65,7 @@ final class OutboxDispatcher {
 				'SELECT id FROM %i WHERE status = %s AND id > %d ORDER BY id ASC LIMIT %d',
 				array( $this->prefix . 'organizations', 'active', $last_id, 100 )
 			);
-			$batch_size = count( $organizations );
+			$batch_size    = count( $organizations );
 			foreach ( $organizations as $organization ) {
 				$organization_id = (int) $organization['id'];
 				if ( $organization_id <= $last_id ) {
