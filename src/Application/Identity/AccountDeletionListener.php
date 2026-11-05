@@ -57,31 +57,41 @@ final class AccountDeletionListener {
 		if ( $user_id < 1 ) {
 			return;
 		}
-		$organizations = $this->db->rows(
-			"SELECT id FROM %i WHERE status = 'active' ORDER BY id ASC LIMIT 100",
-			array( $this->prefix . 'organizations' )
-		);
-		foreach ( $organizations as $organization ) {
-			$scope = new OrgScope( (int) $organization['id'] );
-			$this->tx->run(
-				function () use ( $scope, $user_id ): void {
-					$person = $this->people->by_user( $scope, $user_id );
-					$time   = gmdate( 'Y-m-d H:i:s' );
-					$this->people->unlink_user( $scope, $user_id, $time );
-					$this->delegations->revoke_for_actor( $scope, $user_id, $time );
-					$this->assignments->revoke_for_actor( $scope, $user_id, $time );
-					if ( ! $person ) {
-						return;
-					}
-					$correlation = CorrelationId::generate();
-					$event       = PublicId::generate();
-					$person_id   = PublicId::from_binary( $person['public_id'] );
-					$object      = new PolicyObject( $scope->id, 'person', (int) $person['id'] );
-					$this->audit->append( $scope, new Actor( 0 ), 'person.account_unlinked', $object, 'success', $correlation, $event );
-					$this->outbox->append( $scope, $event, 'person', (int) $person['id'], 'person.account_unlinked', $correlation, array( 'public_id' => $person_id->to_string() ) );
-					$this->publisher->after_commit( 'person.account_unlinked', $event, $person_id );
-				}
+		$last_id = 0;
+		do {
+			// Include inactive organizations: their historic grants must not survive
+			// account deletion or silently reactivate when an organization reopens.
+			$organizations = $this->db->rows(
+				'SELECT id FROM %i WHERE id > %d ORDER BY id ASC LIMIT %d',
+				array( $this->prefix . 'organizations', $last_id, 100 )
 			);
-		}
+			foreach ( $organizations as $organization ) {
+				$organization_id = (int) $organization['id'];
+			if ( $organization_id <= $last_id ) {
+				throw new \RuntimeException( 'Organization pagination cursor did not advance.' );
+			}
+			$last_id = $organization_id;
+			$scope = new OrgScope( $organization_id );
+				$this->tx->run(
+					function () use ( $scope, $user_id ): void {
+						$person = $this->people->by_user( $scope, $user_id );
+						$time   = gmdate( 'Y-m-d H:i:s' );
+						$this->people->unlink_user( $scope, $user_id, $time );
+						$this->delegations->revoke_for_actor( $scope, $user_id, $time );
+						$this->assignments->revoke_for_actor( $scope, $user_id, $time );
+						if ( ! $person ) {
+							return;
+						}
+						$correlation = CorrelationId::generate();
+						$event       = PublicId::generate();
+						$person_id   = PublicId::from_binary( $person['public_id'] );
+						$object      = new PolicyObject( $scope->id, 'person', (int) $person['id'] );
+						$this->audit->append( $scope, new Actor( 0 ), 'person.account_unlinked', $object, 'success', $correlation, $event );
+						$this->outbox->append( $scope, $event, 'person', (int) $person['id'], 'person.account_unlinked', $correlation, array( 'public_id' => $person_id->to_string() ) );
+						$this->publisher->after_commit( 'person.account_unlinked', $event, $person_id );
+					}
+				);
+			}
+		} while ( 100 === count( $organizations ) );
 	}
 }
