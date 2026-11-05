@@ -38,6 +38,26 @@ final class PersistenceTest extends TestCase {
         $this->db->execute('INSERT INTO %i (public_id,name,slug,status,created_at,updated_at) VALUES (%s,%s,%s,%s,%s,%s)', [$this->prefix . 'organizations',PublicId::generate()->to_binary(),$slug,$slug,'active',$time,$time]);
         return (int)$this->db->rows('SELECT id FROM %i WHERE slug = %s', [$this->prefix . 'organizations',$slug])[0]['id'];
     }
+    public function test_newer_live_schema_version_is_never_downgraded_by_foundation(): void {
+        // The existing OrgaVela alpha.2 installation has DB/data version 2.
+        // This historical M0/M1 source snapshot only provides migration 1.
+        // Even in an isolated test database it must not touch a newer schema.
+        $this->runner()->run();
+        $before = $this->db->rows('SHOW CREATE TABLE %i', [$this->prefix . 'organizations']);
+        $this->state->write('uop_db_version', 2);
+        $this->state->write('uop_data_version', 2);
+        try {
+            $this->runner()->run();
+            self::fail('Foundation tried to run against a newer live schema version.');
+        } catch (RuntimeException $error) {
+            self::assertSame('Schema downgrade is not supported.', $error->getMessage());
+        }
+        self::assertSame(2, (int) $this->state->read('uop_db_version'));
+        self::assertSame(2, (int) $this->state->read('uop_data_version'));
+        self::assertSame($before, $this->db->rows('SHOW CREATE TABLE %i', [$this->prefix . 'organizations']));
+        self::assertSame('critical', Installer::health()['status']);
+    }
+
     public function test_fresh_install_all_28_tables_exact_columns_indexes_and_idempotence(): void {
         $clock = new class implements Clock {
             public function now(): \DateTimeImmutable { return new \DateTimeImmutable('2030-01-02T03:04:05+00:00'); }
