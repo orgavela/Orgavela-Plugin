@@ -52,6 +52,21 @@
       "wp_environment_type": "production (runtime label, not a release signoff)",
       "uop_core": "0.1.0-alpha.2 active"
     },
+    "o04_wp_cron_operator_activation": {
+      "date": "2026-11-05",
+      "source": "operator-edited wp-config.php; independently checked with OrgaVela WordPress read-only cron-test and cron-list-events",
+      "wordpress_cron_disabled_by_config": false,
+      "wp_cron_core_file_modified_by_assistant": false,
+      "wordpress_loopback_http": 200,
+      "latest_readonly_overdue_count": 0,
+      "action_scheduler_queue_hook": "present, every_minute, next run in future at last observation",
+      "historical_transient_backlog_after_change": "3 overdue tasks, then 0 in follow-up observations",
+      "trigger_mode": "WordPress visit-triggered (traffic-dependent); no independently verified external IONOS cron",
+      "actual_complete_queue_processing_verified": false,
+      "daily_scheduled_monitor_execution_verified": false,
+      "formal_o04_accepted": false,
+      "monitoring_expectation": "fail-closed if WP-Cron disabled again, pending backlog, or new ActionScheduler failures"
+    },
     "o01_o12_current_live_evidence": {
       "date": "2026-11-05",
       "o02_schema": {
