@@ -25,7 +25,7 @@ jobs:
 
             # Parse only; NEVER eval a diagnostic against WordPress or a host.
             awk '
-              /^[[:space:]]*php_code="\$\(cat <<\047PHP\047$/ {
+              /^[[:space:]]*php_code="\$\(cat \074\074\047PHP\047$/ {
                 count++;
                 file = sprintf("/tmp/uop-readonly-%d.php", count);
                 print "<?php" > file;
