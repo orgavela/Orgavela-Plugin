@@ -2,6 +2,9 @@ version: 2.1
 
 # Real, free-tier CircleCI validation for the organization-owned OrgaVela
 # repository. Earlier GitHub status errors were caused by the missing config,
+# O09 provider reconnect checkpoint 2026-11-05: CircleCI GitHub App is
+# installed for all OrgaVela repos; this real source-integrity job must pass
+# on the current PR SHA before the O04 changes can be integrated.
 # not by any successful check. This workflow never receives IONOS credentials.
 jobs:
   source-integrity:
