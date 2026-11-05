@@ -6,6 +6,10 @@ on:
   pull_request:
 permissions:
   contents: read
+# Superseded PR commits must not consume six full Docker/Playwright matrices.
+concurrency:
+  group: uop-foundation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 env:
   COMPOSER_ROOT_VERSION: 0.1.0-alpha.2
 jobs:
@@ -104,8 +108,11 @@ jobs:
           wp plugin activate uop-core --path="$WP_ROOT"
           wp plugin deactivate uop-core --path="$WP_ROOT"
       - run: npm ci
+        if: (matrix.php == '8.3' && matrix.db == 'mysql:8.0') || (matrix.php == '8.4' && matrix.db == 'mariadb:10.11')
       - run: npx playwright install --with-deps chromium
+        if: (matrix.php == '8.3' && matrix.db == 'mysql:8.0') || (matrix.php == '8.4' && matrix.db == 'mariadb:10.11')
       - name: Browser activation smoke
+        if: (matrix.php == '8.3' && matrix.db == 'mysql:8.0') || (matrix.php == '8.4' && matrix.db == 'mariadb:10.11')
         run: |
           php -S 127.0.0.1:8080 -t "$WP_ROOT" > /tmp/uop-server.log 2>&1 &
           npm run test:browser
