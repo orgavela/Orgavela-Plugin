@@ -20,6 +20,10 @@ expect_one() {
 
 expect_one ORGAVELA_AUDIT_TARGET verified
 expect_one ORGAVELA_AUDIT_PLUGIN_VERSION alpha2
+# Current approved operational mode is WordPress visit-triggered WP-Cron.
+# Do not silently accept a transition back to DISABLE_WP_CRON=true until a
+# separate external trigger and its execution history have been verified.
+expect_one ORGAVELA_CRON_WP_AUTO enabled
 expect_one ORGAVELA_CRON_WP_OPTION valid
 expect_one ORGAVELA_AS_STORE present
 expect_one ORGAVELA_AS_PENDING_OVERDUE_BUCKET none
