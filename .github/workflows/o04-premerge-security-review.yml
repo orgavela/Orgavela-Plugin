@@ -1,0 +1,93 @@
+name: O04 pre-merge security verification (no hosting access)
+
+on:
+  pull_request:
+    paths:
+      - scripts/ci/orgavela-readonly-audit.sh
+      - .github/workflows/orgavela-readonly-audit.yml
+      - .circleci/config.yml
+      - .github/workflows/o04-premerge-security-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-fail-closed:
+    if: github.repository == 'orgavela/Orgavela-Plugin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: ShellCheck audit script
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v shellcheck
+          shellcheck -S error scripts/ci/orgavela-readonly-audit.sh
+
+      - name: Assert repository and branch isolation fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          script="scripts/ci/orgavela-readonly-audit.sh"
+          for mode in cron schema backup-preflight probe sftp; do
+            if GITHUB_REPOSITORY="untrusted/Other-Repo" GITHUB_REF="refs/heads/main" bash "$script" "$mode"; then
+              echo "::error::Foreign repository was permitted for mode $mode"
+              exit 1
+            fi
+            if GITHUB_REPOSITORY="orgavela/Orgavela-Plugin" GITHUB_REF="refs/heads/untrusted" bash "$script" "$mode"; then
+              echo "::error::Non-main branch was permitted for mode $mode"
+              exit 1
+            fi
+          done
+          if GITHUB_REPOSITORY="orgavela/Orgavela-Plugin" GITHUB_REF="refs/heads/main" bash "$script" "execute"; then
+            echo "::error::Unrecognized operation unexpectedly succeeded"
+            exit 1
+          fi
+          echo "All foreign repository, non-main, and unsupported-mode cases were rejected."
+
+      - name: Verify production job has no PR secret access
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -ryaml -rdate -e '
+            workflow = YAML.safe_load(File.read(".github/workflows/orgavela-readonly-audit.yml"), permitted_classes: [Date, Time], aliases: true)
+            jobs = workflow.fetch("jobs")
+            production = jobs.fetch("readonly-audit")
+            guard = production.fetch("if")
+            abort "Production audit not main-only" unless guard.include?("github.ref == '\''refs/heads/main'\''")
+            abort "Wrong repository guard" unless guard.include?("github.repository == '\''orgavela/Orgavela-Plugin'\''")
+            abort "Protected environment not explicitly selected" unless production.fetch("environment") == "orgavela-ionos"
+            static = jobs.fetch("static-safety")
+            abort "Static tests not PR-scoped" unless static.fetch("if").include?("pull_request")
+            abort "Static tests unexpectedly use protected environment" if static.key?("environment")
+            puts "Production job main/repository/environment guard and unprivileged PR tests passed."
+          '
+
+      - name: Confirm cron operations remain observations only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          script = Path("scripts/ci/orgavela-readonly-audit.sh").read_text()
+          assert "ORGAVELA_CRON_DISPATCH_EXECUTED=no" in script
+          assert "ORGAVELA_CRON_MIGRATION_EXECUTED=no" in script
+          forbidden = [
+              r"\bwp\s+cron\s+event\s+run\b",
+              r"\bwp\s+action-scheduler\s+run\b",
+              r"\bcrontab\s+-(?:e|r)\b",
+              r"\bcurl\s+.*wp-cron\.php\b",
+          ]
+          executable = "\n".join(line for line in script.splitlines() if not line.lstrip().startswith("#"))
+          for pattern in forbidden:
+              assert not re.search(pattern, executable), f"Forbidden cron operation: {pattern}"
+          assert "SELECT COUNT(*) FROM %i WHERE status = %s" in script
+          assert "ORGAVELA_CRON_EXTERNAL_TRIGGER=not-verifiable-from-wordpress" in script
+          print("Cron probes contain only bounded observation SQL and explicit no-dispatch markers.")
+          PY
