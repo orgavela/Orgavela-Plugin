@@ -39,3 +39,19 @@ Der neue Ablauf verifiziert unmittelbar vor der isolierten Wiederherstellung, da
 Ausgabe bei erfolgreichem neuen Test: `ORGAVELA_RESTORE_DRILL_CORRUPTION_REJECTED=both-archives`. Dieser Nachweis ist **nicht** als Ende-zu-Ende-Verschlüsselungs- oder Signaturprüfung realer Offsite-Backups zu verstehen: Der Manifest selbst wird in der Wegwerf-Umgebung erzeugt. Betreiberseitig fehlen weiterhin authentisch gesicherter Manifest-/Schlüsselpfad, reale Sicherung, unabhängige Providerkopie und der isolierte Restore einer echten `orgavela.com`-Sicherung.
 
 **Bisheriger geprüfter Stand:** [GitHub PR-Test #41864496614](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41864496614) auf `3a8efa732f258bf9cf2829b13b744c16dc107762`: synthetische DB-/Datei-Sicherung und Wiederherstellung, Index-/SHA-256-Kontrollen sowie drei Sicherheits-Negativtests **erfolgreich**. Die beiden **zusätzlichen** Manipulationstests stehen erst ab Code-HEAD `77b72d44a5ed141da774d0ccdcb944573a1b3489` unter CI-Prüfung, sind also nicht mit dem früheren grünen Beleg zu verwechseln. Kein produktives Backup/Restore.
+
+
+## Echtes CI-Ergebnis auf geschütztem main (05.11.2026)
+
+Der vom alten Privatkonto in die GitHub-Organisation migrierte Workflow wurde nach vollständigem Review und erfolgreichen synthetischen Pull-Request-Tests als [PR #46](https://github.com/orgavela/Orgavela-Plugin/pull/46) unter Wahrung des GitHub-Branchschutzes regulär integriert. Alle anderen neuen O04-/O09-Änderungen von `main` wurden bei der Branchzusammenführung erhalten; die append-only-Arbeitslogteile gingen nicht verloren.
+
+**Verifizierte reale CI-IDs und Grenzen:**
+
+- [GitHub Actions #42037915243](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42037915243) auf dem **letzten PR-HEAD `37af60209a279f7e80e2b96d427fb09d8fa00a8a`**: `success`. Echter synthetischer MariaDB-11.8-Dienst, drei Repo-/Runner-/Branch-Negativfälle, kompletter DB-/Datei-Restore und zwei unabhängige absichtliche Archivkorruptionen, die durch SHA-256 abgewehrt wurden. GitHub Actions lief ohne `orgavela-ionos`-Environment.
+- PR #46 wurde von GitHub mit `merged=true` als Squash-Commit **`98a064fc6c874055e9676f5e60e9ac4cade964d1`** in das weiterhin geschützte `main` integriert.
+- [GitHub Actions #42038116880](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42038116880) auf **exakt diesem `main`-Commit**: `synthetic-restore=SUCCESS`, einschließlich Containerstart, Guard-Negativtests, Backup/Restore, Integritäts- und Bereinigungsprüfungen.
+- Auf demselben `main`-Commit bestätigte ein eigener [CircleCI source-integrity-Job](https://circleci.com/gh/orgavela/Orgavela-Plugin/92) den Status `success`. Dieser CircleCI-Job ist kein Ersatz für die echte synthetische Restore-Prüfung; beide Belege werden getrennt ausgewiesen.
+
+**Getrennte echte Backup-Repo-Inventur (nur Metadaten):** `orgavela/orgavela-backups` ist privat. Am 05.11.2026 waren dort drei **ausschließlich synthetische** GitHub Releases aus Oktober vorhanden: `backup-orgavela-synthetic-circleci-3`, historischer Age-Test `backup-orgavela-age-synthetic-ci-10` und OpenPGP/PGPony-Handoff `pgp04-synthetic-32`. Daraus folgt **kein aktueller Datenbank- oder Dateiensnapshot von orgavela.com**. Der gewählte aktuelle Verschlüsselungsansatz bleibt OpenPGP/PGPony; frühere Age-/Drive-Belege sind historische Experimente und keine Freigabe zur realen Datenerfassung.
+
+**O03 weiterhin nicht abgenommen.** Keine IONOS-Vertragssicherungs-Jobinventur, keine produktive konsistente Vollsicherung mit verschlüsselter privater GitHub-Release-Ablage, kein isolierter echter Restore, kein Recovery- und Retentionsbeleg. Die Version `UOP Core 0.1.0-alpha.2` wurde nicht verändert. Die Maschinenstatusdatei `V1_PROGRESS.json` enthält ab diesem Nachtrag einen expliziten, datierten Bereich `latest_verified_operational_evidence`; der ältere Snapshot vom 12.10. bleibt als Historie erhalten.
