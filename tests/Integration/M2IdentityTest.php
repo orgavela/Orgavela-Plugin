@@ -149,6 +149,21 @@ final class M2IdentityTest extends TestCase {
             );
             self::assertCount(1, $events, 'Deletion must leave one audit/outbox event per linked person.');
         }
+
+        // Verify a production-equivalent sweep reaches the 101st ACTIVE
+        // organization but does not send events for ARCHIVED organizations.
+        // The injected queue sink avoids an actual Action Scheduler dispatch.
+        $queued = [];
+        $dispatcher = new OutboxDispatcher(
+            $this->db, $f['outbox'], $this->prefix,
+            static function (int $org_id, string $event_uuid) use (&$queued): void {
+                $queued[] = [$org_id, $event_uuid];
+            }
+        );
+        $dispatcher->sweep();
+        self::assertCount(1, $queued, 'Outbox sweep ignored an organization beyond the first 100.');
+        self::assertSame($targets[0][0]->id, $queued[0][0]);
+        self::assertNotSame($targets[1][0]->id, $queued[0][0], 'Archived organizations cannot enqueue new deliveries.');
     }
 
     public function test_assignment_grant_and_revoke_are_scoped_and_audited(): void {
