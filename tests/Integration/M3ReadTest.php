@@ -174,4 +174,43 @@ final class M3ReadTest extends TestCase {
         $invalidRequest->set_param('after', '1 OR 1=1');
         self::assertSame(400, rest_do_request($invalidRequest)->get_status());
     }
+
+
+    public function test_profile_projection_loads_more_than_100_fields_and_1000_values(): void {
+        $people = new PersonRepository($this->db, $this->prefix);
+        $fields = new ProfileFieldRepository($this->db, $this->prefix);
+        $values = new ProfileValueRepository($this->db, $this->prefix);
+        $manager = wp_create_user('uop_big_profile_' . bin2hex(random_bytes(4)), wp_generate_password(24), 'big_profile_' . bin2hex(random_bytes(4)) . '@example.invalid');
+        self::assertIsInt($manager);
+        (new \WP_User($manager))->set_role('administrator');
+        $person = PublicId::generate();
+        $now = '2030-01-01 00:00:00';
+        $people->create($this->scope, $person, 'Synthetic profile', null, $now);
+        $personRow = $people->find($this->scope, $person);
+        $options = ['choice0','choice1','choice2','choice3','choice4','choice5','choice6','choice7','choice8','choice9'];
+        for ($i = 0; $i < 101; ++$i) {
+            $fieldId = PublicId::generate();
+            $fields->create($this->scope, $fieldId, [
+                'key' => 'bulk_' . $i, 'type' => 'multiselect', 'label' => 'Synthetic ' . $i,
+                'subject_view' => true, 'sensitivity' => 'personal', 'options' => $options,
+            ], $now);
+            $fieldRow = $fields->find($this->scope, $fieldId);
+            self::assertNotNull($fieldRow);
+            $items = [];
+            foreach ($options as $ordinal => $choice) {
+                $items[] = ['slot' => 'value_string', 'value' => $choice, 'ordinal' => $ordinal];
+            }
+            if (100 === $i) {
+                $items = array_reverse($items);
+            }
+            $values->replace($this->scope, (int) $personRow['id'], (int) $fieldRow['id'], $items, $now);
+        }
+        $policy = new PolicyService($people, new DelegationRepository($this->db, $this->prefix), new AssignmentRepository($this->db, $this->prefix), static fn(int $id, string $cap): bool => $id === $manager);
+        $reads = new M3ReadService($people, $fields, $values, new EventRepository($this->db, $this->prefix), new OccurrenceRepository($this->db, $this->prefix), new FormRepository($this->db, $this->prefix), $policy, new ProjectionService($policy));
+        $profile = $reads->profile(new Actor($manager), $this->scope, $person);
+        self::assertNotNull($profile);
+        self::assertCount(101, $profile['fields']);
+        self::assertSame($options, $profile['fields']['bulk_100'], 'All values remain ordered by ordinal across keyset boundaries.');
+        self::assertNull($reads->profile(new Actor($manager), new OrgScope($this->scope->id + 999), $person));
+    }
 }

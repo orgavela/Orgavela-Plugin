@@ -1183,3 +1183,12 @@ Die Ergebniskommunikation an die GitHub-Issues wurde ausgeführt: [W0 #16 Kommen
 ### O09/M3 – zweiter WPCS-Befund aus echtem GitHub-Quality-Log (05.11.2026)
 
 **Diagnose:** GitHub Quality Job `127536688571` auf `4da3ad8` reduziert alle zuvor gemeldeten Codeformatierungen auf genau einen fehlenden `@throws InvalidArgumentException`-Tag in `M3Controller::forms()`. Die PHP-/DB-Integration (8.3 MySQL/MariaDB) hatte den eigentlichen PHPUnit-Integrationstest bereits erfolgreich hinter sich und befand sich nach dem Logabruf in späteren WordPress-/Browser-Schritten. CircleCI `source-integrity` war noch rot. **Folgeschritt:** Methodendokumentation vollständig nachziehen, unveränderte Berechtigungs-/Cursor-Logik und echte CI auf neuem HEAD prüfen. Kein Test übersprungen, keine M-/O-/R-Abnahme erhöht.
+
+
+## 2026-11-05 – O09/M3: lückenlose Profil-Projektion über 100/1000-Grenzen
+
+**Auftrag:** Freigabevorbereitung für OrgaVela-M3 auf PR #62 fortsetzen, vor allem die truncating Profil-Datenbankreads. Prüfstand: GitHub Foundation #42111068584 mit 8/8 Jobs erfolgreich sowie CircleCI #255 grün auf `7cd540f`; main `d21976b7`, PR weiterhin Draft.
+
+**Technik:** Die `M3ReadService::profile()`-Leseseite ersetzt die festen einmaligen `PageRequest(100)`- und `ProfileValueRepository::for_person()`-Reads durch 100-zeilige, organization-gescoped Keyset-Iterationen. Neues `for_person_page()` nutzt `v.id > after`, nach wie vor gebunden an aktive Person/Definition und gleiche Organisation; gruppierte Multiselect-Werte werden unabhängig von Insert-Reihenfolge nach Ordinal sortiert, bevor die bestehende zentrale Feld-Policy/Projection angewandt wird. Bei >10.000 Definitionen oder Werten wird **fail-closed** eine RuntimeException ausgelöst, statt ohne Fehlermeldung nur einen Ausschnitt zurückzugeben. Diese harte Schutzgrenze ist kein globales Skalierungsversprechen und muss bei M7 Performance/Big Fixtures überprüft werden.
+
+**Regression:** Synthetischer Integrationsfall mit 101 Felddefinitionen und 1.010 Werten, inklusive absichtlich gegenläufiger Multiselect-Insert-Reihenfolge; verifiziert gesamte sichere Projektion und Cross-Org-Deny. Externer CI-Nachweis auf neuem Commit nötig. Keine Secrets, Live-Daten, DB-Migration, IONOS-Änderung oder Veröffentlichung. Formell weiterhin M 0/8, P4 0/4, O 0/12, R 0/18, V1 NO-GO.

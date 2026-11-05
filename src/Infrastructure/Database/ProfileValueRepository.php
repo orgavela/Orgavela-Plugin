@@ -67,4 +67,25 @@ final class ProfileValueRepository {
 			array( $this->prefix . 'profile_values', $this->prefix . 'profile_fields', $this->prefix . 'persons', $scope->id, $scope->id, $person_id )
 		);
 	}
+
+
+	/**
+	 * Read an indexed 100-row keyset of active, scoped profile values.
+	 * Application projections must process all pages before returning data.
+	 *
+	 * @param OrgScope $scope Trusted organization.
+	 * @param int      $person_id Previously authorized internal person ID.
+	 * @param int      $after Last internal value ID; zero begins traversal.
+	 * @return list<array<string,mixed>>
+	 * @throws InvalidArgumentException For a negative or unscoped cursor.
+	 */
+	public function for_person_page( OrgScope $scope, int $person_id, int $after = 0 ): array {
+		if ( $person_id < 1 || $after < 0 ) {
+			throw new InvalidArgumentException( 'Invalid scoped profile value cursor.' );
+		}
+		return $this->db->rows(
+			"SELECT v.id, v.field_id, v.ordinal, v.value_string, v.value_text, v.value_decimal, v.value_date, v.value_boolean FROM %i v INNER JOIN %i f ON f.id = v.field_id INNER JOIN %i p ON p.id = v.person_id WHERE p.organization_id = %d AND f.organization_id = %d AND p.id = %d AND p.status = 'active' AND p.archived_at IS NULL AND f.status = 'active' AND v.id > %d ORDER BY v.id ASC LIMIT 100",
+			array( $this->prefix . 'profile_values', $this->prefix . 'profile_fields', $this->prefix . 'persons', $scope->id, $scope->id, $person_id, $after )
+		);
+	}
 }

@@ -218,31 +218,59 @@ final class M3ReadService {
 		if ( ! $this->policy->can( $actor, 'person.view', $object )->allowed ) {
 			return null;
 		}
-		$rows    = $this->values->for_person( $scope, (int) $person['id'] );
-		$grouped = array();
-		foreach ( $rows as $row ) {
-			$id               = (int) $row['field_id'];
-			$grouped[ $id ][] = $row;
+		$grouped     = array();
+		$after_value = 0;
+		// Never return a partially projected profile when a fixture is
+		// unexpectedly large; bounded keysets avoid a single huge SQL read.
+		for ( $batch = 0; $batch <= 100; ++$batch ) {
+			$rows = $this->values->for_person_page( $scope, (int) $person['id'], $after_value );
+			if ( 100 === $batch && $rows ) {
+				throw new RuntimeException( 'Profile exceeds the safe value projection limit.' );
+			}
+			foreach ( $rows as $row ) {
+				$id               = (int) $row['field_id'];
+				$grouped[ $id ][] = $row;
+			}
+			if ( count( $rows ) < 100 ) {
+				break;
+			}
+			$after_value = (int) $rows[ count( $rows ) - 1 ]['id'];
 		}
+		foreach ( $grouped as &$items ) {
+			usort( $items, static fn ( array $a, array $b ): int => (int) $a['ordinal'] <=> (int) $b['ordinal'] );
+		}
+		unset( $items );
+
 		$definitions = array();
 		$values      = array();
-		foreach ( $this->fields->page( $scope, new PageRequest( 100 ) ) as $field ) {
-			if ( 'active' !== $field['status'] ) {
-				continue;
+		$after_field = 0;
+		for ( $batch = 0; $batch <= 100; ++$batch ) {
+			$field_rows = $this->fields->page( $scope, new PageRequest( 100, $after_field ) );
+			if ( 100 === $batch && $field_rows ) {
+				throw new RuntimeException( 'Profile exceeds the safe field projection limit.' );
 			}
-			$key                 = (string) $field['field_key'];
-			$definitions[ $key ] = new FieldDefinition(
-				$key,
-				(string) $field['sensitivity'],
-				(bool) $field['subject_view'],
-				(bool) $field['subject_edit'],
-				(bool) $field['delegate_view'],
-				(bool) $field['delegate_edit']
-			);
-			$items               = $grouped[ (int) $field['id'] ] ?? array();
-			$values[ $key ]      = 'multiselect' === $field['data_type']
-				? array_map( static fn ( array $item ): mixed => $item['value_string'], $items )
-				: ( $items ? self::decode_value( $items[0] ) : null );
+			foreach ( $field_rows as $field ) {
+				if ( 'active' !== $field['status'] ) {
+					continue;
+				}
+				$key                 = (string) $field['field_key'];
+				$definitions[ $key ] = new FieldDefinition(
+					$key,
+					(string) $field['sensitivity'],
+					(bool) $field['subject_view'],
+					(bool) $field['subject_edit'],
+					(bool) $field['delegate_view'],
+					(bool) $field['delegate_edit']
+				);
+				$field_items      = $grouped[ (int) $field['id'] ] ?? array();
+				$values[ $key ]   = 'multiselect' === $field['data_type']
+					? array_map( static fn ( array $item ): mixed => $item['value_string'], $field_items )
+					: ( $field_items ? self::decode_value( $field_items[0] ) : null );
+			}
+			if ( count( $field_rows ) < 100 ) {
+				break;
+			}
+			$after_field = (int) $field_rows[ count( $field_rows ) - 1 ]['id'];
 		}
 		return $this->projection->project( $actor, 'person.view', $object, $uuid, $definitions, $values );
 	}
