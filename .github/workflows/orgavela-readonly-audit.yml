@@ -71,6 +71,7 @@ jobs:
           cat > "$fixture" <<'STATUS'
           ORGAVELA_AUDIT_TARGET=verified
           ORGAVELA_AUDIT_PLUGIN_VERSION=alpha2
+          ORGAVELA_CRON_WP_AUTO=enabled
           ORGAVELA_CRON_WP_OPTION=valid
           ORGAVELA_AS_STORE=present
           ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none
@@ -80,11 +81,13 @@ jobs:
           ORGAVELA_CRON_MIGRATION_EXECUTED=no
           STATUS
           bash scripts/ci/orgavela-cron-status-evaluate.sh "$fixture"
-          for mutation in recent-failed old-pending queue-overdue missing missing-target unexpected-execution duplicate; do
+          for mutation in recent-failed old-pending queue-overdue wpcron-disabled wpcron-missing missing missing-target unexpected-execution duplicate; do
             case "$mutation" in
               recent-failed) sed -i 's/ORGAVELA_AS_FAILED_LAST24H_BUCKET=none/ORGAVELA_AS_FAILED_LAST24H_BUCKET=1-10/' "$fixture" ;;
               old-pending) sed -i 's/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=1-10/' "$fixture" ;;
               queue-overdue) sed -i 's/ORGAVELA_CRON_QUEUE_EVENT=scheduled-ahead/ORGAVELA_CRON_QUEUE_EVENT=overdue-over-15m/' "$fixture" ;;
+              wpcron-disabled) sed -i 's/ORGAVELA_CRON_WP_AUTO=enabled/ORGAVELA_CRON_WP_AUTO=disabled/' "$fixture" ;;
+              wpcron-missing) sed -i '/^ORGAVELA_CRON_WP_AUTO=/d' "$fixture" ;;
               missing) sed -i '/^ORGAVELA_AS_STORE=/d' "$fixture" ;;
               missing-target) sed -i 's/ORGAVELA_AUDIT_TARGET=verified/ORGAVELA_AUDIT_TARGET=unknown/' "$fixture" ;;
               unexpected-execution) sed -i 's/ORGAVELA_CRON_DISPATCH_EXECUTED=no/ORGAVELA_CRON_DISPATCH_EXECUTED=yes/' "$fixture" ;;
@@ -97,6 +100,8 @@ jobs:
             sed -i 's/ORGAVELA_AS_FAILED_LAST24H_BUCKET=1-10/ORGAVELA_AS_FAILED_LAST24H_BUCKET=none/' "$fixture"
             sed -i 's/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=1-10/ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none/' "$fixture"
             sed -i 's/ORGAVELA_CRON_QUEUE_EVENT=overdue-over-15m/ORGAVELA_CRON_QUEUE_EVENT=scheduled-ahead/' "$fixture"
+            if [[ "$mutation" == 'wpcron-disabled' ]]; then sed -i 's/ORGAVELA_CRON_WP_AUTO=disabled/ORGAVELA_CRON_WP_AUTO=enabled/' "$fixture"; fi
+            if [[ "$mutation" == 'wpcron-missing' ]]; then echo 'ORGAVELA_CRON_WP_AUTO=enabled' >> "$fixture"; fi
             # Restore fixture for next deliberately isolated negative condition.
             if [[ "$mutation" == 'missing' ]]; then echo 'ORGAVELA_AS_STORE=present' >> "$fixture"; fi
             if [[ "$mutation" == 'missing-target' ]]; then sed -i 's/ORGAVELA_AUDIT_TARGET=unknown/ORGAVELA_AUDIT_TARGET=verified/' "$fixture"; fi
