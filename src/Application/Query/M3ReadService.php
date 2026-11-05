@@ -68,39 +68,52 @@ final class M3ReadService {
 	 * @param OrgScope      $scope Organization boundary.
 	 * @param PublicId|null $after Last public form ID from the previous page.
 	 * @return array{items:list<array<string,mixed>>,next_cursor:?string}
-	 * @throws \InvalidArgumentException For a cursor outside the organization.
+	 * @throws \InvalidArgumentException For an inaccessible or foreign cursor.
+	 * @throws RuntimeException If the authorization scan exceeds its safe limit.
 	 */
 	public function form_page( Actor $actor, OrgScope $scope, ?PublicId $after ): array {
 		$this->require_manager( $actor, $scope, 'form.manage' );
 		$after_id = 0;
 		if ( null !== $after ) {
 			$cursor = $this->forms->find( $scope, $after );
-			if ( ! $cursor ) {
+			if ( ! $cursor || null !== $cursor['archived_at'] || ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $cursor['id'] ) )->allowed ) {
 				throw new \InvalidArgumentException( 'Invalid form page cursor.' );
 			}
 			$after_id = (int) $cursor['id'];
 		}
-		$rows   = $this->forms->page( $scope, new PageRequest( 100, $after_id ) );
 		$result = array();
-		foreach ( $rows as $row ) {
-			if ( null !== $row['archived_at'] || ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $row['id'] ) )->allowed ) {
-				continue;
+		// Hidden or archived records are never exposed as continuation tokens.
+		// A fixed scan budget prevents unbounded reads for inaccessible data.
+		for ( $batch = 0; $batch < 20; ++$batch ) {
+			$rows = $this->forms->page( $scope, new PageRequest( 100, $after_id ) );
+			foreach ( $rows as $row ) {
+				if ( null !== $row['archived_at'] || ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $row['id'] ) )->allowed ) {
+					continue;
+				}
+				$result[] = array(
+					'public_id' => PublicId::from_binary( $row['public_id'] )->to_string(),
+					'key'       => (string) $row['form_key'],
+					'title'     => (string) $row['title'],
+					'status'    => (string) $row['status'],
+					'revision'  => (int) $row['draft_revision'],
+				);
+				if ( 100 === count( $result ) ) {
+					return array(
+						'items'       => $result,
+						'next_cursor' => $result[99]['public_id'],
+					);
+				}
 			}
-			$result[] = array(
-				'public_id' => PublicId::from_binary( $row['public_id'] )->to_string(),
-				'key'       => (string) $row['form_key'],
-				'title'     => (string) $row['title'],
-				'status'    => (string) $row['status'],
-				'revision'  => (int) $row['draft_revision'],
-			);
+			if ( count( $rows ) < 100 ) {
+				return array(
+					'items'       => $result,
+					'next_cursor' => null,
+				);
+			}
+			$after_id = (int) $rows[ count( $rows ) - 1 ]['id'];
 		}
-		$next_cursor = count( $rows ) === 100 ? PublicId::from_binary( $rows[99]['public_id'] )->to_string() : null;
-		return array(
-			'items'       => $result,
-			'next_cursor' => $next_cursor,
-		);
+		throw new RuntimeException( 'Form listing exceeds the safe authorization scan limit.' );
 	}
-
 	/**
 	 * Load one authorized draft and immutable published-version pointer.
 	 *

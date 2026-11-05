@@ -150,8 +150,11 @@ final class M3ReadTest extends TestCase {
         $controller->register();
         wp_set_current_user($manager);
         $draft = ['schema_version' => 1, 'fields' => [['key' => 'name', 'type' => 'text', 'label' => 'Name', 'required' => true]]];
+        $created = [];
         for ($i = 0; $i < 105; ++$i) {
-            $forms->create($this->scope, PublicId::generate(), $manager, 'form_' . $i, 'Synthetic form ' . $i, 'event', $draft, '2030-01-01 00:00:00');
+            $id = PublicId::generate();
+            $created[] = $id;
+            $forms->create($this->scope, $id, $manager, 'form_' . $i, 'Synthetic form ' . $i, 'event', $draft, '2030-01-01 00:00:00');
         }
         $first = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/forms'));
         self::assertSame(200, $first->get_status());
@@ -173,6 +176,34 @@ final class M3ReadTest extends TestCase {
         $invalidRequest = new \WP_REST_Request('GET', '/uop/v1/forms');
         $invalidRequest->set_param('after', '1 OR 1=1');
         self::assertSame(400, rest_do_request($invalidRequest)->get_status());
+
+        // An archived form must never become a visible list item or cursor,
+        // even when hidden rows straddle the first hundred database rows.
+        foreach ([2, 102] as $position) {
+            $this->db->execute(
+                'UPDATE %i SET archived_at = %s WHERE organization_id = %d AND public_id = %s',
+                [$this->prefix . 'forms', '2030-01-02 00:00:00', $this->scope->id, $created[$position]->to_binary()]
+            );
+        }
+        $filteredFirst = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/forms'));
+        self::assertSame(200, $filteredFirst->get_status());
+        self::assertCount(100, $filteredFirst->get_data()['items']);
+        $cursor = $filteredFirst->get_data()['next_cursor'];
+        self::assertSame($filteredFirst->get_data()['items'][99]['public_id'], $cursor);
+        self::assertNotContains($created[2]->to_string(), array_column($filteredFirst->get_data()['items'], 'public_id'));
+        $nextFiltered = new \WP_REST_Request('GET', '/uop/v1/forms');
+        $nextFiltered->set_param('after', $cursor);
+        $filteredSecond = rest_do_request($nextFiltered);
+        self::assertSame(200, $filteredSecond->get_status());
+        self::assertCount(3, $filteredSecond->get_data()['items']);
+        self::assertNull($filteredSecond->get_data()['next_cursor']);
+        $visible = array_merge(array_column($filteredFirst->get_data()['items'], 'public_id'), array_column($filteredSecond->get_data()['items'], 'public_id'));
+        self::assertCount(103, array_unique($visible));
+        self::assertNotContains($created[2]->to_string(), $visible);
+        self::assertNotContains($created[102]->to_string(), $visible);
+        $archivedCursor = new \WP_REST_Request('GET', '/uop/v1/forms');
+        $archivedCursor->set_param('after', $created[2]->to_string());
+        self::assertSame(400, rest_do_request($archivedCursor)->get_status(), 'Archived UUIDs cannot be used as page cursors.');
     }
 
 
