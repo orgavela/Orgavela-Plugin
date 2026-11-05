@@ -1,0 +1,192 @@
+{
+  "schema": "orgavela-operations-closeout-v1",
+  "observed_as_of": "2026-11-05",
+  "project": "orgavela/Orgavela-Plugin",
+  "authority": "docs/operations/V1_PROGRESS.json",
+  "purpose": "Separate technical evidence from operator/legal signoff; no automatic go-live",
+  "formal_release_decision": "NO_GO",
+  "operations": [
+    {
+      "id": "O01",
+      "status": "partial",
+      "accepted": false,
+      "owner": "Betreiber / Hosting",
+      "observation": "SFTP-/SSH-Ziel auf orgavela.com verifiziert; Zugriff bleibt webspaceweit",
+      "technical_evidence": [
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42036870948"
+      ],
+      "missing_exit_evidence": [
+        "Eigenständigen OrgaVela-Account mit Least Privilege und negativem Fremdpfadtest nachweisen",
+        "GitHub-/IONOS-Secrets und Host-Keys mit benanntem Verantwortlichen prüfen"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O02",
+      "status": "partial",
+      "accepted": false,
+      "owner": "Betreiber / Entwicklung",
+      "observation": "Aktives Alpha.2; 29 UOP-Tabellen, Schema, Standardorganisation und Migrationstatus gut",
+      "technical_evidence": [
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042192653"
+      ],
+      "missing_exit_evidence": [
+        "Releasegebundenes physisches Datenbank-/Indexmanifest abnehmen",
+        "Konsistenz mit echten Restore-/Recovery-Gates nachweisen"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O03",
+      "status": "partial",
+      "accepted": false,
+      "owner": "Betreiber / Backup-Verantwortliche",
+      "observation": "Privates Backupziel, synthetischer Restore und live Backup-Metadatenpreflight bestätigt",
+      "technical_evidence": [
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042772320",
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42038116880"
+      ],
+      "missing_exit_evidence": [
+        "Echtes vollständiges, konsistentes DB+Dateien-Backup verschlüsselt privat und mit Readback verifizieren",
+        "Abgeschotteten Restore echter Backupdaten sowie Recovery-Time und Retention unabhängig bestätigen",
+        "IONOS-Provider-Backupinventar mit Rücksicherungsstand prüfen"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O04",
+      "status": "blocked",
+      "accepted": false,
+      "owner": "Betreiber / IONOS / Entwicklung",
+      "observation": "WordPress-Cron aus; echter strenger Test: Queue-Hook 5–15 Minuten überfällig, keine frischen gescheiterten Action-Scheduler-Aktionen",
+      "technical_evidence": [
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606"
+      ],
+      "missing_exit_evidence": [
+        "Vorhandene IONOS-Host-Cronkonfiguration, Quelle, Frequenz und letzte Ausführungen nachweisen",
+        "Ohne Doppel-Cron sicheren Worker-/Retry-/Backlog-Golden-Path vorführen",
+        "Queue-Hook-Rückstand nachhaltig klären und Recovery/Alarm testen"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O05",
+      "status": "not-started",
+      "accepted": false,
+      "owner": "Betreiber / Mail / Entwicklung",
+      "observation": "Kein freigegebener UOP-Live-Mailtransport oder tatsächlicher Zustellnachweis",
+      "technical_evidence": [],
+      "missing_exit_evidence": [
+        "Absender, SPF/DKIM/DMARC, legitime SMTP-Konfiguration und sichere Empfänger freigeben",
+        "Einmal-/Einladungslinks, Bounce/Retry, Outbox über reale getrennte Testadressen belegen",
+        "Keine echten Drittmails vor O03/O06 und Feature-CI"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O06",
+      "status": "blocked",
+      "accepted": false,
+      "owner": "Betreiber / Datenschutz",
+      "observation": "Allgemeine WordPress-Suchmaschinenabschreckung aus; Privacy Policy als Draft; öffentliche Sample Page",
+      "technical_evidence": [],
+      "missing_exit_evidence": [
+        "Öffentliche Markenwebsite und private UOP-Testpfade verbindlich trennen und Zugriffs-/Indexschutz testen",
+        "Vollständige Datenschutzerklärung für tatsächlich aktive Dienste freigeben",
+        "Dateninventar, Retention, Logging, Einwilligung und P4-Jugendschutz verbindlich abnehmen"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O07",
+      "status": "not-started",
+      "accepted": false,
+      "owner": "Entwicklung / Fachliche UAT",
+      "observation": "Live-UOP weiterhin alpha.2; volle M0–M6/P4-Funktionskette nicht integriert",
+      "technical_evidence": [],
+      "missing_exit_evidence": [
+        "Sicheres Staging mit synthetischen Adult/Admin/Gast/Guardian/Consent/Waitlist-E2E auf exakt freigegebenem SHA",
+        "Mail-, Cron-, Datenschutz-/Rollback-Gates vor Live-Funktionstest erfüllen",
+        "Browser-, REST-, Accessibility- und Negativpfade dokumentieren"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O08",
+      "status": "partial",
+      "accepted": false,
+      "owner": "Entwicklung / Betreiber",
+      "observation": "Täglicher read-only Monitor auf main integriert; strenger Realtest hat O04-Rückstand detektiert",
+      "technical_evidence": [
+        "https://github.com/orgavela/Orgavela-Plugin/pull/53",
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606"
+      ],
+      "missing_exit_evidence": [
+        "Ersten geplanten täglichen Lauf und echten Alert-Empfang nachweisen",
+        "Fehlaktions-Ursachen, sichere Beobachtungshistorie sowie Eskalations- und Recovery-Prozess abnehmen",
+        "Keine geplante Statuskontrolle als Ersatz für externen Worker missverstehen"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O09",
+      "status": "partial",
+      "accepted": false,
+      "owner": "Entwicklung / Review",
+      "observation": "CircleCI source-integrity authentisch erfolgreich auf geschütztem main; ursprüngliche Feature-PR-Kette offen",
+      "technical_evidence": [
+        "https://circleci.com/gh/orgavela/Orgavela-Plugin/92"
+      ],
+      "missing_exit_evidence": [
+        "PR #1→#2→#3→#4→#5→#6→#11 in Abhängigkeitsreihenfolge unabhängig prüfen und integrieren",
+        "PHPStan/WPCS/HTTPS/Browser/P4/DB-Matrix mit tatsächlicher Release-SHA vollständig grün",
+        "Keine geskippten Plugin-Codeprüfungen als Vollintegration ausgeben"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O10",
+      "status": "not-started",
+      "accepted": false,
+      "owner": "Entwicklung / Betreiber",
+      "observation": "Synthetischer Dateisicherungs-/DB-Restore geprobt; noch kein Update-/Rollback-Verfahren mit echten Daten",
+      "technical_evidence": [
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42038116880"
+      ],
+      "missing_exit_evidence": [
+        "Versionierten atomaren Upgrade-/Migration-/Rollback-Plan ohne überschreibende Erstinstallationsannahme aufbauen",
+        "Synthetischen Offline-Rollback und echten isolierten Restore mit Betreiberfreigabe prüfen",
+        "Checksummen, Secrethygiene, Lock-/Crash-/Teilstopp-Gates"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O11",
+      "status": "not-started",
+      "accepted": false,
+      "owner": "Fachabnahme / Dokumentation",
+      "observation": "Technische Betriebsrunbooks vorhanden, aber Rollenhandbuch und unterschriebene Nutzerakzeptanz fehlen",
+      "technical_evidence": [],
+      "missing_exit_evidence": [
+        "Vollständiges Rollen-/Admin-/Teilnehmerhandbuch und Bedienungshilfe bereitstellen",
+        "UAT-Szenarien und barrierefreie echte Bedienprüfungen dokumentieren",
+        "Benannte Verantwortliche und Datum für fachliche Freigabe"
+      ],
+      "approval_record": null
+    },
+    {
+      "id": "O12",
+      "status": "not-started",
+      "accepted": false,
+      "owner": "Projektleitung / Recht / Sicherheit",
+      "observation": "V1 bisher kein formal abgenommener Meilenstein, P4- oder Release-Gate",
+      "technical_evidence": [],
+      "missing_exit_evidence": [
+        "18/18 formale Release-Gates mit exaktem RC-SHA und unabhängigen Belegen erfüllen",
+        "Offene O-/P4-/Security-/Privacy-/A11y-Gates abschließen",
+        "Schriftliches, datiertes und nachweisbares Go/No-Go samt Rollback-/Recovery-Kette erteilen"
+      ],
+      "approval_record": null
+    }
+  ]
+}

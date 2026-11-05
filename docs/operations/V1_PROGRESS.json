@@ -52,6 +52,63 @@
       "wp_environment_type": "production (runtime label, not a release signoff)",
       "uop_core": "0.1.0-alpha.2 active"
     },
+    "o01_o12_current_live_evidence": {
+      "date": "2026-11-05",
+      "o02_schema": {
+        "run_id": 42042192653,
+        "run_result": "success",
+        "verified_root": "orgavela.com",
+        "plugin_version": "0.1.0-alpha.2",
+        "schema_health": "good",
+        "physical_uop_tables": 29,
+        "default_organization": "good",
+        "migration_versions": "good",
+        "formal_exit": false
+      },
+      "o03_live_backup_readonly_preflight": {
+        "run_id": 42042772320,
+        "run_result": "success",
+        "wordpress_files_size_bucket": "100-500MiB",
+        "wordpress_database_size_bucket": "under-25MiB",
+        "hosting_free_space_bucket": "over-5GiB",
+        "tools_available": ["mysqldump", "mariadb-dump", "mysql", "tar", "gzip", "sha256sum"],
+        "ionos_provider_snapshot_inventory_verified": false,
+        "actual_backup_exported": false,
+        "actual_isolated_restore_executed": false
+      },
+      "o04_o08_strict_cron": {
+        "run_id": 42042200606,
+        "run_result": "failure-by-safety-policy",
+        "wp_cron_auto": "disabled",
+        "queue_hook_status": "overdue-5-15m",
+        "action_scheduler_pending_over_10m": "none",
+        "action_scheduler_historical_failed_bucket": "1-10",
+        "action_scheduler_failed_last24h_bucket": "none",
+        "external_ionos_dispatch_verified": false,
+        "wp_queue_dispatch_executed": false,
+        "scheduled_readonly_monitor_configured": true,
+        "scheduled_monitor_start_commit": "e037efdc61877c7672581d1abd23112c225a8098",
+        "scheduled_monitor_verified_execution": false,
+        "formal_o04_accepted": false,
+        "formal_o08_accepted": false
+      },
+      "o06_visibility_and_privacy": {
+        "discourage_search_engines": false,
+        "privacy_policy_page_status": "draft",
+        "published_demo_page_exists": true,
+        "restricted_uop_staging_verified": false,
+        "legal_data_protection_approval_verified": false
+      },
+      "o05_o07_o09_o10_o11_o12": {
+        "live_smtp_delivery_verified": false,
+        "full_role_based_staging_e2e_verified": false,
+        "circleci_real_source_integrity_main": "success",
+        "integrated_full_feature_ci_verified": false,
+        "live_plugin_upgrade_and_restore_verified": false,
+        "final_uat_signoff_verified": false,
+        "final_release_go_decision_verified": false
+      }
+    },
     "v1_formal_signoffs_changed": false
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
@@ -279,7 +336,7 @@
     },
     {
       "id": "O08",
-      "status": "not-started"
+      "status": "partial"
     },
     {
       "id": "O09",

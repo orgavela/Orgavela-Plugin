@@ -1,0 +1,45 @@
+name: OrgaVela - O01-O12 evidence and release truth gate
+
+on:
+  pull_request:
+    paths:
+      - docs/operations/O01_O12_EXIT_GATES.json
+      - docs/operations/V1_PROGRESS.json
+      - scripts/ci/orgavela-operations-closeout-check.py
+      - .github/workflows/orgavela-operations-closeout-gate.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/operations/O01_O12_EXIT_GATES.json
+      - docs/operations/V1_PROGRESS.json
+      - scripts/ci/orgavela-operations-closeout-check.py
+      - .github/workflows/orgavela-operations-closeout-gate.yml
+
+permissions:
+  contents: read
+
+jobs:
+  truthful-evidence:
+    if: github.repository == 'orgavela/Orgavela-Plugin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check operations manifest against canonical V1 status
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B scripts/ci/orgavela-operations-closeout-check.py
+      - name: Reject falsified GO decisions, approvals and missing gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B scripts/ci/orgavela-operations-closeout-check.py --self-test
+      - name: Distinguish honest CI pass from release authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "This job validates honesty of O01-O12 evidence only."
+          echo "It must never claim that OrgaVela production release gates are complete."
