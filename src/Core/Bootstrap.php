@@ -96,6 +96,7 @@ final class Bootstrap {
 		$container = new ServiceContainer();
 		$modules   = new ModuleRegistry();
 		$modules->add( new FoundationModule() );
+		$modules->add( new IdentityModule() );
 		self::$kernel = new Kernel( $container, $modules );
 		self::$kernel->boot();
 	}
