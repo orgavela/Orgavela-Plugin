@@ -58,9 +58,10 @@
       "status": "blocked",
       "accepted": false,
       "owner": "Betreiber / IONOS / Entwicklung",
-      "observation": "WordPress-Cron aus; echter strenger Test: Queue-Hook 5–15 Minuten überfällig, keine frischen gescheiterten Action-Scheduler-Aktionen",
+      "observation": "Betreiber hat DISABLE_WP_CRON=false aktiviert; OrgaVela-WP-Read-only bestätigt WP-Cron aktiv, Loopback HTTP 200 und zuletzt 0 überfällige Hooks; vorheriger 5–15-Minuten-Rückstand bleibt historischer Befund. Besucherauslösung ist verkehrsabhängig, kein garantierter Server-Cron.",
       "technical_evidence": [
-        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606"
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606",
+        "https://github.com/orgavela/Orgavela-Plugin/blob/main/docs/operations/O04_WP_CRON_VISITOR_MODE_2026-11-05.md"
       ],
       "missing_exit_evidence": [
         "Vorhandene IONOS-Host-Cronkonfiguration, Quelle, Frequenz und letzte Ausführungen nachweisen",
@@ -116,7 +117,7 @@
       "status": "partial",
       "accepted": false,
       "owner": "Entwicklung / Betreiber",
-      "observation": "Täglicher read-only Monitor auf main integriert; strenger Realtest hat O04-Rückstand detektiert",
+      "observation": "Täglicher read-only Monitor integriert. Eingebauter Besuchs-WP-Cron jetzt aktiviert; zusätzlicher Fail-closed-Test schützt gegen unbemerkte Rückkehr zu DISABLE_WP_CRON=true. Erster regulärer Monitorlauf und Alarmzustellung noch nicht verifiziert.",
       "technical_evidence": [
         "https://github.com/orgavela/Orgavela-Plugin/pull/53",
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606"

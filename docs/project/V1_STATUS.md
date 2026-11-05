@@ -3,6 +3,14 @@
 **Stand:** 12.10.2026, initiale V1-Baseline nach Liveprüfung. **V1-Status: NICHT ABGENOMMEN.**  
 **Normativer Masterplan:** [V1_ACCEPTANCE_PLAN.md](../operations/V1_ACCEPTANCE_PLAN.md) · **Verbindliche Fortschrittsdaten:** [V1_PROGRESS.json](../operations/V1_PROGRESS.json) · **Zentrales Abnahme-Issue:** [#15](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/15) · **Ergänzende Roadmap:** [V1_MASTER_PLAN.md](V1_MASTER_PLAN.md) · **Abnahmematrix:** [V1_ACCEPTANCE_MATRIX.md](V1_ACCEPTANCE_MATRIX.md) · **Arbeitsjournal:** [ASSISTANT_WORK_LOG.md](../operations/ASSISTANT_WORK_LOG.md).
 
+## O04: WP-Cron vom Betreiber aktiviert – nachfolgende Live-Prüfung 05.11.2026
+
+Der Betreiber hat in IONOS **selbst** `wp-config.php` mit `define('DISABLE_WP_CRON', false);` gespeichert. Der WordPress-Kern `wp-cron.php` blieb unverändert. Eine anschließend vom Assistenten **nur lesend** ausgeführte OrgaVela-MCP-Prüfung bestätigt: `disabled_by_config=false`, Loopback `HTTP 200`, zuletzt `overdue_count=0`; `action_scheduler_run_queue` ist weiter minütlich geplant und im letzten Snapshot nicht überfällig.
+
+Dies ist **neuer** Zustand gegenüber den unmittelbar vorherigen, in den älteren Abschnitten unten dokumentierten `WP-Cron disabled`-/`overdue-5-15m`-Messungen. Diese älteren Fehlerbelege bleiben als Historie bestehen, werden aber **nicht** als aktuelle Konfiguration ausgegeben. Der jetzige Modus löst Aufgaben **besucherabhängig** aus: Ein einzelner gesunder Zeitpunkt belegt weder garantierte Ausführungsintervalle noch erfolgreich zugestellte E-Mails.
+
+Der kostenlose O08-Monitor wird deshalb im separaten PR zusätzlich auf `ORGAVELA_CRON_WP_AUTO=enabled` geprüft und testet negativ einen stillen Rückfall zu `disabled` sowie fehlende Messwerte. **O04 bleibt blockiert, O08 teilweise implementiert; formell 0/12 O-Gates und V1 NO-GO.** Siehe [O04 Visitor-Cron Betriebsnachtrag](../operations/O04_WP_CRON_VISITOR_MODE_2026-11-05.md).
+
 ## O01–O12-Neubewertung – 05.11.2026, späterer Betriebsblock
 
 **Formale Ops-Abnahmen: 0/12; V1 weiterhin NO-GO.** Nach O08-Monitorintegration (PR #53/#54), realem Schema-Audit [#42042192653](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042192653) und isoliert wiederholter echter Backup-Metadaten-Prüfung [#42042772320](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042772320) ist **keine** Vollsicherung/Recovery einer echten Site erfolgt. Eine strengere Cron-Prüfung [#42042200606](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606) war **berechtigt ROT**: `action_scheduler_run_queue` 5–15 Minuten überfällig, historische Failures `1–10`, keine letzten 24h neu fehlgeschlagenen Aktionen; externer IONOS-Cron unklar. Dieser Status darf nicht durch einen grünen `source-integrity`-Job überdeckt werden.
