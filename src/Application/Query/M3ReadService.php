@@ -57,9 +57,32 @@ final class M3ReadService {
 	 * @return list<array<string, mixed>>
 	 */
 	public function forms( Actor $actor, OrgScope $scope ): array {
+		return $this->form_page( $actor, $scope, null )['items'];
+	}
+
+	/**
+	 * One authorized, keyset-bounded form page. The public cursor is a UUID,
+	 * never an exposed numeric database key.
+	 *
+	 * @param Actor         $actor Authenticated manager.
+	 * @param OrgScope      $scope Organization boundary.
+	 * @param PublicId|null $after Last public form ID from the previous page.
+	 * @return array{items:list<array<string,mixed>>,next_cursor:?string}
+	 * @throws \InvalidArgumentException For a cursor outside the organization.
+	 */
+	public function form_page( Actor $actor, OrgScope $scope, ?PublicId $after ): array {
 		$this->require_manager( $actor, $scope, 'form.manage' );
+		$after_id = 0;
+		if ( null !== $after ) {
+			$cursor = $this->forms->find( $scope, $after );
+			if ( ! $cursor ) {
+				throw new \InvalidArgumentException( 'Invalid form page cursor.' );
+			}
+			$after_id = (int) $cursor['id'];
+		}
+		$rows   = $this->forms->page( $scope, new PageRequest( 100, $after_id ) );
 		$result = array();
-		foreach ( $this->forms->page( $scope, new PageRequest( 100 ) ) as $row ) {
+		foreach ( $rows as $row ) {
 			if ( null !== $row['archived_at'] || ! $this->policy->can( $actor, 'form.manage', new PolicyObject( $scope->id, 'form', (int) $row['id'] ) )->allowed ) {
 				continue;
 			}
@@ -71,7 +94,8 @@ final class M3ReadService {
 				'revision'  => (int) $row['draft_revision'],
 			);
 		}
-		return $result;
+		$next_cursor = count( $rows ) === 100 ? PublicId::from_binary( $rows[99]['public_id'] )->to_string() : null;
+		return array( 'items' => $result, 'next_cursor' => $next_cursor );
 	}
 
 	/**

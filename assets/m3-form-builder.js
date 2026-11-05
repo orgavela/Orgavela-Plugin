@@ -16,6 +16,7 @@
 
 	function Builder() {
 		const [forms, setForms] = useState([]);
+		const [nextCursor, setNextCursor] = useState(null);
 		const [selected, setSelected] = useState('');
 		const [record, setRecord] = useState(null);
 		const [draft, setDraft] = useState(null);
@@ -35,6 +36,19 @@
 		async function refreshForms() {
 			const response = await api({ path: '/uop/v1/forms' });
 			setForms(response.items || []);
+			setNextCursor(response.next_cursor || null);
+		}
+		async function loadMoreForms() {
+			if (!nextCursor || busy) return;
+			setBusy(true); setError('');
+			try {
+				const response = await api({ path: '/uop/v1/forms?after=' + encodeURIComponent(nextCursor) });
+				setForms(previous => {
+					const known = new Set(previous.map(form => form.public_id));
+					return previous.concat((response.items || []).filter(form => !known.has(form.public_id)));
+				});
+				setNextCursor(response.next_cursor || null);
+			} catch (e) { failed(e); } finally { setBusy(false); }
 		}
 		useEffect(() => { refreshForms().catch(failed); }, []);
 		async function load(uuid) {
@@ -174,9 +188,10 @@
 				h('label', { className: 'uop-m3__control' }, t('Existing forms', 'uop-core'),
 					h('select', { value: selected, disabled: busy || dirty, onChange: ev => load(ev.target.value) },
 						h('option', { value: '' }, t('Choose a form', 'uop-core')),
-						forms.map(form => h('option', { key: form.public_id, value: form.public_id }, form.title + ' (' + form.status + ')'))
+						(record && !forms.some(form => form.public_id === record.public_id) ? [...forms, record] : forms).map(form => h('option', { key: form.public_id, value: form.public_id }, form.title + ' (' + form.status + ')'))
 					)
 				),
+				nextCursor ? h('button', { type: 'button', className: 'button', disabled: busy || dirty, onClick: loadMoreForms }, t('Load more forms', 'uop-core')) : null,
 				h('p', { className: 'uop-m3__hint' }, dirty ? t('Save before switching forms.', 'uop-core') : '')
 			),
 			!record ? h('section', { className: 'uop-m3__panel', 'aria-label': t('Create form', 'uop-core') },

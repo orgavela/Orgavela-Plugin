@@ -162,12 +162,22 @@ final class M3Controller {
 	}
 
 	/**
-	 * Project a bounded organization form list.
+	 * Project one organization form page using a public UUID cursor.
 	 *
-	 * @return array<string, mixed>
+	 * @param WP_REST_Request $request Incoming page request.
+	 * @return array<string, mixed>|WP_Error
 	 */
-	public function forms(): array {
-		return array( 'items' => $this->reads->forms( $this->actor(), $this->required_scope() ) );
+	public function forms( WP_REST_Request $request ): array|WP_Error {
+		try {
+			$raw = $request->get_param( 'after' );
+			if ( null !== $raw && ! is_string( $raw ) ) {
+				throw new InvalidArgumentException( 'Invalid cursor format.' );
+			}
+			$after = null !== $raw ? PublicId::from_string( $raw ) : null;
+			return $this->reads->form_page( $this->actor(), $this->required_scope(), $after );
+		} catch ( InvalidArgumentException $error ) {
+			return new WP_Error( 'uop_invalid_cursor', 'Invalid form cursor.', array( 'status' => 400 ) );
+		}
 	}
 
 	/**

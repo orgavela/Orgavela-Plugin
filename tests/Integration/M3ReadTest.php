@@ -131,4 +131,47 @@ final class M3ReadTest extends TestCase {
         self::assertSame(403, $archivedProfile->get_status(), 'Archived profile data must stay inaccessible.');
 
     }
+
+    public function test_form_list_cursor_loads_past_100_and_rejects_invalid_scope(): void {
+        $people = new PersonRepository($this->db, $this->prefix);
+        $forms = new FormRepository($this->db, $this->prefix);
+        $fields = new ProfileFieldRepository($this->db, $this->prefix);
+        $manager = wp_create_user('uop_page_' . bin2hex(random_bytes(4)), wp_generate_password(25), 'page_' . bin2hex(random_bytes(4)) . '@example.invalid');
+        self::assertIsInt($manager);
+        (new \WP_User($manager))->set_role('administrator');
+        $actor = new Actor($manager);
+        $policy = new PolicyService($people, new DelegationRepository($this->db, $this->prefix), new AssignmentRepository($this->db, $this->prefix), static fn(int $id, string $cap): bool => $id === $manager);
+        $tx = new TransactionManager($this->db, static function(int $n): void {}, static function(\Throwable $e): void {});
+        $audit = new AuditWriter($this->db, $this->prefix);
+        $outbox = new OutboxRepository($this->db, $this->prefix);
+        $read = new M3ReadService($people, $fields, new ProfileValueRepository($this->db, $this->prefix), new EventRepository($this->db, $this->prefix), new OccurrenceRepository($this->db, $this->prefix), $forms, $policy, new ProjectionService($policy));
+        $form = new FormService($forms, $policy, $tx, $audit, $outbox);
+        $controller = new M3Controller($read, $form, $policy);
+        $controller->register();
+        wp_set_current_user($manager);
+        $draft = ['schema_version' => 1, 'fields' => [['key' => 'name', 'type' => 'text', 'label' => 'Name', 'required' => true]]];
+        for ($i = 0; $i < 105; ++$i) {
+            $forms->create($this->scope, PublicId::generate(), $manager, 'form_' . $i, 'Synthetic form ' . $i, 'event', $draft, '2030-01-01 00:00:00');
+        }
+        $first = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/forms'));
+        self::assertSame(200, $first->get_status());
+        self::assertCount(100, $first->get_data()['items']);
+        self::assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', $first->get_data()['next_cursor']);
+        self::assertArrayNotHasKey('id', $first->get_data()['items'][0]);
+
+        $secondRequest = new \WP_REST_Request('GET', '/uop/v1/forms');
+        $secondRequest->set_param('after', $first->get_data()['next_cursor']);
+        $second = rest_do_request($secondRequest);
+        self::assertSame(200, $second->get_status());
+        self::assertCount(5, $second->get_data()['items']);
+        self::assertNull($second->get_data()['next_cursor']);
+        self::assertCount(105, array_unique(array_merge(array_column($first->get_data()['items'], 'public_id'), array_column($second->get_data()['items'], 'public_id'))));
+
+        $foreignRequest = new \WP_REST_Request('GET', '/uop/v1/forms');
+        $foreignRequest->set_param('after', PublicId::generate()->to_string());
+        self::assertSame(400, rest_do_request($foreignRequest)->get_status());
+        $invalidRequest = new \WP_REST_Request('GET', '/uop/v1/forms');
+        $invalidRequest->set_param('after', '1 OR 1=1');
+        self::assertSame(400, rest_do_request($invalidRequest)->get_status());
+    }
 }
