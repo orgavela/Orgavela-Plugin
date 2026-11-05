@@ -1,0 +1,11 @@
+/vendor/
+/node_modules/
+/build/
+/dist/
+/.phpunit.cache/
+/.phpstan-cache/
+/test-results/
+/playwright-report/
+/tests/wordpress/
+/.env
+*.log

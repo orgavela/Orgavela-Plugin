@@ -1,0 +1,144 @@
+name: Foundation and persistence
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+env:
+  COMPOSER_ROOT_VERSION: 0.1.0-alpha.2
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, mbstring, zip
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer validate --strict
+      - run: composer audit
+      - run: composer lint
+      - run: composer analyse
+      - run: composer test
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: node bin/schema-manifest.mjs --check
+      - run: npm run build
+      - run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+      - name: Reproducible release archive
+        run: |
+          php bin/package.php > /tmp/hash-one
+          php bin/package.php > /tmp/hash-two
+          diff /tmp/hash-one /tmp/hash-two
+          unzip -l dist/uop-core.zip
+          php tests/packaging.php
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uop-core
+          path: dist/uop-core.zip
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+        db: ['mysql:8.0', 'mariadb:10.11']
+    services:
+      database:
+        image: ${{ matrix.db }}
+        env:
+          MYSQL_ROOT_PASSWORD: uop_disposable_test
+          MYSQL_DATABASE: uop_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -puop_disposable_test"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, mbstring, zip
+          tools: composer:v2, wp-cli
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer test
+      - name: Install disposable WordPress
+        env:
+          WP_VERSION: ${{ matrix.php == '8.3' && '6.9' || '7.1.1' }}
+        run: |
+          echo "WP_ROOT=/tmp/uop-wordpress" >> "$GITHUB_ENV"
+          echo "UOP_TEST_ALLOW_DATABASE=1" >> "$GITHUB_ENV"
+          password="$(openssl rand -hex 20)"
+          echo "::add-mask::$password"
+          echo "WP_ADMIN_PASSWORD=$password" >> "$GITHUB_ENV"
+          wp core download --version="$WP_VERSION" --path=/tmp/uop-wordpress
+          wp config create --path=/tmp/uop-wordpress --dbname=uop_test --dbuser=root --dbpass=uop_disposable_test --dbhost=127.0.0.1 --dbcharset=utf8mb4 --dbprefix=uop_ci_
+          wp config set WP_DEBUG true --raw --path=/tmp/uop-wordpress
+          wp config set WP_DEBUG_LOG true --raw --path=/tmp/uop-wordpress
+          wp config set DISABLE_WP_CRON true --raw --path=/tmp/uop-wordpress
+          wp core install --path=/tmp/uop-wordpress --url=http://127.0.0.1:8080 --title=UOP-Test --admin_user=uop_test_admin --admin_password="$password" --admin_email=uop@example.invalid --skip-email
+          ln -s "$GITHUB_WORKSPACE" /tmp/uop-wordpress/wp-content/plugins/uop-core
+      - run: composer test:integration
+      - name: WP CLI activation and deactivation
+        run: |
+          wp plugin activate uop-core --path="$WP_ROOT"
+          wp plugin deactivate uop-core --path="$WP_ROOT"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Browser activation smoke
+        run: |
+          php -S 127.0.0.1:8080 -t "$WP_ROOT" > /tmp/uop-server.log 2>&1 &
+          npm run test:browser
+      - name: Multisite persistence regression
+        run: |
+          wp core multisite-convert --path="$WP_ROOT" --title=UOP-Network
+          wp eval-file "$GITHUB_WORKSPACE/tests/multisite.php" --path="$WP_ROOT"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: diagnostics-${{ strategy.job-index }}
+          path: |
+            test-results/
+            /tmp/uop-server.log
+            /tmp/uop-wordpress/wp-content/debug.log
+  artifact-smoke:
+    needs: quality
+    runs-on: ubuntu-latest
+    services:
+      database:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: uop_disposable_test
+          MYSQL_DATABASE: uop_artifact
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -puop_disposable_test"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: uop-core
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, mbstring, zip
+          tools: wp-cli
+          coverage: none
+      - run: |
+          wp core download --version=6.9 --path=/tmp/wordpress
+          wp config create --path=/tmp/wordpress --dbname=uop_artifact --dbuser=root --dbpass=uop_disposable_test --dbhost=127.0.0.1 --dbcharset=utf8mb4
+          wp core install --path=/tmp/wordpress --url=http://example.invalid --title=Artifact --admin_user=test_admin --admin_password="$(openssl rand -hex 20)" --admin_email=test@example.invalid --skip-email
+          wp plugin install "$PWD/uop-core.zip" --activate --path=/tmp/wordpress
+          wp plugin deactivate uop-core --path=/tmp/wordpress
