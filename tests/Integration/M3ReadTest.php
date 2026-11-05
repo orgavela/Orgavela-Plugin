@@ -85,5 +85,29 @@ final class M3ReadTest extends TestCase {
         wp_set_current_user($member);
         $memberResult=rest_do_request($profileReq);
         self::assertSame(['display'=>'Hello'],$memberResult->get_data()['fields']);
+
+        // A self-service member may read their own projected profile, but must
+        // never be able to read a manager form draft or mutate/publish it.
+        $formPath = '/uop/v1/forms/' . $created->to_string();
+        $formRead = rest_do_request(new \WP_REST_Request('GET', $formPath));
+        self::assertSame(403, $formRead->get_status());
+
+        $draftWrite = new \WP_REST_Request('PUT', $formPath . '/draft');
+        $draftWrite->set_header('content-type', 'application/json');
+        $draftWrite->set_body(wp_json_encode([
+            'revision' => 1,
+            'draft' => [
+                'schema_version' => 1,
+                'fields' => [['key' => 'name', 'type' => 'text', 'label' => 'Escalation', 'required' => true]],
+            ],
+        ]));
+        $deniedWrite = rest_do_request($draftWrite);
+        self::assertSame(403, $deniedWrite->get_status(), 'Member must not update form drafts.');
+
+        $publishRequest = new \WP_REST_Request('POST', $formPath . '/publish');
+        $publishRequest->set_header('content-type', 'application/json');
+        $publishRequest->set_body(wp_json_encode(['revision' => 1]));
+        $deniedPublish = rest_do_request($publishRequest);
+        self::assertSame(403, $deniedPublish->get_status(), 'Member must not publish forms.');
     }
 }
