@@ -267,4 +267,72 @@ final class M3ReadTest extends TestCase {
         self::assertSame(403, $restricted->get_status(), 'Subscriber route must fail closed.');
         self::assertSame([], $read->events(new Actor($reader), $this->scope), 'UOP manager policy must not bypass the WordPress post gate.');
     }
+
+
+    public function test_event_occurrences_page_beyond_100_with_stable_timestamp_and_scoped_cursor(): void {
+        $people = new PersonRepository($this->db, $this->prefix);
+        $fields = new ProfileFieldRepository($this->db, $this->prefix);
+        $values = new ProfileValueRepository($this->db, $this->prefix);
+        $events = new EventRepository($this->db, $this->prefix);
+        $occurrences = new OccurrenceRepository($this->db, $this->prefix);
+        $forms = new FormRepository($this->db, $this->prefix);
+        $manager = wp_create_user('uop_occ_page_' . bin2hex(random_bytes(4)), wp_generate_password(24), 'occ_page_' . bin2hex(random_bytes(4)) . '@example.invalid');
+        $stranger = wp_create_user('uop_occ_denied_' . bin2hex(random_bytes(4)), wp_generate_password(24), 'occ_denied_' . bin2hex(random_bytes(4)) . '@example.invalid');
+        self::assertIsInt($manager);
+        self::assertIsInt($stranger);
+        (new \WP_User($manager))->set_role('administrator');
+        (new \WP_User($stranger))->set_role('subscriber');
+        if (!post_type_exists('uop_event')) {
+            register_post_type('uop_event', ['public' => true]);
+        }
+        $eventPostId = wp_insert_post(['post_type' => 'uop_event', 'post_title' => 'Fixture event', 'post_status' => 'draft', 'post_author' => $manager]);
+        $otherPostId = wp_insert_post(['post_type' => 'uop_event', 'post_title' => 'Other event', 'post_status' => 'draft', 'post_author' => $manager]);
+        self::assertIsInt($eventPostId);
+        self::assertIsInt($otherPostId);
+        $eventId = PublicId::generate();
+        $otherEventId = PublicId::generate();
+        $now = '2030-01-01 00:00:00';
+        $events->create($this->scope, $eventId, $eventPostId, 'Europe/Berlin', $now);
+        $events->create($this->scope, $otherEventId, $otherPostId, 'Europe/Berlin', $now);
+        $window = new \UOP\Domain\Events\OccurrenceWindow('2030-01-20T10:00:00+01:00', '2030-01-20T11:00:00+01:00', 'Europe/Berlin');
+        for ($i = 0; $i < 105; ++$i) {
+            // Identical UTC start tests the composite (start_at,id) cursor.
+            $occurrences->create($this->scope, PublicId::generate(), $eventPostId, $window, $now);
+        }
+        $foreignCursor = PublicId::generate();
+        $occurrences->create($this->scope, $foreignCursor, $otherPostId, $window, $now);
+        $policy = new PolicyService($people, new DelegationRepository($this->db, $this->prefix), new AssignmentRepository($this->db, $this->prefix), static fn(int $id, string $cap): bool => $id === $manager || $id === $stranger);
+        $reads = new M3ReadService($people, $fields, $values, $events, $occurrences, $forms, $policy, new ProjectionService($policy));
+        $tx = new TransactionManager($this->db, static function(int $n): void {}, static function(\Throwable $e): void {});
+        $formsService = new FormService($forms, $policy, $tx, new AuditWriter($this->db, $this->prefix), new OutboxRepository($this->db, $this->prefix));
+        (new M3Controller($reads, $formsService, $policy))->register();
+
+        $path = '/uop/v1/events/' . $eventId->to_string();
+        wp_set_current_user($manager);
+        $first = rest_do_request(new \WP_REST_Request('GET', $path));
+        self::assertSame(200, $first->get_status());
+        self::assertCount(100, $first->get_data()['occurrences']);
+        self::assertArrayNotHasKey('id', $first->get_data()['occurrences'][0]);
+        self::assertArrayNotHasKey('event_post_id', $first->get_data()['occurrences'][0]);
+        self::assertSame($first->get_data()['occurrences'][99]['public_id'], $first->get_data()['occurrences_next_cursor']);
+        $continuation = new \WP_REST_Request('GET', $path);
+        $continuation->set_param('after_occurrence', $first->get_data()['occurrences_next_cursor']);
+        $second = rest_do_request($continuation);
+        self::assertSame(200, $second->get_status());
+        self::assertCount(5, $second->get_data()['occurrences']);
+        self::assertNull($second->get_data()['occurrences_next_cursor']);
+        $ids = array_merge(array_column($first->get_data()['occurrences'], 'public_id'), array_column($second->get_data()['occurrences'], 'public_id'));
+        self::assertCount(105, array_unique($ids));
+
+        $wrongEvent = new \WP_REST_Request('GET', $path);
+        $wrongEvent->set_param('after_occurrence', $foreignCursor->to_string());
+        self::assertSame(400, rest_do_request($wrongEvent)->get_status());
+        $invalid = new \WP_REST_Request('GET', $path);
+        $invalid->set_param('after_occurrence', 'invalid SQL cursor');
+        self::assertSame(400, rest_do_request($invalid)->get_status());
+        self::assertNull($reads->event(new Actor($manager), new OrgScope($this->scope->id + 200), $eventId));
+        wp_set_current_user($stranger);
+        $denied = rest_do_request(new \WP_REST_Request('GET', $path));
+        self::assertSame(403, $denied->get_status());
+    }
 }

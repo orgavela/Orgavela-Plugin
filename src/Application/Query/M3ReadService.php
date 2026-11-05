@@ -206,10 +206,12 @@ final class M3ReadService {
 	 *
 	 * @param Actor    $actor Current editor.
 	 * @param OrgScope $scope Trusted organization.
-	 * @param PublicId $uuid  Event public ID.
+	 * @param PublicId      $uuid Event public ID.
+	 * @param PublicId|null $after_occurrence Public cursor for next occurrence page.
 	 * @return array<string, mixed>|null
+	 * @throws \InvalidArgumentException If an occurrence cursor belongs to another event.
 	 */
-	public function event( Actor $actor, OrgScope $scope, PublicId $uuid ): ?array {
+	public function event( Actor $actor, OrgScope $scope, PublicId $uuid, ?PublicId $after_occurrence = null ): ?array {
 		$row = $this->events->by_public( $scope, $uuid );
 		if ( ! $row ) {
 			return null;
@@ -218,8 +220,19 @@ final class M3ReadService {
 		if ( ! $this->can_read_event( $actor, $scope, $event_id ) ) {
 			return null;
 		}
+		$after_start = null;
+		$after_id    = 0;
+		if ( null !== $after_occurrence ) {
+			$cursor = $this->occurrences->event_cursor( $scope, $event_id, $after_occurrence );
+			if ( ! $cursor ) {
+				throw new \InvalidArgumentException( 'Occurrence cursor is not owned by the selected event.' );
+			}
+			$after_start = (string) $cursor['start_at'];
+			$after_id    = (int) $cursor['id'];
+		}
 		$occurrences = array();
-		foreach ( $this->occurrences->for_event( $scope, $event_id ) as $occurrence ) {
+		$rows        = $this->occurrences->for_event_page( $scope, $event_id, $after_start, $after_id );
+		foreach ( $rows as $occurrence ) {
 			$occurrences[] = array(
 				'public_id'     => PublicId::from_binary( $occurrence['public_id'] )->to_string(),
 				'starts_at_utc' => (string) $occurrence['start_at'],
@@ -228,13 +241,15 @@ final class M3ReadService {
 				'status'        => (string) $occurrence['status'],
 			);
 		}
+		$next_cursor = count( $rows ) === 100 ? $occurrences[99]['public_id'] : null;
 		return array(
-			'public_id'   => $uuid->to_string(),
-			'title'       => get_the_title( $event_id ),
-			'status'      => (string) $row['status'],
-			'visibility'  => (string) $row['visibility'],
-			'timezone'    => (string) $row['timezone'],
-			'occurrences' => $occurrences,
+			'public_id'               => $uuid->to_string(),
+			'title'                   => get_the_title( $event_id ),
+			'status'                  => (string) $row['status'],
+			'visibility'              => (string) $row['visibility'],
+			'timezone'                => (string) $row['timezone'],
+			'occurrences'             => $occurrences,
+			'occurrences_next_cursor' => $next_cursor,
 		);
 	}
 

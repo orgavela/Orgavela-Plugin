@@ -271,13 +271,23 @@ final class M3Controller {
 	}
 
 	/**
-	 * Return authorized event and occurrence read model.
+	 * Return an authorized event with one bounded occurrence page.
 	 *
 	 * @param WP_REST_Request $request Incoming request.
-	 * @return array<string, mixed>
+	 * @return array<string,mixed>|WP_Error
+	 * @throws InvalidArgumentException If the cursor shape is malformed.
 	 */
-	public function event( WP_REST_Request $request ): array {
-		return (array) $this->reads->event( $this->actor(), $this->required_scope(), $this->required_uuid( $request ) );
+	public function event( WP_REST_Request $request ): array|WP_Error {
+		try {
+			$raw = $request->get_param( 'after_occurrence' );
+			if ( null !== $raw && ! is_string( $raw ) ) {
+				throw new InvalidArgumentException( 'Invalid occurrence cursor format.' );
+			}
+			$after = null !== $raw ? PublicId::from_string( $raw ) : null;
+			return (array) $this->reads->event( $this->actor(), $this->required_scope(), $this->required_uuid( $request ), $after );
+		} catch ( InvalidArgumentException $error ) {
+			return new WP_Error( 'uop_invalid_cursor', 'Invalid occurrence cursor.', array( 'status' => 400 ) );
+		}
 	}
 
 	/**
