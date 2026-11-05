@@ -97,6 +97,60 @@ final class M2IdentityTest extends TestCase {
     }
 
 
+    public function test_deleted_wordpress_user_revokes_late_and_archived_organizations(): void {
+        // The legacy cleanup silently stopped after 100 ACTIVE organizations.
+        // Do not retain a deleted user's person link or grants in organization 101+
+        // or in an archived organization that might be reactivated later.
+        $f = $this->fixture();
+        $victim = wp_create_user(
+            'uop_delete_' . bin2hex(random_bytes(4)),
+            wp_generate_password(20),
+            'delete_' . bin2hex(random_bytes(4)) . '@example.invalid'
+        );
+        self::assertIsInt($victim);
+        $now = '2030-01-02 03:04:05';
+        $targets = [];
+        for ($i = 0; $i < 102; ++$i) {
+            $slug = 'uop-deletion-' . $i;
+            $status = $i === 101 ? 'archived' : 'active';
+            $this->db->execute(
+                'INSERT INTO %i (public_id, name, slug, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s)',
+                [$this->prefix . 'organizations', PublicId::generate()->to_binary(), $slug, $slug, $status, $now, $now]
+            );
+            if ($i < 100) {
+                continue;
+            }
+            $rows = $this->db->rows(
+                'SELECT id FROM %i WHERE slug = %s',
+                [$this->prefix . 'organizations', $slug]
+            );
+            self::assertCount(1, $rows);
+            $scope = new OrgScope((int) $rows[0]['id']);
+            $person = PublicId::generate();
+            $f['people']->create($scope, $person, 'Synthetic Person', null, $now);
+            self::assertTrue($f['people']->link($scope, $person, $victim, $now));
+            $f['assignments']->grant($scope, $victim, 'viewer', 'organization', 0, 'personal', $now);
+            $targets[] = [$scope, $person];
+        }
+        self::assertCount(2, $targets);
+        $deletion = new AccountDeletionListener(
+            $this->db, $this->prefix, $f['people'], $f['delegations'],
+            $f['assignments'], $f['tx'], $f['audit'], $f['outbox'], $f['pub']
+        );
+        $deletion->handle($victim);
+        foreach ($targets as [$scope, $person]) {
+            $row = $f['people']->find($scope, $person);
+            self::assertNotNull($row, 'Deleting an account must retain the person record.');
+            self::assertNull($row['wp_user_id'], 'Deleted WordPress user is still linked.');
+            self::assertSame([], $f['assignments']->active_for($scope, $victim));
+            $events = $this->db->rows(
+                'SELECT id FROM %i WHERE organization_id = %d AND event_name = %s',
+                [$this->prefix . 'domain_events', $scope->id, 'person.account_unlinked']
+            );
+            self::assertCount(1, $events, 'Deletion must leave one audit/outbox event per linked person.');
+        }
+    }
+
     public function test_assignment_grant_and_revoke_are_scoped_and_audited(): void {
         $f=$this->fixture();
         $manager=new Actor($f['admin']);
