@@ -3,6 +3,18 @@
 **Stand:** 12.10.2026, initiale V1-Baseline nach Liveprüfung. **V1-Status: NICHT ABGENOMMEN.**  
 **Normativer Masterplan:** [V1_ACCEPTANCE_PLAN.md](../operations/V1_ACCEPTANCE_PLAN.md) · **Verbindliche Fortschrittsdaten:** [V1_PROGRESS.json](../operations/V1_PROGRESS.json) · **Zentrales Abnahme-Issue:** [#15](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/15) · **Ergänzende Roadmap:** [V1_MASTER_PLAN.md](V1_MASTER_PLAN.md) · **Abnahmematrix:** [V1_ACCEPTANCE_MATRIX.md](V1_ACCEPTANCE_MATRIX.md) · **Arbeitsjournal:** [ASSISTANT_WORK_LOG.md](../operations/ASSISTANT_WORK_LOG.md).
 
+## Aktueller W0-Betriebsnachtrag – 05.11.2026 (keine V1-Freigabe)
+
+| Prüfbereich | Neu verifizierter technischer Status | Nächste Hürde |
+|---|---|---|
+| **O04 / echter SSH-Cron-Audit** | [GitHub Actions #42036870948](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42036870948) **SUCCESS** auf OrgaVela: `WP-Cron disabled`, Action-Scheduler-Store vorhanden, kein >10-Minuten-Pending, aber `1–10` historische/zeitlich ungeklärte Failed-Actions | **Externe IONOS-Jobkonfiguration, echte Laufhistorie, Alarm-/Recovery-Probe** nicht geprüft; O04 bleibt **blocked** |
+| **O03 / synthetische Recovery** | PR #46 ist **in `main` integriert** (`98a064fc`); [synthetische MariaDB-11.8-Restore-CI #42038116880](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42038116880) und [CircleCI Main #92](https://circleci.com/gh/orgavela/Orgavela-Plugin/92) **SUCCESS** | **Kein echter Vollsnapshot von orgavela.com, kein isolierter echter Restore**, kein O03-Signoff |
+| **O09 / reale CI-Provider-Verbindung** | CircleCI `source-integrity` auf geschütztem `main` nach Konfigurationsfix mehrfach **SUCCESS** | Vollständige Plugin-Stack-/PHP-/Browser-CI nach Feature-PR-Integration ausstehend; O09 bleibt **partial** |
+| **Privates Backup-Ziel** | `orgavela/orgavela-backups` als **privat** geprüft; drei Releases enthalten **nur synthetische** Testarchive (Age historisch, OpenPGP/PGPony aktueller Plan) | Echte getrennt autorisierte verschlüsselte Capture-/Writer-/Readback-/Restore-Kette fehlt |
+| **Live-Umgebung** | Über verbundene OrgaVela-WordPress-Lesefunktionen geprüft: WP **7.1.4**, PHP **8.3.36**, MariaDB **11.8.8**, **UOP Core 0.1.0-alpha.2 aktiv** | Kein V1-Deploy, keine echten Teilnehmerdaten oder Datenschutz-Freigabe |
+
+**Formaler V1-Stand:** historische Implementierung **62/71**, Abnahme **0/8 M-Meilensteine**, **0/4 P4**, **0/18 Release-Gates**. Der 04.11.-Nachtrag darunter ist ein **damaliger PR-Zwischenstand**; sein Hinweis „noch nicht integriert“ ist durch den oben belegten Merge von PR #46 überholt. Verbindliche datierte Belege sind in [`V1_PROGRESS.json`](../operations/V1_PROGRESS.json) unter `latest_verified_operational_evidence` und in den O03-/O04-Runbooks festgehalten.
+
 ## Evidenznachtrag O03/W0 – 04.11.2026 (ohne formale Abnahme)
 
 Auf [PR #46](https://github.com/orgavela/Orgavela-Plugin/pull/46), HEAD `ebe2ed3eb791e9dfc38237f5fb39bb58122285ad`, ist der wiederhergestellte **synthetische** MariaDB-11.8-Backup-/Restore-Job [#41867617337](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41867617337) vollständig **grün**. Datenbank-Dump und WordPress-Test-Dateiarchiv wurden getrennt absichtlich beschädigt, beide SHA-256-Prüfungen lehnten die Manipulationen ab. Die wiederhergestellten Originale bestanden die Checks, die zuvor leere isolierte Zieldatenbank erhielt zwei künstliche Datensätze; Index, Archivdateien und Prüfsummen stimmten. Auf dem früheren Code-Commit war bereits [#41867282907](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41867282907) grün. Der Branch ist noch nicht in `main` integriert.
