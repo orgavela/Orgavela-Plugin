@@ -1,0 +1,42 @@
+name: O09 M3 - CircleCI PHP-image diagnostic parity
+
+on:
+  push:
+    branches:
+      - integration/o09-m3-forms-events-20261105
+    paths:
+      - '.github/workflows/o09-m3-circleci-parity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  circleci-image-parity:
+    if: github.repository == 'orgavela/Orgavela-Plugin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    container:
+      image: cimg/php:8.3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: CircleCI image tooling and read-only operations safety syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -v
+          composer --version
+          bash -n scripts/ci/orgavela-readonly-audit.sh
+          bash -n scripts/ci/orgavela-cron-status-evaluate.sh
+          bash -n scripts/ci/orgavela-cron-evaluator-tests.sh
+          bash scripts/ci/orgavela-cron-evaluator-tests.sh
+      - name: Reproduce provider Composer validation and PHP checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer validate --strict
+          composer install --no-interaction --prefer-dist --no-progress
+          composer lint
+          composer analyse
+          composer test
