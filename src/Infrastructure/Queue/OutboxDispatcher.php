@@ -77,8 +77,10 @@ final class OutboxDispatcher {
 					$uuid = PublicId::from_binary( $event['event_uuid'] )->to_string();
 					if ( null !== $this->enqueue ) {
 						( $this->enqueue )( $scope->id, $uuid );
-					} else {
+					} elseif ( function_exists( 'as_enqueue_async_action' ) ) {
 						as_enqueue_async_action( 'uop_outbox_consume', array( $scope->id, $uuid ), 'uop', true );
+					} else {
+						throw new \RuntimeException( 'Action Scheduler enqueue function unavailable.' );
 					}
 				}
 			}
