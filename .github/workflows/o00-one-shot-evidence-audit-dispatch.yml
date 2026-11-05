@@ -1,4 +1,4 @@
-name: OrgaVela O01-O04 one-time read-only evidence dispatch
+name: OrgaVela O03 retry missing read-only backup preflight
 
 on:
   push:
@@ -21,38 +21,37 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - name: Inspect only fixed read-only dispatches and main guards
+      - name: Validate fixed single read-only backup inventory operation
         shell: bash
         run: |
           set -euo pipefail
           ruby -ryaml -rdate -e '
             c = YAML.safe_load(File.read(".github/workflows/o00-one-shot-evidence-audit-dispatch.yml"), permitted_classes: [Date, Time], aliases: true)
-            abort "Write permission at workflow level" unless c.fetch("permissions") == {"contents"=>"read"}
-            dispatch = c.fetch("jobs").fetch("dispatch-readonly-audits")
-            guard = dispatch.fetch("if")
-            %w[push main orgavela/Orgavela-Plugin].each { |v| abort "Missing main guard" unless guard.include?(v) }
-            abort "Dispatcher must not have IONOS environment" if dispatch.key?("environment")
-            command = dispatch.fetch("steps").last.fetch("run")
-            abort "Wrong target" unless command.include?("orgavela-readonly-audit.yml/dispatches")
-            %w[schema backup-preflight cron].each { |m| abort "Missing permitted audit #{m}" unless command.include?(m) }
-            abort "Forbidden dispatch mode" if command.include?("sftp") || command.include?("deploy") || command.include?("restore")
-            abort "Must use normal workflow_dispatch" unless command.include?("gh api --method POST")
-            abort "Missing strict monitoring" unless command.include?("inputs[strict_monitor]=true")
-            puts "Normal read-only O02/O03/O04 dispatch bridge constrained and statically reviewed."
+            abort "Workflow token overprivileged" unless c.fetch("permissions") == {"contents"=>"read"}
+            job = c.fetch("jobs").fetch("dispatch-readonly-backup")
+            guard = job.fetch("if")
+            %w[push main orgavela/Orgavela-Plugin].each { |v| abort "Missing strict guard #{v}" unless guard.include?(v) }
+            abort "Dispatcher must not use IONOS environment" if job.key?("environment")
+            command = job.fetch("steps").last.fetch("run")
+            abort "Wrong path" unless command.include?("orgavela-readonly-audit.yml/dispatches")
+            abort "Wrong operation" unless command.include?("inputs[operation]=backup-preflight")
+            abort "Cannot dispatch multiple jobs" if command.include?("for operation")
+            abort "Must use normal GitHub dispatch" unless command.include?("gh api --method POST")
+            puts "Only one fixed read-only O03 backup preflight may be dispatched."
           '
 
-  dispatch-readonly-audits:
+  dispatch-readonly-backup:
     if: >-
       github.event_name == 'push' &&
       github.repository == 'orgavela/Orgavela-Plugin' &&
       github.ref == 'refs/heads/main' &&
-      startsWith(github.event.head_commit.message, 'ops(o01-o04): one-time read-only WordPress evidence audit')
+      startsWith(github.event.head_commit.message, 'ops(o03): retry one read-only backup preflight')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Scoped, expiring OrgaVela App token
-        uses: actions/create-github-app-token@v3
+      - name: Scoped OrgaVela App token
         id: token
+        uses: actions/create-github-app-token@v3
         with:
           client-id: ${{ secrets.ORGAVELA_APP_CLIENT_ID }}
           private-key: ${{ secrets.ORGAVELA_APP_PRIVATE_KEY }}
@@ -60,25 +59,13 @@ jobs:
           repositories: Orgavela-Plugin
           permission-actions: write
           permission-contents: read
-      - name: Dispatch only fixed safe metadata reads
+      - name: Dispatch only normal read-only O03 backup preflight
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
         shell: bash
         run: |
           set -euo pipefail
-          for operation in schema backup-preflight cron; do
-            if [[ "$operation" == "cron" ]]; then
-              gh api --method POST -H "Accept: application/vnd.github+json" \
-                "repos/orgavela/Orgavela-Plugin/actions/workflows/orgavela-readonly-audit.yml/dispatches" \
-                -f ref=main \
-                -f "inputs[operation]=cron" \
-                -f "inputs[strict_monitor]=true" >/dev/null
-            else
-              gh api --method POST -H "Accept: application/vnd.github+json" \
-                "repos/orgavela/Orgavela-Plugin/actions/workflows/orgavela-readonly-audit.yml/dispatches" \
-                -f ref=main \
-                -f "inputs[operation]=$operation" >/dev/null
-            fi
-            echo "Dispatched ordinary read-only OrgaVela audit operation: $operation"
-          done
-          echo "Dispatch acceptance does not mean the separate SSH jobs succeeded."
+          gh api --method POST -H "Accept: application/vnd.github+json" \
+            "repos/orgavela/Orgavela-Plugin/actions/workflows/orgavela-readonly-audit.yml/dispatches" \
+            -f ref=main -f "inputs[operation]=backup-preflight" >/dev/null
+          echo "Requested precisely one read-only O03 backup metadata audit. No backup was created."
