@@ -61,7 +61,6 @@ final class ProfileValueRepository {
 	 * @param OrgScope $scope Trusted organization.
 	 * @param int      $person_id Internal subject ID already scoped in the application.
 	 * @return list<array<string, mixed>>
-	 * @throws InvalidArgumentException If the scoped subject ID is invalid.
 	 * @throws RuntimeException If the bounded read exceeds 10,000 values.
 	 */
 	public function for_person( OrgScope $scope, int $person_id ): array {
