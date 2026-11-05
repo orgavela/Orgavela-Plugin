@@ -3,6 +3,14 @@
 **Stand:** 12.10.2026, initiale V1-Baseline nach Liveprüfung. **V1-Status: NICHT ABGENOMMEN.**  
 **Normativer Masterplan:** [V1_ACCEPTANCE_PLAN.md](../operations/V1_ACCEPTANCE_PLAN.md) · **Verbindliche Fortschrittsdaten:** [V1_PROGRESS.json](../operations/V1_PROGRESS.json) · **Zentrales Abnahme-Issue:** [#15](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/15) · **Ergänzende Roadmap:** [V1_MASTER_PLAN.md](V1_MASTER_PLAN.md) · **Abnahmematrix:** [V1_ACCEPTANCE_MATRIX.md](V1_ACCEPTANCE_MATRIX.md) · **Arbeitsjournal:** [ASSISTANT_WORK_LOG.md](../operations/ASSISTANT_WORK_LOG.md).
 
+## O01–O12-Neubewertung – 05.11.2026, späterer Betriebsblock
+
+**Formale Ops-Abnahmen: 0/12; V1 weiterhin NO-GO.** Nach O08-Monitorintegration (PR #53/#54), realem Schema-Audit [#42042192653](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042192653) und isoliert wiederholter echter Backup-Metadaten-Prüfung [#42042772320](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042772320) ist **keine** Vollsicherung/Recovery einer echten Site erfolgt. Eine strengere Cron-Prüfung [#42042200606](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606) war **berechtigt ROT**: `action_scheduler_run_queue` 5–15 Minuten überfällig, historische Failures `1–10`, keine letzten 24h neu fehlgeschlagenen Aktionen; externer IONOS-Cron unklar. Dieser Status darf nicht durch einen grünen `source-integrity`-Job überdeckt werden.
+
+Die WordPress-Live-Leseprüfung zeigte außerdem `Privacy Policy=draft`, `discourage_search_engines=false` und eine veröffentlichte Beispielseite. Vor realem UOP-Staging-Testbetrieb sind Zugriffs-/Index-/Rechtsfragen offen. O08 wechselt technisch von `not-started` auf **`partial`**, weil die tägliche reine Beobachtung eingerichtet ist; ihr erster regulärer Zeitplanlauf und eine echte Alarmzustellung sind noch nicht belegt. Alle anderen O-Statuswerte bleiben konservativ.
+
+**Verbindliche Detailabgrenzung:** [O01–O12-Abschlussprotokoll](../operations/O01_O12_EXIT_PLAN_2026-11-05.md) · [maschinenlesbare zwölf Gate-Statuswerte](../operations/O01_O12_EXIT_GATES.json) · [aktuelle Betriebsbelege](../operations/V1_PROGRESS.json). Zusätzlich verhindert ein kostenloser GitHub-Check nachgewiesene Widersprüche zwischen Exit-Matrix, normativem V1-Status und einer eventuell fälschlich gesetzten `GO`-Entscheidung. Die ursprünglichen Feature-PRs sind weiterhin nicht in `main` integriert; M 0/8, P4 0/4, R 0/18.
+
 ## Aktueller W0-Betriebsnachtrag – 05.11.2026 (keine V1-Freigabe)
 
 | Prüfbereich | Neu verifizierter technischer Status | Nächste Hürde |
