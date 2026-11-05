@@ -251,12 +251,23 @@ final class M3Controller {
 	}
 
 	/**
-	 * Return authorized event summaries.
+	 * Return an authorized keyset page without leaking private event IDs.
 	 *
-	 * @return array<string, mixed>
+	 * @param WP_REST_Request|null $request Incoming page request, if any.
+	 * @return array<string,mixed>|WP_Error
+	 * @throws InvalidArgumentException If the cursor shape is invalid.
 	 */
-	public function events(): array {
-		return array( 'items' => $this->reads->events( $this->actor(), $this->required_scope() ) );
+	public function events( ?WP_REST_Request $request = null ): array|WP_Error {
+		try {
+			$raw = null !== $request ? $request->get_param( 'after' ) : null;
+			if ( null !== $raw && ! is_string( $raw ) ) {
+				throw new InvalidArgumentException( 'Invalid event cursor format.' );
+			}
+			$after = null !== $raw ? PublicId::from_string( $raw ) : null;
+			return $this->reads->event_page( $this->actor(), $this->required_scope(), $after );
+		} catch ( InvalidArgumentException $error ) {
+			return new WP_Error( 'uop_invalid_cursor', 'Invalid event cursor.', array( 'status' => 400 ) );
+		}
 	}
 
 	/**

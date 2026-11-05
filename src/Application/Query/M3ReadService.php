@@ -141,24 +141,60 @@ final class M3ReadService {
 	 * @return list<array<string, mixed>>
 	 */
 	public function events( Actor $actor, OrgScope $scope ): array {
-		$result = array();
-		foreach ( $this->events->for_organization( $scope ) as $row ) {
-			$event_id = (int) $row['event_post_id'];
-			$post     = get_post( $event_id );
-			if ( ! $post || 'uop_event' !== $post->post_type || 'trash' === $post->post_status
-				|| ! user_can( $actor->user_id, 'edit_post', $event_id )
-				|| ! $this->policy->can( $actor, 'event.manage', new PolicyObject( $scope->id, 'event', $event_id, null, $event_id ) )->allowed ) {
-				continue;
+		return $this->event_page( $actor, $scope, null )['items'];
+	}
+
+	/**
+	 * Fetch up to 100 policy- and WordPress-authorized events.
+	 *
+	 * Only a visible event UUID is used as the external cursor; denied
+	 * raw database records must never become public pagination tokens.
+	 *
+	 * @param Actor         $actor Authenticated actor.
+	 * @param OrgScope      $scope Trusted organization.
+	 * @param PublicId|null $after Authorized public event from previous page.
+	 * @return array{items:list<array<string,mixed>>,next_cursor:?string}
+	 * @throws \InvalidArgumentException If the cursor does not refer to an accessible event.
+	 */
+	public function event_page( Actor $actor, OrgScope $scope, ?PublicId $after ): array {
+		$after_post_id = 0;
+		if ( null !== $after ) {
+			$cursor = $this->events->by_public( $scope, $after );
+			if ( ! $cursor || ! $this->can_read_event( $actor, $scope, (int) $cursor['event_post_id'] ) ) {
+				throw new \InvalidArgumentException( 'Invalid event cursor.' );
 			}
-			$result[] = array(
-				'public_id'  => PublicId::from_binary( $row['public_id'] )->to_string(),
-				'title'      => get_the_title( $event_id ),
-				'status'     => (string) $row['status'],
-				'visibility' => (string) $row['visibility'],
-				'timezone'   => (string) $row['timezone'],
-			);
+			$after_post_id = (int) $cursor['event_post_id'];
 		}
-		return $result;
+		$result = array();
+		// Scan bounded raw pages until a full authorized page is assembled;
+		// never leak private event IDs merely to advance past hidden rows.
+		for ( $batch = 0; $batch < 20; ++$batch ) {
+			$rows = $this->events->for_organization( $scope, $after_post_id );
+			foreach ( $rows as $row ) {
+				$event_id = (int) $row['event_post_id'];
+				if ( ! $this->can_read_event( $actor, $scope, $event_id ) ) {
+					continue;
+				}
+				$result[] = array(
+					'public_id'  => PublicId::from_binary( $row['public_id'] )->to_string(),
+					'title'      => get_the_title( $event_id ),
+					'status'     => (string) $row['status'],
+					'visibility' => (string) $row['visibility'],
+					'timezone'   => (string) $row['timezone'],
+				);
+				if ( 100 === count( $result ) ) {
+					return array(
+						'items'       => $result,
+						'next_cursor' => $result[99]['public_id'],
+					);
+				}
+			}
+			if ( count( $rows ) < 100 ) {
+				return array( 'items' => $result, 'next_cursor' => null );
+			}
+			$after_post_id = (int) $rows[ count( $rows ) - 1 ]['event_post_id'];
+		}
+		throw new RuntimeException( 'Event listing exceeds the safe authorization scan limit.' );
 	}
 
 	/**
@@ -175,10 +211,7 @@ final class M3ReadService {
 			return null;
 		}
 		$event_id = (int) $row['event_post_id'];
-		$post     = get_post( $event_id );
-		if ( ! $post || 'uop_event' !== $post->post_type || 'trash' === $post->post_status
-			|| ! user_can( $actor->user_id, 'edit_post', $event_id )
-			|| ! $this->policy->can( $actor, 'event.manage', new PolicyObject( $scope->id, 'event', $event_id, null, $event_id ) )->allowed ) {
+		if ( ! $this->can_read_event( $actor, $scope, $event_id ) ) {
 			return null;
 		}
 		$occurrences = array();
@@ -274,6 +307,25 @@ final class M3ReadService {
 			$after_field = (int) $field_rows[ count( $field_rows ) - 1 ]['id'];
 		}
 		return $this->projection->project( $actor, 'person.view', $object, $uuid, $definitions, $values );
+	}
+
+
+	/**
+	 * Require both tenant policy and actual WordPress post ownership rights.
+	 *
+	 * @param Actor    $actor Current actor.
+	 * @param OrgScope $scope Trusted organization.
+	 * @param int      $event_id Trusted scoped WordPress post ID.
+	 * @return bool
+	 */
+	private function can_read_event( Actor $actor, OrgScope $scope, int $event_id ): bool {
+		if ( $event_id < 1 ) {
+			return false;
+		}
+		$post = get_post( $event_id );
+		return null !== $post && 'uop_event' === $post->post_type && 'trash' !== $post->post_status
+			&& user_can( $actor->user_id, 'edit_post', $event_id )
+			&& $this->policy->can( $actor, 'event.manage', new PolicyObject( $scope->id, 'event', $event_id, null, $event_id ) )->allowed;
 	}
 
 	/**

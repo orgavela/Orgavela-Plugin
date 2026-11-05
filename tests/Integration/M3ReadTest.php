@@ -213,4 +213,60 @@ final class M3ReadTest extends TestCase {
         self::assertSame($options, $profile['fields']['bulk_100'], 'All values remain ordered by ordinal across keyset boundaries.');
         self::assertNull($reads->profile(new Actor($manager), new OrgScope($this->scope->id + 999), $person));
     }
+
+
+    public function test_event_list_pages_past_100_without_revealing_wordpress_posts(): void {
+        $people = new PersonRepository($this->db, $this->prefix);
+        $fields = new ProfileFieldRepository($this->db, $this->prefix);
+        $values = new ProfileValueRepository($this->db, $this->prefix);
+        $events = new EventRepository($this->db, $this->prefix);
+        $forms = new FormRepository($this->db, $this->prefix);
+        $manager = wp_create_user('uop_event_page_' . bin2hex(random_bytes(4)), wp_generate_password(24), 'event_page_' . bin2hex(random_bytes(4)) . '@example.invalid');
+        $reader = wp_create_user('uop_event_reader_' . bin2hex(random_bytes(4)), wp_generate_password(24), 'event_reader_' . bin2hex(random_bytes(4)) . '@example.invalid');
+        self::assertIsInt($manager);
+        self::assertIsInt($reader);
+        (new \WP_User($manager))->set_role('administrator');
+        (new \WP_User($reader))->set_role('subscriber');
+        if (!post_type_exists('uop_event')) {
+            register_post_type('uop_event', ['public' => true]);
+        }
+        $now = '2030-01-01 00:00:00';
+        for ($i = 0; $i < 105; ++$i) {
+            $postId = wp_insert_post(['post_type' => 'uop_event', 'post_title' => 'Synthetic event ' . $i, 'post_status' => 'draft', 'post_author' => $manager]);
+            self::assertIsInt($postId);
+            self::assertGreaterThan(0, $postId);
+            $events->create($this->scope, PublicId::generate(), $postId, 'Europe/Berlin', $now);
+        }
+        // Deliberately over-permissive UOP test resolver: WordPress must
+        // still block a subscriber from reading editorial event posts.
+        $policy = new PolicyService($people, new DelegationRepository($this->db, $this->prefix), new AssignmentRepository($this->db, $this->prefix), static fn(int $id, string $cap): bool => $id === $manager || $id === $reader);
+        $read = new M3ReadService($people, $fields, $values, $events, new OccurrenceRepository($this->db, $this->prefix), $forms, $policy, new ProjectionService($policy));
+        $tx = new TransactionManager($this->db, static function(int $n): void {}, static function(\Throwable $e): void {});
+        $form = new FormService($forms, $policy, $tx, new AuditWriter($this->db, $this->prefix), new OutboxRepository($this->db, $this->prefix));
+        (new M3Controller($read, $form, $policy))->register();
+        wp_set_current_user($manager);
+        $first = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/events'));
+        self::assertSame(200, $first->get_status());
+        self::assertCount(100, $first->get_data()['items']);
+        self::assertArrayNotHasKey('event_post_id', $first->get_data()['items'][0]);
+        self::assertSame($first->get_data()['items'][99]['public_id'], $first->get_data()['next_cursor']);
+        $next = new \WP_REST_Request('GET', '/uop/v1/events');
+        $next->set_param('after', $first->get_data()['next_cursor']);
+        $second = rest_do_request($next);
+        self::assertSame(200, $second->get_status());
+        self::assertCount(5, $second->get_data()['items']);
+        self::assertNull($second->get_data()['next_cursor']);
+        $allIds = array_merge(array_column($first->get_data()['items'], 'public_id'), array_column($second->get_data()['items'], 'public_id'));
+        self::assertCount(105, array_unique($allIds));
+
+        $forged = new \WP_REST_Request('GET', '/uop/v1/events');
+        $forged->set_param('after', PublicId::generate()->to_string());
+        self::assertSame(400, rest_do_request($forged)->get_status());
+        wp_set_current_user($reader);
+        $restricted = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/events'));
+        self::assertSame(200, $restricted->get_status());
+        self::assertSame([], $restricted->get_data()['items']);
+        self::assertNull($restricted->get_data()['next_cursor']);
+        self::assertSame([], $read->events(new Actor($reader), $this->scope));
+    }
 }

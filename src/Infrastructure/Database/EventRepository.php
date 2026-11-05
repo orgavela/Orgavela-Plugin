@@ -69,12 +69,13 @@ final class EventRepository {
 	 * Enumerate a bounded page of manager-visible organization event settings.
 	 *
 	 * @param OrgScope $scope Trusted organization.
+	 * @param int      $after_post_id Last scoped event post key, zero starts traversal.
 	 * @return list<array<string, mixed>>
 	 */
-	public function for_organization( OrgScope $scope ): array {
+	public function for_organization( OrgScope $scope, int $after_post_id = 0 ): array {
 		return $this->db->rows(
-			'SELECT event_post_id, public_id, status, visibility, timezone FROM %i WHERE organization_id = %d ORDER BY event_post_id ASC LIMIT 100',
-			array( $this->prefix . 'event_settings', $scope->id )
+			'SELECT event_post_id, public_id, status, visibility, timezone FROM %i WHERE organization_id = %d AND event_post_id > %d ORDER BY event_post_id ASC LIMIT 100',
+			array( $this->prefix . 'event_settings', $scope->id, $after_post_id )
 		);
 	}
 }
