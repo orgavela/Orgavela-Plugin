@@ -208,6 +208,7 @@ final class M3ReadService {
 	 * @param OrgScope $scope Trusted organization.
 	 * @param PublicId $uuid  Person public ID.
 	 * @return array<string, mixed>|null Null hides inaccessible people.
+	 * @throws RuntimeException When the profile exceeds safe bounded projection limits.
 	 */
 	public function profile( Actor $actor, OrgScope $scope, PublicId $uuid ): ?array {
 		$person = $this->people->find( $scope, $uuid );
@@ -262,8 +263,8 @@ final class M3ReadService {
 					(bool) $field['delegate_view'],
 					(bool) $field['delegate_edit']
 				);
-				$field_items      = $grouped[ (int) $field['id'] ] ?? array();
-				$values[ $key ]   = 'multiselect' === $field['data_type']
+				$field_items         = $grouped[ (int) $field['id'] ] ?? array();
+				$values[ $key ]      = 'multiselect' === $field['data_type']
 					? array_map( static fn ( array $item ): mixed => $item['value_string'], $field_items )
 					: ( $field_items ? self::decode_value( $field_items[0] ) : null );
 			}
