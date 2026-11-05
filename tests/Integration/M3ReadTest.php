@@ -264,9 +264,7 @@ final class M3ReadTest extends TestCase {
         self::assertSame(400, rest_do_request($forged)->get_status());
         wp_set_current_user($reader);
         $restricted = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/events'));
-        self::assertSame(200, $restricted->get_status());
-        self::assertSame([], $restricted->get_data()['items']);
-        self::assertNull($restricted->get_data()['next_cursor']);
-        self::assertSame([], $read->events(new Actor($reader), $this->scope));
+        self::assertSame(403, $restricted->get_status(), 'Subscriber route must fail closed.');
+        self::assertSame([], $read->events(new Actor($reader), $this->scope), 'UOP manager policy must not bypass the WordPress post gate.');
     }
 }

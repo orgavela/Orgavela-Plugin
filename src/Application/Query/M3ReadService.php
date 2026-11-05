@@ -155,6 +155,7 @@ final class M3ReadService {
 	 * @param PublicId|null $after Authorized public event from previous page.
 	 * @return array{items:list<array<string,mixed>>,next_cursor:?string}
 	 * @throws \InvalidArgumentException If the cursor does not refer to an accessible event.
+	 * @throws RuntimeException If the authorization scan exceeds its safe limit.
 	 */
 	public function event_page( Actor $actor, OrgScope $scope, ?PublicId $after ): array {
 		$after_post_id = 0;
@@ -190,7 +191,10 @@ final class M3ReadService {
 				}
 			}
 			if ( count( $rows ) < 100 ) {
-				return array( 'items' => $result, 'next_cursor' => null );
+				return array(
+					'items'       => $result,
+					'next_cursor' => null,
+				);
 			}
 			$after_post_id = (int) $rows[ count( $rows ) - 1 ]['event_post_id'];
 		}
