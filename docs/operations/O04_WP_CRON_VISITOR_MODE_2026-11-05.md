@@ -35,11 +35,11 @@ Ein **externer IONOS-Cron wurde weiterhin weder bestätigt noch eingerichtet**. 
 Die tägliche rein lesende GitHub-Actions-Prüfung (07:17 UTC, vorhandener `orgavela-ionos`-geschützter Workflow) kontrolliert weiterhin:
 
 - Das OrgaVela-Repository, den Hauptbranch, das konkrete Ziel und die installierte Alpha.2-Version.
-- `ORGAVELA_CRON_WP_OPTION=valid`, ActionScheduler-Store vorhanden, keine Pending-Aktionen >10 Minuten, keine neuen Failed-Actions innerhalb 24 Stunden.
+- `ORGAVELA_CRON_WP_OPTION=valid`, `ORGAVELA_CRON_OTHER_OVERDUE_BUCKET=none` (dieses ältere Statusfeld zählt alle überfälligen WP-Hooks einschließlich des Queue-Hooks), ActionScheduler-Store vorhanden, keine Pending-Aktionen >10 Minuten, keine neuen Failed-Actions innerhalb 24 Stunden.
 - Einen eindeutigen, ausreichend frischen `action_scheduler_run_queue`-Hook.
 - **Neu:** Die aktuelle, ausdrücklich vom Betreiber aktivierte Einstellung `ORGAVELA_CRON_WP_AUTO=enabled`. Eine Rückkehr zu `disabled`, ein fehlender Status oder eine unerwartete Änderung führen zunächst **fail-closed** zum roten Überwachungslauf. Vor einem Wechsel auf einen nachweislich funktionierenden externen Trigger ist ein gesonderter geprüfter O04-Änderungs-PR erforderlich.
 
-Die negativen Tests enthalten nun zusätzlich `wpcron-disabled` und `wpcron-missing`; beide dürfen nie als gesund gelten. Diese Monitoring-Änderung selbst hat **keinen** Zugriff auf `wp-config.php`, löst **keine** Cronjobs aus und ändert **keine** WordPress-Daten.
+Die negativen Tests enthalten zusätzlich `wpcron-disabled`, `wpcron-missing`, `other-overdue` und `other-missing`; keiner dieser Zustände darf als gesund gelten. Diese Monitoring-Änderung selbst hat **keinen** Zugriff auf `wp-config.php`, löst **keine** Cronjobs aus und ändert **keine** WordPress-Daten.
 
 **Belege:** [O08-Monitor-PR #53](https://github.com/orgavela/Orgavela-Plugin/pull/53), [strenger manueller Testmodus PR #54](https://github.com/orgavela/Orgavela-Plugin/pull/54), [älterer negativer Cron-Live-Test #42042200606](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042200606). Die ältere Fehlmessung wurde **vor** der jetzigen Betreiberänderung erhoben und darf nicht als neuer aktueller Zustand ausgegeben werden.
 
