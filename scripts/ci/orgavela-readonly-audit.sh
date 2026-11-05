@@ -371,26 +371,8 @@ $1 == "ORGAVELA_BACKUP_EXPORT_EXECUTED" && $2 == "no" { print; next }
 $1 == "ORGAVELA_BACKUP_RESTORE_EXECUTED" && $2 == "no" { print; next }
 ' "$tmp/out"
 
-# O08: optional alert-only evaluation. Never retries or executes a queue job.
-# The scheduled read-only run fails on fresh failures, stalled queues, or
-# unknown/invalid telemetry; historical failed actions remain informational.
+# O08: a scheduled run evaluates only aggregate, allowlisted status keys.
+# The separate evaluator is covered by data-free negative tests in PR CI.
 if [[ "${ORGAVELA_MONITOR_STRICT:-0}" == '1' && "$mode" == 'cron' ]]; then
-  if ! grep -Fqx 'ORGAVELA_AS_FAILED_LAST24H_BUCKET=none' "$tmp/out"; then
-    echo '::error::O08: Recent Action Scheduler failures or unverifiable 24h failure count. No queue job was executed.'
-    exit 1
-  fi
-  if ! grep -Fqx 'ORGAVELA_AS_PENDING_OVERDUE_BUCKET=none' "$tmp/out"; then
-    echo '::error::O08: Pending Action Scheduler backlog over 10 minutes or unreadable count. No queue job was executed.'
-    exit 1
-  fi
-  if ! grep -Eq '^ORGAVELA_CRON_QUEUE_EVENT=(scheduled-ahead|due-within-5m)$' "$tmp/out"; then
-    echo '::error::O08: Queue hook missing, stale, duplicated or unreadable. External IONOS cron remains unverified.'
-    exit 1
-  fi
-  if ! grep -Fqx 'ORGAVELA_CRON_WP_OPTION=valid' "$tmp/out" ||
-     ! grep -Fqx 'ORGAVELA_AS_STORE=present' "$tmp/out"; then
-    echo '::error::O08: WordPress cron/Action Scheduler store not verifiably readable.'
-    exit 1
-  fi
-  echo 'ORGAVELA_O08_MONITOR=read-only-snapshot-ok'
+  bash scripts/ci/orgavela-cron-status-evaluate.sh "$tmp/out"
 fi
