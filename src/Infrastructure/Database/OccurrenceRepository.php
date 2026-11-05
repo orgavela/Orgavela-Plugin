@@ -61,10 +61,10 @@ final class OccurrenceRepository extends ScopedRepository {
 	/**
 	 * Read a bounded chronological page, using the indexed UTC start and ID.
 	 *
-	 * @param OrgScope $scope Trusted organization.
-	 * @param int      $event_post_id Scoped event post ID.
+	 * @param OrgScope    $scope Trusted organization.
+	 * @param int         $event_post_id Scoped event post ID.
 	 * @param string|null $after_start UTC start of an event-owned cursor.
-	 * @param int      $after_id Internal cursor ID resolved within this event.
+	 * @param int         $after_id Internal cursor ID resolved within this event.
 	 * @return list<array<string,mixed>>
 	 * @throws InvalidArgumentException If cursor components are invalid.
 	 */

@@ -204,8 +204,8 @@ final class M3ReadService {
 	/**
 	 * Read operational event and its manual occurrences via owner scope.
 	 *
-	 * @param Actor    $actor Current editor.
-	 * @param OrgScope $scope Trusted organization.
+	 * @param Actor         $actor Current editor.
+	 * @param OrgScope      $scope Trusted organization.
 	 * @param PublicId      $uuid Event public ID.
 	 * @param PublicId|null $after_occurrence Public cursor for next occurrence page.
 	 * @return array<string, mixed>|null
