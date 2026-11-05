@@ -42,6 +42,24 @@ jobs:
             abort "Unexpected resource class" unless job["resource_class"] == "small"
             puts "CircleCI YAML/real source-integrity job structure valid (static check, NOT provider success)."
           '
+      - name: Reject CircleCI template interpolation and run offline source-integrity syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -ryaml -e '
+            config = YAML.safe_load(File.read(".circleci/config.yml"), aliases: true)
+            source_steps = config.fetch("jobs").fetch("source-integrity").fetch("steps").filter_map { |step|
+              step.is_a?(Hash) && step["run"].is_a?(Hash) ? step["run"]["command"] : nil
+            }
+            abort "Source-integrity command missing" if source_steps.empty?
+            command = source_steps.first
+            abort "Unescaped CircleCI template opener in source-integrity command" if command.include?("<" * 2)
+            File.write(File.join(ENV.fetch("RUNNER_TEMP"), "orgavela-circleci-source-integrity.sh"), command)
+          '
+          bash -n "$RUNNER_TEMP/orgavela-circleci-source-integrity.sh"
+          # The FIRST CircleCI command only parses local source and lints PHP snippets.
+          # Never execute the separate Composer command or any remote audit here.
+          bash "$RUNNER_TEMP/orgavela-circleci-source-integrity.sh"
       - name: Validate existing audit Bash syntax without execution
         shell: bash
         run: |
