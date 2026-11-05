@@ -1,0 +1,52 @@
+name: O09 CircleCI config bootstrap - static validation
+
+on:
+  push:
+    branches:
+      - fix/o09-circleci-bootstrap-20261105
+    paths:
+      - .circleci/config.yml
+      - .github/workflows/o09-circleci-bootstrap-check.yml
+      - docs/operations/ASSISTANT_WORK_LOG.md
+  pull_request:
+    paths:
+      - .circleci/config.yml
+      - .github/workflows/o09-circleci-bootstrap-check.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate-circleci-bootstrap:
+    if: github.repository == 'orgavela/Orgavela-Plugin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout untrusted branch without retained credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate genuine CircleCI configuration structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -ryaml -e '
+            config = YAML.safe_load(File.read(".circleci/config.yml"), aliases: true)
+            abort "CircleCI version mismatch" unless config["version"].to_s == "2.1"
+            job = config.fetch("jobs").fetch("source-integrity")
+            abort "No real source check" unless job["steps"].is_a?(Array) && job["steps"].length >= 3
+            source_commands = job["steps"].filter_map { |step| step.is_a?(Hash) && step["run"].is_a?(Hash) ? step["run"]["command"] : nil }.join("\n")
+            %w[bash composer php].each { |check| abort "Missing real #{check} check" unless source_commands.include?(check) }
+            workflows = config.fetch("workflows").fetch("audit-and-php-integrity")
+            abort "Missing CircleCI job in workflow" unless workflows.fetch("jobs").include?("source-integrity")
+            abort "Unexpected resource class" unless job["resource_class"] == "small"
+            puts "CircleCI YAML/real source-integrity job structure valid (static check, NOT provider success)."
+          '
+      - name: Validate existing audit Bash syntax without execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/ci/orgavela-readonly-audit.sh
+          bash -n scripts/ci/orgavela-readonly-audit.sh
+          test -f .github/workflows/orgavela-readonly-audit.yml
+          echo "Existing read-only audit syntax valid. No IONOS connection performed."

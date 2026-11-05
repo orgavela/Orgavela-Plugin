@@ -1,0 +1,67 @@
+version: 2.1
+
+# Real, free-tier CircleCI validation for the organization-owned OrgaVela
+# repository. Earlier GitHub status errors were caused by the missing config,
+# not by any successful check. This workflow never receives IONOS credentials.
+jobs:
+  source-integrity:
+    docker:
+      - image: cimg/php:8.3
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Read-only SSH audit safety, Bash and embedded PHP syntax
+          command: |
+            set -euo pipefail
+            test -f scripts/ci/orgavela-readonly-audit.sh
+            bash -n scripts/ci/orgavela-readonly-audit.sh
+            grep -Fq "orgavela/Orgavela-Plugin" scripts/ci/orgavela-readonly-audit.sh
+            grep -Fq "ORGAVELA_CRON_DISPATCH_EXECUTED=no" scripts/ci/orgavela-readonly-audit.sh
+            grep -Fq "ORGAVELA_CRON_MIGRATION_EXECUTED=no" scripts/ci/orgavela-readonly-audit.sh
+
+            # Parse only; NEVER eval a diagnostic against WordPress or a host.
+            awk '
+              /^[[:space:]]*php_code="\$\(cat <<\047PHP\047$/ {
+                count++;
+                file = sprintf("/tmp/uop-readonly-%d.php", count);
+                print "<?php" > file;
+                inside = 1;
+                next;
+              }
+              inside && /^PHP$/ {
+                close(file);
+                inside = 0;
+                next;
+              }
+              inside { print >> file }
+              END { if (count != 3 || inside) exit 1 }
+            ' scripts/ci/orgavela-readonly-audit.sh
+            for number in 1 2 3; do
+              php -l "/tmp/uop-readonly-$number.php"
+            done
+            if grep -Eq '^[[:space:]]*(wp[[:space:]]+(cron[[:space:]]+event[[:space:]]+run|action-scheduler[[:space:]]+run)|crontab[[:space:]]+-)' scripts/ci/orgavela-readonly-audit.sh; then
+              echo "Refusing any execution or mutation inside the read-only audit."
+              exit 1
+            fi
+      - run:
+          name: Actual PHP plugin quality checks when source is in the branch
+          command: |
+            set -euo pipefail
+            if [[ ! -f composer.json ]]; then
+              echo "Main currently contains only operations tooling; PHP plugin source and Composer lock are absent."
+              exit 0
+            fi
+            # Never substitute a passing metadata-only check for actual PHP
+            # quality when a branch contains the plugin.
+            test -f composer.lock
+            composer validate --strict
+            composer install --no-interaction --prefer-dist --no-progress
+            composer lint
+            composer analyse
+            composer test
+
+workflows:
+  audit-and-php-integrity:
+    jobs:
+      - source-integrity
