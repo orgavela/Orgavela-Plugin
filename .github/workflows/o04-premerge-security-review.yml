@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ruby -ryaml -e '
+          ruby -ryaml -rdate -e '
             workflow = YAML.safe_load(File.read(".github/workflows/orgavela-readonly-audit.yml"), permitted_classes: [Date, Time], aliases: true)
             jobs = workflow.fetch("jobs")
             production = jobs.fetch("readonly-audit")
