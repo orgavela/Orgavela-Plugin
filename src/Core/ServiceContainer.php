@@ -51,6 +51,9 @@ final class ServiceContainer {
 	 *
 	 * @param string $id Identifier.
 	 * @return object
+	 * @phpstan-template T of object
+	 * @phpstan-param class-string<T> $id
+	 * @phpstan-return T
 	 * @throws LogicException If unknown or circular.
 	 */
 	public function get( string $id ): object {
