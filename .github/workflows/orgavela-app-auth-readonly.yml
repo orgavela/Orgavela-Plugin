@@ -30,6 +30,7 @@ jobs:
           repositories: Orgavela-Plugin
           permission-contents: read
           permission-administration: read
+          permission-organization-administration: read
           permission-statuses: read
 
       - name: Verify expected GitHub App identity
@@ -79,3 +80,17 @@ jobs:
           fi
           gh api "repos/${GITHUB_REPOSITORY}/commits/main/status" \
             --jq '.statuses[] | select(.context == "CircleCI Pipeline") | "CIRCLECI_MAIN_STATE=" + .state + " CIRCLECI_MAIN_DESCRIPTION=" + .description'
+
+      - name: CircleCI GitHub App organization scope (read-only)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          installations="$(gh api "orgs/orgavela/installations?per_page=100")"
+          echo "$installations" | jq -r '
+            [.installations[] | select((.app_slug // "") | test("circleci"; "i"))] as $apps |
+            "CIRCLECI_APP_INSTALLATIONS=" + ($apps | length | tostring),
+            ($apps[] | "CIRCLECI_APP_SLUG=" + .app_slug + " REPOSITORY_SELECTION=" + .repository_selection + " SUSPENDED=" + ((.suspended_at != null) | tostring))
+          '
+          echo "No GitHub or CircleCI configuration was changed."
