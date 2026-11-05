@@ -7,6 +7,7 @@
 
 namespace UOP\Infrastructure\Queue;
 
+use Closure;
 use Throwable;
 use UOP\Application\Event\DomainEventDto;
 use UOP\Core\PublicId;
@@ -22,8 +23,15 @@ final class OutboxDispatcher {
 	 * @param Connection       $db     Site database adapter.
 	 * @param OutboxRepository $outbox Persistent domain events.
 	 * @param string           $prefix Trusted WordPress table prefix.
+	 * @param Closure|null     $enqueue Optional isolated queue seam for synthetic tests.
+	 * @phpstan-param Closure(int,string):void|null $enqueue
 	 */
-	public function __construct( private Connection $db, private OutboxRepository $outbox, private string $prefix ) {}
+	public function __construct(
+		private Connection $db,
+		private OutboxRepository $outbox,
+		private string $prefix,
+		private ?Closure $enqueue = null
+	) {}
 
 	/** Register the private Action Scheduler jobs without running them in HTTP requests. */
 	public function register_hooks(): void {
@@ -46,7 +54,7 @@ final class OutboxDispatcher {
 	 * @throws \RuntimeException If the organization cursor fails to advance.
 	 */
 	public function sweep(): void {
-		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
+		if ( null === $this->enqueue && ! function_exists( 'as_enqueue_async_action' ) ) {
 			return;
 		}
 		$last_id = 0;
@@ -67,7 +75,11 @@ final class OutboxDispatcher {
 				$scope   = new OrgScope( $organization_id );
 				foreach ( $this->outbox->pending( $scope ) as $event ) {
 					$uuid = PublicId::from_binary( $event['event_uuid'] )->to_string();
-					as_enqueue_async_action( 'uop_outbox_consume', array( $scope->id, $uuid ), 'uop', true );
+					if ( null !== $this->enqueue ) {
+						( $this->enqueue )( $scope->id, $uuid );
+					} else {
+						as_enqueue_async_action( 'uop_outbox_consume', array( $scope->id, $uuid ), 'uop', true );
+					}
 				}
 			}
 		} while ( 100 === $batch_size );
