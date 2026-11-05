@@ -117,7 +117,10 @@ final class M3ReadService {
 		$result = array();
 		foreach ( $this->events->for_organization( $scope ) as $row ) {
 			$event_id = (int) $row['event_post_id'];
-			if ( ! $this->policy->can( $actor, 'event.manage', new PolicyObject( $scope->id, 'event', $event_id, null, $event_id ) )->allowed ) {
+			$post = get_post( $event_id );
+			if ( ! $post || 'uop_event' !== $post->post_type || 'trash' === $post->post_status
+				|| ! user_can( $actor->user_id, 'edit_post', $event_id )
+				|| ! $this->policy->can( $actor, 'event.manage', new PolicyObject( $scope->id, 'event', $event_id, null, $event_id ) )->allowed ) {
 				continue;
 			}
 			$result[] = array(
@@ -145,7 +148,10 @@ final class M3ReadService {
 			return null;
 		}
 		$event_id = (int) $row['event_post_id'];
-		if ( ! $this->policy->can( $actor, 'event.manage', new PolicyObject( $scope->id, 'event', $event_id, null, $event_id ) )->allowed ) {
+		$post = get_post( $event_id );
+		if ( ! $post || 'uop_event' !== $post->post_type || 'trash' === $post->post_status
+			|| ! user_can( $actor->user_id, 'edit_post', $event_id )
+			|| ! $this->policy->can( $actor, 'event.manage', new PolicyObject( $scope->id, 'event', $event_id, null, $event_id ) )->allowed ) {
 			return null;
 		}
 		$occurrences = array();

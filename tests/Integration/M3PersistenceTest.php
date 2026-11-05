@@ -6,7 +6,8 @@ use RuntimeException;
 use UOP\Application\Event\EventService;
 use UOP\Application\Form\FormService;
 use UOP\Application\Profile\ProfileService;
-use UOP\Application\Policy\{Actor, PolicyService};
+use UOP\Application\Policy\{Actor, PolicyService, ProjectionService};
+use UOP\Application\Query\M3ReadService;
 use UOP\Core\{CorrelationId, PublicId, TransactionManager};
 use UOP\Domain\Events\OccurrenceWindow;
 use UOP\Domain\Organization\OrgScope;
@@ -146,6 +147,32 @@ final class M3PersistenceTest extends TestCase {
         }
         $after = $this->db->rows('SELECT id FROM %i WHERE event_post_id = %d', [$this->prefix.'event_occurrences',$post_id]);
         self::assertCount(count($before), $after);
+
+        // Event reads must respect both the UOP policy and WordPress
+        // edit_post permission. A forged manager capability is insufficient.
+        $reads = new M3ReadService(
+            $s['people'],
+            $s['fields'],
+            new ProfileValueRepository($this->db, $this->prefix),
+            $s['events'],
+            new OccurrenceRepository($this->db, $this->prefix),
+            $s['forms'],
+            $policy,
+            new ProjectionService($policy)
+        );
+        self::assertNull($reads->event($stranger_actor, $this->scope, $uuid));
+        self::assertSame([], $reads->events($stranger_actor, $this->scope));
+        self::assertSame($uuid->to_string(), $reads->event($s['actor'], $this->scope, $uuid)['public_id']);
+
+        $controller = new \UOP\REST\M3Controller($reads, $s['form'], $policy);
+        $controller->register();
+        wp_set_current_user($stranger);
+        $deniedEvent = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/events/' . $uuid->to_string()));
+        self::assertSame(403, $deniedEvent->get_status());
+        $filtered = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/events'));
+        self::assertSame(200, $filtered->get_status());
+        self::assertSame([], $filtered->get_data()['items']);
+
 
     }
 }
