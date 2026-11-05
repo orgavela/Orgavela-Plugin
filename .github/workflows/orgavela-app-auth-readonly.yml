@@ -1,0 +1,81 @@
+name: OrgaVela GitHub App - read-only authentication test
+
+on:
+  push:
+    branches:
+      - test/orgavela-app-auth-readonly-20261105
+    paths:
+      - .github/workflows/orgavela-app-auth-readonly.yml
+      - docs/operations/o09-github-app-readonly-audit.md
+      - docs/operations/ASSISTANT_WORK_LOG.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-installation:
+    name: Verify OrgaVela App (read-only)
+    if: github.repository == 'orgavela/Orgavela-Plugin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create narrowly scoped installation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.ORGAVELA_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ORGAVELA_APP_PRIVATE_KEY }}
+          owner: orgavela
+          repositories: Orgavela-Plugin
+          permission-contents: read
+          permission-administration: read
+          permission-statuses: read
+
+      - name: Verify expected GitHub App identity
+        shell: bash
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          test "$APP_SLUG" = "orgavela-dev-assistant-2026"
+          echo "PASS: authenticated as OrgaVela-Dev-Assistant-2026."
+
+      - name: Verify repository and file access
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/${GITHUB_REPOSITORY}" --jq '.full_name')" = "orgavela/Orgavela-Plugin"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/contents/docs/operations/V1_PROGRESS.json" --jq '.path')" = "docs/operations/V1_PROGRESS.json"
+          echo "PASS: OrgaVela GitHub App token works with contents:read in Orgavela-Plugin."
+
+      - name: Diagnose locked main and CircleCI without changes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          protection="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main/protection")"
+          branch_protected="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main" --jq '.protected')"
+          echo "MAIN_BRANCH_PROTECTED=${branch_protected}"
+          printf '%s' "$protection" | jq -r '
+            "MAIN_BRANCH_LOCK_FIELD_PRESENT=" + (has("lock_branch") | tostring),
+            "MAIN_BRANCH_LOCKED=" + (if has("lock_branch") then ((.lock_branch.enabled // false) | tostring) else "unknown" end),
+            "PUSH_RESTRICTIONS_PRESENT=" + ((.restrictions != null) | tostring),
+            "REQUIRED_LINEAR_HISTORY=" + ((.required_linear_history.enabled // false) | tostring),
+            "REQUIRED_CONVERSATION_RESOLUTION=" + ((.required_conversation_resolution.enabled // false) | tostring),
+            "ENFORCE_ADMINS=" + ((.enforce_admins.enabled // false) | tostring),
+            "REQUIRED_STATUS_CHECKS=" + ((.required_status_checks.contexts // []) | join(",")),
+            "REQUIRED_PR_REVIEWS=" + ((.required_pull_request_reviews != null) | tostring)
+          '
+          rulesets="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets?includes_parents=true")"
+          printf '%s' "$rulesets" | jq -r '"APPLICABLE_RULESETS=" + (length | tostring)'
+          if gh api "repos/${GITHUB_REPOSITORY}/contents/.circleci/config.yml?ref=main" >/dev/null 2>&1; then
+            echo "CIRCLECI_CONFIG_MAIN=present"
+          else
+            echo "CIRCLECI_CONFIG_MAIN=missing_or_not_readable"
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/commits/main/status" \
+            --jq '.statuses[] | select(.context == "CircleCI Pipeline") | "CIRCLECI_MAIN_STATE=" + .state + " CIRCLECI_MAIN_DESCRIPTION=" + .description'
