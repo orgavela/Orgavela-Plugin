@@ -52,6 +52,7 @@ final class AccountDeletionListener {
 	 * Detach accounts and revoke their grants, retaining historical person records.
 	 *
 	 * @param int $user_id WordPress-deleted user ID.
+	 * @throws \RuntimeException If organization pagination becomes inconsistent.
 	 */
 	public function handle( int $user_id ): void {
 		if ( $user_id < 1 ) {
@@ -65,13 +66,14 @@ final class AccountDeletionListener {
 				'SELECT id FROM %i WHERE id > %d ORDER BY id ASC LIMIT %d',
 				array( $this->prefix . 'organizations', $last_id, 100 )
 			);
+			$batch_size = count( $organizations );
 			foreach ( $organizations as $organization ) {
 				$organization_id = (int) $organization['id'];
 				if ( $organization_id <= $last_id ) {
 					throw new \RuntimeException( 'Organization pagination cursor did not advance.' );
 				}
 				$last_id = $organization_id;
-				$scope = new OrgScope( $organization_id );
+				$scope   = new OrgScope( $organization_id );
 				$this->tx->run(
 					function () use ( $scope, $user_id ): void {
 						$person = $this->people->by_user( $scope, $user_id );
@@ -92,6 +94,6 @@ final class AccountDeletionListener {
 					}
 				);
 			}
-		} while ( 100 === count( $organizations ) );
+		} while ( 100 === $batch_size );
 	}
 }
