@@ -40,22 +40,37 @@ final class OutboxDispatcher {
 		);
 	}
 
-	/** Requeue undelivered events after a crash between commit and enqueue. */
+	/**
+	 * Requeue undelivered events after a crash between commit and enqueue.
+	 *
+	 * @throws \RuntimeException If the organization cursor fails to advance.
+	 */
 	public function sweep(): void {
 		if ( ! function_exists( 'as_enqueue_async_action' ) ) {
 			return;
 		}
-		$organizations = $this->db->rows(
-			"SELECT id FROM %i WHERE status = 'active' ORDER BY id ASC LIMIT 100",
-			array( $this->prefix . 'organizations' )
-		);
-		foreach ( $organizations as $organization ) {
-			$scope = new OrgScope( (int) $organization['id'] );
-			foreach ( $this->outbox->pending( $scope ) as $event ) {
-				$uuid = PublicId::from_binary( $event['event_uuid'] )->to_string();
-				as_enqueue_async_action( 'uop_outbox_consume', array( $scope->id, $uuid ), 'uop', true );
+		$last_id = 0;
+		do {
+			// Avoid silently starving every organization after the first 100.
+			// Closed organizations remain excluded from new deliveries.
+			$organizations = $this->db->rows(
+				'SELECT id FROM %i WHERE status = %s AND id > %d ORDER BY id ASC LIMIT %d',
+				array( $this->prefix . 'organizations', 'active', $last_id, 100 )
+			);
+			$batch_size = count( $organizations );
+			foreach ( $organizations as $organization ) {
+				$organization_id = (int) $organization['id'];
+				if ( $organization_id <= $last_id ) {
+					throw new \RuntimeException( 'Outbox organization pagination cursor did not advance.' );
+				}
+				$last_id = $organization_id;
+				$scope   = new OrgScope( $organization_id );
+				foreach ( $this->outbox->pending( $scope ) as $event ) {
+					$uuid = PublicId::from_binary( $event['event_uuid'] )->to_string();
+					as_enqueue_async_action( 'uop_outbox_consume', array( $scope->id, $uuid ), 'uop', true );
+				}
 			}
-		}
+		} while ( 100 === $batch_size );
 	}
 
 	/**
