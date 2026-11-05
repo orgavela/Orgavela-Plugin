@@ -3,8 +3,16 @@
 # This is NOT a backup or a restore of orgavela.com.
 set -euo pipefail
 umask 077
-[[ "${GITHUB_REPOSITORY:-}" == "janjrre/Projekt-Wordpress-Plugin" ]] || exit 2
-[[ "${GITHUB_REF:-}" == "refs/heads/main" ]] || exit 2
+# This job is exclusively the disposable GitHub CI; never run against
+# the real OrgaVela hosting DB or any site outside this repository.
+[[ "${GITHUB_ACTIONS:-}" == "true" ]] || exit 2
+[[ "${GITHUB_REPOSITORY:-}" == "orgavela/Orgavela-Plugin" ]] || exit 2
+if [[ "${GITHUB_EVENT_NAME:-}" == "pull_request" ]]; then
+  [[ "${GITHUB_REF:-}" =~ ^refs/pull/[0-9]+/merge$ ]] || exit 2
+else
+  [[ "${GITHUB_EVENT_NAME:-}" == "push" || "${GITHUB_EVENT_NAME:-}" == "workflow_dispatch" ]] || exit 2
+  [[ "${GITHUB_REF:-}" == "refs/heads/main" ]] || exit 2
+fi
 [[ -n "${RESTORE_TEST_DATABASE_PASSWORD:-}" ]] || {
   echo '::error::Synthetic test database password missing'; exit 2;
 }
@@ -54,6 +62,30 @@ tar -tzf "$temp/files.tar.gz" >/dev/null
   sha256sum --check --status SHA256SUMS
 )
 
+# O03 negative recovery test: neither a tampered SQL backup nor a tampered
+# files archive may pass the integrity gate before any restore starts.
+# Temporarily corrupt each SYNTHETIC fixture and restore its original bytes.
+for archive in database.sql.gz files.tar.gz; do
+  cp -- "$temp/$archive" "$temp/$archive.untampered"
+  printf 'intentionally-corrupted-ci-only' >> "$temp/$archive"
+  if ( cd "$temp" && sha256sum --check --status SHA256SUMS ); then
+    echo '::error::Corrupted synthetic backup unexpectedly passed SHA-256 verification.'
+    exit 1
+  fi
+  mv -- "$temp/$archive.untampered" "$temp/$archive"
+  ( cd "$temp" && sha256sum --check --status SHA256SUMS ) || {
+    echo '::error::Original synthetic backup did not recover after tamper test.'
+    exit 1
+  }
+done
+
+# The restore target must remain empty until the checksum gate has passed.
+restore_table_count=$("${client[@]}" --execute="SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'uop_synthetic_restore'")
+[[ "$restore_table_count" == '0' ]] || {
+  echo '::error::Synthetic restore target was modified before integrity checks.'
+  exit 1
+}
+
 # Restore ONLY into a separate synthetic database on this disposable runner.
 gzip -dc "$temp/database.sql.gz" | "${client[@]}" uop_synthetic_restore >/dev/null
 mkdir -p "$temp/restored_files"
@@ -74,6 +106,7 @@ echo 'ORGAVELA_RESTORE_DRILL=synthetic-success'
 echo 'ORGAVELA_RESTORE_DRILL_DATABASE=isolated-test-container'
 echo 'ORGAVELA_RESTORE_DRILL_ROWS=2-synthetic'
 echo 'ORGAVELA_RESTORE_DRILL_DB_AND_FILES_SHA256=verified'
+echo 'ORGAVELA_RESTORE_DRILL_CORRUPTION_REJECTED=both-archives'
 echo 'ORGAVELA_RESTORE_DRILL_INDEX=verified'
 echo 'ORGAVELA_RESTORE_DRILL_LIVE_BACKUP_USED=no'
 echo 'ORGAVELA_RESTORE_DRILL_LIVE_RESTORE=no'

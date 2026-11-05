@@ -158,3 +158,10 @@ Bewusst **nicht** B04/R03 als grün zählen. [Operatives O03-Runbook](../operati
 | IONOS-OrgaVela-Vertragsbackups und konkrete Restorepunkte im Hosting-Konto überprüft | **Offen**, allgemeine Anbieterangaben genügen nicht |
 
 Abnahme nur bei belegtem GH-01…GH-07 und tatsächlichem IONOS-Recoveryinventar. [Masterplan v2.11](../operations/V1_ACCEPTANCE_PLAN.md) · [Maschinenstatus v2.11](../operations/V1_PROGRESS.json); Release-Gates (darunter R03 und R15) bleiben ausdrücklich offen. Keine Datensicherungs- oder Löschaktivität in diesem Matrix-Nachtrag.
+
+
+### O03 – Erneuter synthetischer Restore-Negativtest 04.11.2026
+
+**Technischer Vorbeleg, kein W0-/B04-/R03-Signoff:** [PR #46](https://github.com/orgavela/Orgavela-Plugin/pull/46), SHA `ebe2ed3eb791e9dfc38237f5fb39bb58122285ad`, [echte GitHub-CI #41867617337](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41867617337), Status **SUCCESS**. Wegwerf-MariaDB 11.8: synthetischer SQL-Dump und synthetisches Dateipaket einzeln absichtlich verändert; beide Integritätsprüfungen **mussten scheitern**, gültige Kopien wurden erneut geprüft, Zieldatenbank vor Restore leer, danach synthetischer Daten-/Index-/Datei-Roundtrip erfolgreich. Kein IONOS-Dump, kein personenbezogenes Material, kein echtes Restore. Die drei Guard-Negativtests für Repo/Runner/Ref waren ebenfalls erfolgreich. `ORGAVELA_RESTORE_DRILL_LIVE_BACKUP_USED=no` und `ORGAVELA_RESTORE_DRILL_LIVE_RESTORE=no` wurden im Job geloggt.
+
+**B04/O03/R03 formal weiter offen**, bis unabhängige Nachweise einer echten verschlüsselten, unverfälschten `orgavela.com`-DB-/Dateisicherung und eines tatsächlich isolierten Restore-/Recovery-Pfads vorliegen. Keine Minderung der bestehenden Abnahmekriterien.
