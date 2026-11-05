@@ -28,6 +28,15 @@ jobs:
           repositories: Orgavela-Plugin
           permission-contents: read
 
+      - name: Verify expected GitHub App identity
+        shell: bash
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          test "$APP_SLUG" = "orgavela-dev-assistant-2026"
+          echo "PASS: authenticated as OrgaVela-Dev-Assistant-2026."
+
       - name: Verify repository and file access
         shell: bash
         env:
