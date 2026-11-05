@@ -67,11 +67,11 @@ final class AccountDeletionListener {
 			);
 			foreach ( $organizations as $organization ) {
 				$organization_id = (int) $organization['id'];
-			if ( $organization_id <= $last_id ) {
-				throw new \RuntimeException( 'Organization pagination cursor did not advance.' );
-			}
-			$last_id = $organization_id;
-			$scope = new OrgScope( $organization_id );
+				if ( $organization_id <= $last_id ) {
+					throw new \RuntimeException( 'Organization pagination cursor did not advance.' );
+				}
+				$last_id = $organization_id;
+				$scope = new OrgScope( $organization_id );
 				$this->tx->run(
 					function () use ( $scope, $user_id ): void {
 						$person = $this->people->by_user( $scope, $user_id );
