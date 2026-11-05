@@ -166,6 +166,7 @@ final class M3Controller {
 	 *
 	 * @param WP_REST_Request $request Incoming page request.
 	 * @return array<string, mixed>|WP_Error
+	 * @throws RuntimeException If the site organization is missing.
 	 */
 	public function forms( WP_REST_Request $request ): array|WP_Error {
 		try {

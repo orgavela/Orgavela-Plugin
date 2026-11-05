@@ -169,9 +169,9 @@ final class M3PersistenceTest extends TestCase {
         wp_set_current_user($stranger);
         $deniedEvent = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/events/' . $uuid->to_string()));
         self::assertSame(403, $deniedEvent->get_status());
+        self::assertSame([], $controller->events()['items'], 'The policy-authorized collection must filter unauthorized posts.');
         $filtered = rest_do_request(new \WP_REST_Request('GET', '/uop/v1/events'));
-        self::assertSame(200, $filtered->get_status());
-        self::assertSame([], $filtered->get_data()['items']);
+        self::assertSame(403, $filtered->get_status(), 'The registered WordPress route must reject an unprivileged actor.');
 
 
     }
