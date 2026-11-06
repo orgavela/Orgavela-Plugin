@@ -950,3 +950,7 @@ Transport/Runtimepins und konkrete getrennte Source-/Writer-Gates fertigstellen.
 Kein echtes Backup/Restore/Livezugriff/Deploy/Merge/Schedule. Vollständige produktive
 Collectorportierung bleibt offen; production_capture_allowed=false. V1-Zähler
 unverändert 62/71, M0–M7 0/8, P4 0/4, R0/18; alpha.2 zuletzt belegt.
+
+### O03/PGP05 – Implementierungsfolge 06.11.2026
+
+Bounded SSHtransport, getrennte Capture-/Writer-Einstiege und private Restorewerkzeuge ergänzt. [Neue synthetische Prüfungen und konkrete Livevoraussetzungen](O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md). Parentintegration, Review, private Runner-/Ciphertextanbindung und tatsächlicher Website-Snapshot+Restore bleiben Voraussetzung vor O01/O10/M3-Bereitstellung. Keine formalen Statuszähler geändert.

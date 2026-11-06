@@ -782,5 +782,19 @@
       ]
     }
   },
-  "audit_evidence_path": "docs/operations/W0_ORGAVELA_READ_ONLY_AUDIT_2026-10-12.md"
+  "audit_evidence_path": "docs/operations/W0_ORGAVELA_READ_ONLY_AUDIT_2026-10-12.md",
+  "latest_verified_operational_evidence": {
+    "o03_bounded_transport_2026_11_06": {
+      "scope": "implementation and synthetic local recovery only",
+      "parent_pr": 36,
+      "python_tests_passed": 27,
+      "synthetic_encrypted_wp_db_restore": true,
+      "synthetic_restore_tables": 52,
+      "production_capture_executed": false,
+      "real_snapshot_restore_verified": false,
+      "live_runner_activated": false,
+      "next_owner": "Codex after security review",
+      "report": "docs/operations/O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md"
+    }
+  }
 }

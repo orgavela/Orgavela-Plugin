@@ -649,3 +649,7 @@ Transport/Runtimepins und konkrete getrennte Source-/Writer-Gates fertigstellen.
 Kein echtes Backup/Restore/Livezugriff/Deploy/Merge/Schedule. Vollständige produktive
 Collectorportierung bleibt offen; production_capture_allowed=false. V1-Zähler
 unverändert 62/71, M0–M7 0/8, P4 0/4, R0/18; alpha.2 zuletzt belegt.
+
+## O03/PGP05 – bounded Capture und synthetische WP-Recovery, 06.11.2026
+
+Neue getrennte Capture-/Ciphertext-Writer-/Restore-Einstiege implementiert,27 lokale Regressionen und echte synthetische verschlüsselte Docker-WP/MariaDB-Recovery bestanden. [Belege und verbleibende Live-/Integrationsgates](../operations/O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md). Kein echter Snapshot/Restore, keine Liveänderung oder neue formale Abnahme; PR62 bleibt Draft.
