@@ -43,7 +43,7 @@ def run():
                 try:docker('exec',name+'-db','healthcheck.sh','--connect','--innodb_initialized');break
                 except RuntimeError:time.sleep(1)
             else:raise RuntimeError('abort fixture database unavailable')
-            for mode in ('exception','timeout','disconnected','foreign-marker','tar-exception','tar-timeout','tar-disconnected','dump-exception','dump-timeout','dump-disconnected'):
+            for mode in ('exception','timeout','disconnected','foreign-marker','tar-exception','tar-timeout','tar-disconnected','dump-exception','dump-timeout','dump-disconnected','registration-timeout','registration-disconnected','registration-foreign-marker'):
                 for path in state.iterdir():
                     if path.is_file():path.unlink()
                 print('SYNTHETIC_ABORT_CASE='+mode,flush=True)
@@ -74,16 +74,21 @@ def run():
                     pid=(state/'pid').read_text()
                     if not pid.isdecimal():raise RuntimeError('invalid synthetic pid')
                     docker('exec',runner,'/bin/kill','-KILL',pid)
-                if mode=='foreign-marker':(state/'.maintenance').write_text('foreign-owner')
+                if mode in ('foreign-marker','registration-foreign-marker'):(state/'.maintenance').write_text('foreign-owner')
                 deadline=time.monotonic()+12
                 while (state/'watch').exists() and time.monotonic()<deadline:time.sleep(.05)
                 if (state/'watch').exists():raise RuntimeError('watchdog fixture cleanup timeout: '+mode+' '+(state/'watchdog.log').read_text()[-1000:])
                 try:docker('exec',runner,'php','/checks/synthetic_abort_worker.php','probe')
                 except RuntimeError:raise RuntimeError('fresh write lock probe failed: '+mode) from None
-                if mode=='foreign-marker':
+                if mode in ('foreign-marker','registration-foreign-marker'):
                     if (state/'.maintenance').read_text()!='foreign-owner':raise RuntimeError('foreign maintenance removed')
                     (state/'.maintenance').unlink()
                 if status()!=200:raise RuntimeError('synthetic HTTP recovery failed')
+                if (state/'registration.json').exists():
+                    member=json.loads((state/'registration.json').read_text())
+                    code='$p=orgavela_process_current('+str(member['pid'])+');exit($p && $p["state"]!=="Z" && $p["start"]==="'+member['start']+'"?1:0);'
+                    docker('exec',runner,'php','-r','require "/checks/lib/backup_process_safety.php";'+code)
+                    if (state/'foreign-marker').read_text()!='foreign-owner':raise RuntimeError('foreign marker removed')
                 if (state/'children.json').exists():
                     children=json.loads((state/'children.json').read_text())
                     for member in children['members']:

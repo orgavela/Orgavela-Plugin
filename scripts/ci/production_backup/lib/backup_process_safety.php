@@ -54,24 +54,27 @@ function orgavela_process_members(array $owned): array {
 
 /** Kill whole sessions, including gzip grandchildren; never a caller's inherited group. */
 function orgavela_process_stop_groups(string $work): bool {
-    try {
-        if(glob($work.'/child-*.stat.tmp'))return false;
-        $records=glob($work.'/child-*.stat');
-        if(count($records)>32)return false;
-        foreach($records as $record) {
-            if(is_link($record)||filesize($record)>4096)return false;
-            $owned=orgavela_process_stat(file_get_contents($record));
+    $ok=true;
+    // A temporary registration is not a veto on already committed sessions.
+    // Complete temporary identities use the same session/start/UID validation.
+    $records=array_merge(glob($work.'/child-*.stat'),glob($work.'/child-*.stat.tmp'));
+    if(count($records)>64)$ok=false;
+    foreach($records as $record) {
+        try {
+            if(is_link($record)||filesize($record)>4096)throw new RuntimeException('process record');
+            $raw=file_get_contents($record);
+            // Incomplete identities never authorize signals; report failure after other groups.
+            $owned=orgavela_process_stat($raw);
             if(orgavela_process_members($owned)) {
-                // Freeze the whole group before KILL so it cannot add descendants.
-                if(!posix_kill(-$owned['pid'],19)&&orgavela_process_members($owned))return false;
-                if(orgavela_process_members($owned)&&!posix_kill(-$owned['pid'],9)&&orgavela_process_members($owned))return false;
+                if(!posix_kill(-$owned['pid'],19)&&orgavela_process_members($owned))throw new RuntimeException('process freeze');
+                if(orgavela_process_members($owned)&&!posix_kill(-$owned['pid'],9)&&orgavela_process_members($owned))throw new RuntimeException('process kill');
             }
             $end=microtime(true)+1;
             while(orgavela_process_members($owned)&&microtime(true)<$end)usleep(10000);
-            if(orgavela_process_members($owned))return false;
-        }
-        return true;
-    }catch(Throwable $failure){return false;}
+            if(orgavela_process_members($owned))throw new RuntimeException('process remains');
+        }catch(Throwable $failure){$ok=false;}
+    }
+    return $ok;
 }
 
 function orgavela_process_helper_source(): string {

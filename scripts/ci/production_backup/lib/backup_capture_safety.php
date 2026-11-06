@@ -190,8 +190,9 @@ function orgavela_capture_watchdog(string $work,string $maintenance,string $hash
     usleep(100000); $stopped=orgavela_process_stop_groups($w);
     $parent=orgavela_process_current($pid);
     if('.($terminate?'true':'false').' && $parent && $parent["start"]===$identity)posix_kill($pid,9);
-    if(!$stopped)exit(71);
     $p='.var_export($maintenance,true).'; $h='.var_export($hash,true).'; if(is_file($p)&&!is_link($p)&&hash_equals($h,(string)hash_file("sha256",$p)))unlink($p);
+    if(!$stopped)exit(71);
+    foreach(glob($w."/child-*.stat.tmp") as $f)unlink($f);
     foreach(glob($w."/child-*.stat") as $f)unlink($f);
     foreach(["database.sql.gz","wordpress-files.tar.gz","capture-evidence.json","watchdog.php","maintenance-template","ready"] as $f)@unlink($w."/".$f); @rmdir($w);';
 }

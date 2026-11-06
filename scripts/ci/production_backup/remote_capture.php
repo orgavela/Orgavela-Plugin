@@ -22,7 +22,7 @@ $cleanup = static function() use (&$db,&$work,&$maintenance,&$maintenanceHash,&$
     // Keep watchdog metadata if normal marker cleanup failed, so it can retry.
     if(!$maintenanceClean)return;
     if ($work && is_dir($work) && !is_link($work)) {
-        foreach(glob($work.'/child-*.stat') as $file)@unlink($file);
+        foreach(array_merge(glob($work.'/child-*.stat'),glob($work.'/child-*.stat.tmp')) as $file)@unlink($file);
         foreach (['database.sql.gz','wordpress-files.tar.gz','capture-evidence.json','watchdog.php','maintenance-template','ready'] as $file) @unlink($work.'/'.$file);
         @rmdir($work);
     }

@@ -10,7 +10,7 @@ if(($argv[1]??'')==='probe') {
 if(!$db->query('CREATE TABLE IF NOT EXISTS fixture_table(id INT PRIMARY KEY) ENGINE=InnoDB'))exit(4);
 if(!orgavela_lock_capture_tables($db,['fixture_table']))exit(5);
 $mode=$argv[1]??'';
-$childKind=str_starts_with($mode,'tar-')?'tar':(str_starts_with($mode,'dump-')?'dump':null);
+$childKind=(str_starts_with($mode,'tar-')||str_starts_with($mode,'registration-'))?'tar':(str_starts_with($mode,'dump-')?'dump':null);
 if($childKind==='dump') {
     // More output than a pipe can hold; this is a real running dump, not sleep.
     if(!$db->query('UNLOCK TABLES')||!$db->query('CREATE TABLE IF NOT EXISTS dump_payload(id INT PRIMARY KEY, payload LONGBLOB) ENGINE=InnoDB')||!$db->query("REPLACE INTO dump_payload VALUES(1,REPEAT('synthetic-only',200000))")||!$db->commit()||!orgavela_lock_capture_tables($db,['fixture_table']))exit(9);
@@ -53,6 +53,15 @@ if($childKind) {
     if($comm!==($childKind==='tar'?'tar':'mariadb-dump'))exit(12);
     file_put_contents('/state/children.json',json_encode(['tool'=>$comm,'members'=>$members,'output_observed'=>true],JSON_THROW_ON_ERROR));
 }
+if(str_starts_with($mode,'registration-')) {
+    // Freeze a second session exactly between writing the temporary stat and mv.
+    $registration=proc_open(['/usr/bin/setsid','/bin/sh','-c','umask 077; cat /proc/$$/stat > /state/watch/child-register.stat.tmp; kill -STOP $$; mv /state/watch/child-register.stat.tmp /state/watch/child-register.stat; kill -STOP $$; exec sleep 30'],[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']],$registrationPipes);
+    $end=microtime(true)+2;
+    do {$r=orgavela_process_current(proc_get_status($registration)['pid']);usleep(10000);}while($r && $r['state']!=='T' && microtime(true)<$end);
+    if(!$r || $r['state']!=='T')exit(14);
+    file_put_contents('/state/registration.json',json_encode($r,JSON_THROW_ON_ERROR));
+    file_put_contents('/state/foreign-marker','foreign-owner');
+}
 file_put_contents('/state/locked','ready');
 // Graceful exception path mirrors capture cleanup; timeout/disconnect rely on watchdog.
 if($mode==='exception'||str_ends_with($mode,'-exception')) {
@@ -62,7 +71,7 @@ if($mode==='exception'||str_ends_with($mode,'-exception')) {
         if(is_resource($child)){foreach($pipes as $pipe)if(is_resource($pipe))fclose($pipe);proc_close($child);}
         $db->query('UNLOCK TABLES');$db->close();
         if(!orgavela_remove_owned_maintenance($marker,$hash))exit(7);
-        foreach(glob($work.'/child-*.stat') as $file)unlink($file);
+        foreach(array_merge(glob($work.'/child-*.stat'),glob($work.'/child-*.stat.tmp')) as $file)unlink($file);
         unlink($work.'/ready');unlink($work.'/watchdog.php');rmdir($work);
     }
     exit(0);

@@ -959,3 +959,8 @@ Bounded SSHtransport, getrennte Capture-/Writer-Einstiege und private Restorewer
 ### O03-Nachtrag 06.11.2026 – Sicherheitskorrekturen zur erneuten Work-Prüfung
 
 PR64 bleibt Draft/unintegriert: ausführbaren Restore von Source-PHP getrennt, tatsächlichen TAR-Inhalt gegen Inventar gebunden und private Controller-/integrierte Engineidentität getrennt geprüft. Lokal34 Regressionen und synthetische PHP-Drop-in-/DB-/Abbruchproben erfolgreich; kein echter Snapshot oder IONOS-Abbruchnachweis. Nächste Zuständigkeit Work: unabhängige Sicherheitsnachprüfung des neuen Kandidaten; anschließend reguläre Parentintegration und Codex für echte Abbruch-/private Sicherungs-/Readback-/Restoreprobe. PR62 Draft4fb50cb; kein Sitechange, alpha.2 letzter Livebeleg. V1-Zähler unverändert62/71 historisch,M0–M7 0/8,P4 0/4,R0/18. Aktuelle Run-/Commitbelege im append-only Arbeitslog.
+
+
+### O03 – Registrierungsabbruch, lokaler Kandidat 06.11.2026
+
+Work-Befund 44554bd auf Basis 7c170f3 rot reproduziert und korrigiert. Erweiterte synthetische Containerprobe 13/13, 34 Python-Regressionen und ergänzte PHP-Hilfstests grün: eigene registrierte Gruppen einschließlich temporärer vollständiger Registrierung beendet, WRITE-Locks freigegeben, HTTP erholt, fremde Prozesse/Marker erhalten. Unvollständige Identitäten bleiben ohne Signalautorität und liefern Fehlerstatus; der eigene Marker wird trotzdem hashgebunden entfernt. Details/Prüfgrenzen im Arbeitslog docs/operations/ASSISTANT_WORK_LOG.md. Work-Nachprüfung, Provider-CI und Parentintegration offen; PR62/64 Draft und ungemergt. Kein IONOS-Abbruch, Snapshot, Rückdownload oder Restore. Zähler unverändert: 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18; alpha.2 letzter Livebeleg.
