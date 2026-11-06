@@ -39,7 +39,11 @@
     "backup_storage_check": {
       "repository": "orgavela/orgavela-backups",
       "repository_visibility": "private",
-      "synthetic_release_tags_verified": ["backup-orgavela-synthetic-circleci-3", "backup-orgavela-age-synthetic-ci-10", "pgp04-synthetic-32"],
+      "synthetic_release_tags_verified": [
+        "backup-orgavela-synthetic-circleci-3",
+        "backup-orgavela-age-synthetic-ci-10",
+        "pgp04-synthetic-32"
+      ],
       "active_operator_encryption_preference": "OpenPGP / PGPony; historical age test releases not active backup proof",
       "verified_live_orgavela_full_backup": false,
       "verified_isolated_real_restore": false,
@@ -86,7 +90,14 @@
         "wordpress_files_size_bucket": "100-500MiB",
         "wordpress_database_size_bucket": "under-25MiB",
         "hosting_free_space_bucket": "over-5GiB",
-        "tools_available": ["mysqldump", "mariadb-dump", "mysql", "tar", "gzip", "sha256sum"],
+        "tools_available": [
+          "mysqldump",
+          "mariadb-dump",
+          "mysql",
+          "tar",
+          "gzip",
+          "sha256sum"
+        ],
         "ionos_provider_snapshot_inventory_verified": false,
         "actual_backup_exported": false,
         "actual_isolated_restore_executed": false
@@ -124,7 +135,17 @@
         "final_release_go_decision_verified": false
       }
     },
-    "v1_formal_signoffs_changed": false
+    "v1_formal_signoffs_changed": false,
+    "m3_synthetic_workbench_2026_11_06": {
+      "source_sha": "4fb50cbf495e482441eb35b5b41507866380cda2",
+      "artifact_id": 13503402652,
+      "package_sha256": "4e92063a3983725577856b63f87a32da6d826c61e89dc95f9ecce9915061a670",
+      "installed_files_verified": 192,
+      "target": "local Docker WordPress 6.9 / PHP 8.3 / MariaDB 10.11; loopback only",
+      "manual_acceptance": false,
+      "orgavela_com_changed": false,
+      "handoff": "Work; docs/operations/M3_CI_WORKBENCH_2026-11-06.md"
+    }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
   "plan_path": "docs/operations/V1_ACCEPTANCE_PLAN.md",

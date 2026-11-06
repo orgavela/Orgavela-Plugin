@@ -9,3 +9,5 @@
 /tests/wordpress/
 /.env
 *.log
+/.orgavela-m3-workbench/
+/scripts/testing/__pycache__/
