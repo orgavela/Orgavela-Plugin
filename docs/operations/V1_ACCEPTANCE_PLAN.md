@@ -561,3 +561,7 @@ Für die ausstehende manuelle Abnahme ist alternativ eine lokale WordPress-Insta
 ### O01/O03/O10 – dauerhaftes Testziel orgavela.com, Betreiberfreigabe 06.11.2026
 
 orgavela.com ist das verbindliche dauerhaft zugriffsgeschützte Testziel. Reihenfolge: echter konsistenter Datei+DB-Snapshot und separater Real-Restore → Hostschutz inklusive REST/Assets und Work-Zugang → synthetischer Testbetrieb ohne reale Nebenwirkungen → manueller CI-Paket-Testdeploy mit Rollback → M3-Abnahme. [Bestand, neue Main-Audits, technisch unvollständiger O03-Collector und nächste Arbeit](ORGAVELA_PERMANENT_TEST_ENVIRONMENT.md). Einrichtungsbeginn bestätigt, noch keine Websiteänderung und keine neue formale O-/M-/P4-/R-Abnahme.
+
+### O03/PGP05 – ausführbare Capture-/Recoveryfolge 06.11.2026
+
+[PR64](https://github.com/orgavela/Orgavela-Plugin/pull/64) auf2d031a4 implementiert bounded SSH-Transport, separate Source-/Ciphertext-Publisher-Einstiege und private Restorewerkzeuge;27 Provider-Regressionen grün und lokaler verschlüsselter synthetischer WP/MariaDB-Restore bestanden. Abhängig von PR36-Parentkette. Vor echtem Sicherungs-/Restorelauf fehlen Review/Integration, getrennte vertrauenswürdige Runneranbindung und privater Betreiber-Restorehost. O01-Zugangsschutz/O10/M3-Upload bleiben davon abhängig; keine neue formale Abnahme.
