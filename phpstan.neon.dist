@@ -5,3 +5,6 @@ parameters:
     paths:
         - src
     tmpDir: .phpstan-cache
+    # Keep memory predictable on CircleCI's 1-vCPU / 2-GB small executor.
+    parallel:
+        maximumNumberOfProcesses: 1

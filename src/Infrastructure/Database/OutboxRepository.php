@@ -35,7 +35,7 @@ final class OutboxRepository {
 	 * @throws InvalidArgumentException For out-of-contract metadata.
 	 */
 	public function append( OrgScope $scope, PublicId $uuid, string $aggregate, int $aggregate_id, string $event_name, CorrelationId $correlation, array $payload ): void {
-		if ( $aggregate_id < 1 || ! in_array( $aggregate, array( 'person', 'delegation', 'assignment', 'registration', 'capacity', 'consent' ), true ) || ! preg_match( '/^[a-z]+(?:\.[a-z_]+)+$/D', $event_name ) ) {
+		if ( $aggregate_id < 1 || ! in_array( $aggregate, array( 'person', 'delegation', 'assignment', 'registration', 'capacity', 'consent', 'event', 'form', 'profile_field' ), true ) || ! preg_match( '/^[a-z]+(?:\.[a-z_]+)+$/D', $event_name ) ) {
 			throw new InvalidArgumentException( 'Invalid domain event.' );
 		}
 		foreach ( $payload as $key => $value ) {

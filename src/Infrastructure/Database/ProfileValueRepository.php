@@ -1,0 +1,111 @@
+<?php
+/**
+ * Typed profile value persistence inside a transaction.
+ *
+ * @package UOP
+ */
+
+namespace UOP\Infrastructure\Database;
+
+use InvalidArgumentException;
+use RuntimeException;
+use UOP\Domain\Organization\OrgScope;
+
+/** Exactly one typed value slot per row and an ordinal for multiselect. */
+final class ProfileValueRepository {
+	/**
+	 * Capture the live database and owned prefix.
+	 *
+	 * @param Connection $db     Database adapter.
+	 * @param string     $prefix Trusted WordPress prefix.
+	 */
+	public function __construct( private Connection $db, private string $prefix ) {}
+
+	/**
+	 * Replace values for a verified organization-owned person and field.
+	 *
+	 * @param OrgScope $scope Organization boundary.
+	 * @param int      $person_id Internal person ID.
+	 * @param int      $field_id  Internal field ID.
+	 * @param array    $values Typed normalized values.
+	 * @phpstan-param list<array{slot:string,value:string|int,ordinal:int}> $values
+	 * @param string   $utc_now UTC timestamp.
+	 * @throws InvalidArgumentException If a value escapes its scalar slot.
+	 */
+	public function replace( OrgScope $scope, int $person_id, int $field_id, array $values, string $utc_now ): void {
+		$owned = $this->db->rows(
+			"SELECT p.id FROM %i p INNER JOIN %i f ON f.organization_id = p.organization_id WHERE p.organization_id = %d AND p.id = %d AND f.id = %d AND p.status = 'active' AND p.archived_at IS NULL AND f.status = 'active' LIMIT 1",
+			array( $this->prefix . 'persons', $this->prefix . 'profile_fields', $scope->id, $person_id, $field_id )
+		);
+		if ( ! $owned ) {
+			throw new InvalidArgumentException( 'Profile person and field must belong to the same active organization.' );
+		}
+		$this->db->execute(
+			'DELETE FROM %i WHERE person_id = %d AND field_id = %d',
+			array( $this->prefix . 'profile_values', $person_id, $field_id )
+		);
+		foreach ( $values as $value ) {
+			$slot = $value['slot'];
+			if ( ! in_array( $slot, array( 'value_string', 'value_text', 'value_decimal', 'value_date', 'value_boolean' ), true ) || $value['ordinal'] < 0 || $value['ordinal'] > 100 ) {
+				throw new InvalidArgumentException( 'Unsupported profile value slot.' );
+			}
+			$this->db->execute(
+				'INSERT INTO %i (person_id, field_id, ordinal, %i, updated_at) VALUES (%d,%d,%d,%s,%s)',
+				array( $this->prefix . 'profile_values', $slot, $person_id, $field_id, $value['ordinal'], $value['value'], $utc_now )
+			);
+		}
+	}
+	/**
+	 * Read typed values for a scoped person with organization-bound field joins.
+	 *
+	 * @param OrgScope $scope Trusted organization.
+	 * @param int      $person_id Internal subject ID already scoped in the application.
+	 * @return list<array<string, mixed>>
+	 * @throws RuntimeException If the bounded read exceeds 10,000 values.
+	 */
+	public function for_person( OrgScope $scope, int $person_id ): array {
+		$result = array();
+		$after  = 0;
+		for ( $batch = 0; $batch <= 100; ++$batch ) {
+			$rows = $this->for_person_page( $scope, $person_id, $after );
+			if ( 100 === $batch && $rows ) {
+				throw new RuntimeException( 'Profile values exceed the safe legacy read limit.' );
+			}
+			foreach ( $rows as $row ) {
+				$after = (int) $row['id'];
+				unset( $row['id'] );
+				$result[] = $row;
+			}
+			if ( count( $rows ) < 100 ) {
+				break;
+			}
+		}
+		usort(
+			$result,
+			static function ( array $a, array $b ): int {
+				$field_order = (int) $a['field_id'] <=> (int) $b['field_id'];
+				return 0 !== $field_order ? $field_order : (int) $a['ordinal'] <=> (int) $b['ordinal'];
+			}
+		);
+		return $result;
+	}
+	/**
+	 * Read an indexed 100-row keyset of active, scoped profile values.
+	 * Application projections must process all pages before returning data.
+	 *
+	 * @param OrgScope $scope Trusted organization.
+	 * @param int      $person_id Previously authorized internal person ID.
+	 * @param int      $after Last internal value ID; zero begins traversal.
+	 * @return list<array<string,mixed>>
+	 * @throws InvalidArgumentException For a negative or unscoped cursor.
+	 */
+	public function for_person_page( OrgScope $scope, int $person_id, int $after = 0 ): array {
+		if ( $person_id < 1 || $after < 0 ) {
+			throw new InvalidArgumentException( 'Invalid scoped profile value cursor.' );
+		}
+		return $this->db->rows(
+			"SELECT v.id, v.field_id, v.ordinal, v.value_string, v.value_text, v.value_decimal, v.value_date, v.value_boolean FROM %i v INNER JOIN %i f ON f.id = v.field_id INNER JOIN %i p ON p.id = v.person_id WHERE p.organization_id = %d AND f.organization_id = %d AND p.id = %d AND p.status = 'active' AND p.archived_at IS NULL AND f.status = 'active' AND v.id > %d ORDER BY v.id ASC LIMIT 100",
+			array( $this->prefix . 'profile_values', $this->prefix . 'profile_fields', $this->prefix . 'persons', $scope->id, $scope->id, $person_id, $after )
+		);
+	}
+}

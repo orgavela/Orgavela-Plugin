@@ -1160,3 +1160,67 @@ Die Ergebniskommunikation an die GitHub-Issues wurde ausgeführt: [W0 #16 Kommen
 **CI-Implementierung:** In `.github/workflows/orgavela-readonly-audit.yml` die lange eingebettete Fixture durch Aufruf desselben Skripts ersetzt, `shellcheck -S error` und Bash-Parserprüfung für beide ausführbaren Dateien erhalten. In `.circleci/config.yml` den identischen Offline-Test als separaten echten `source-integrity`-Jobschritt ergänzt, neben und unabhängig von PHP-/Composerprüfungen. Kein GitHub-Environment für PR-Tests, keine weitere App-Berechtigung und keine externen Kosten beauftragt. Die betroffenen Betriebsunterlagen wurden um die genaue Unterscheidung Offline-Proof vs. echten geplanten Live-Audit erweitert.
 
 **Abnahmebedingung:** Echte GHA-`static-safety`, die unabhängige O04-Premerge-Prüfung sowie `ci/circleci: source-integrity` **auf demselben aktuellen SHA** grün; erst dann GitHub-PR regulär integrieren. Der tägliche 07:17-UTC-Lauf, Host-Cron, Notification-, Worker-/Retry- und rechtliche Gate-Abnahmen bleiben unabhängig davon zu erfüllen. Kein künstlicher Fortschritt in O/M/P4/R-Zahlen.
+
+
+## 2026-11-05 – O09/M3: Event-Leseautorisierung und Formular-Keyset-Pagination (PR #62)
+
+**Auftrag:** OrgaVela M3 auf dem vorhandenen Draft-PR weiter absichern; kein produktiver Upload. Nach erneuter Prüfung war `main` auf `d21976b7`, PR #62 bei `8ce6471`, vorherige acht GitHub-Jobs auf `8ce6471` grün. V1-Codingpakete 62/71 (historisch), formale M 0/8, P4 0/4, R 0/18.
+
+**Korrektur 1 (bereits committed `0b983a4`):** M3-Event-REST-Reads verlangen neben OrgScope und UOP-Policy auch ein gültiges WordPress-`uop_event`-Objekt, kein `trash` und `edit_post` für die konkrete Post-ID. Integrationsregression mit policy-seitig privilegiertem, in WordPress aber unberechtigtem Nutzer; list- und detail-Antworten müssen verweigern/filtern. CI für den Commit zunächst noch ausstehend.
+
+**Korrektur 2 (aktueller Commit dieses Arbeitsblocks):** Formularübersichten per höchstens 100 Rohzeilen und UUID-basierter Fortsetzung ohne interne Datenbank-IDs; fremde/ungültige Cursor HTTP 400, Schutz vor unautorisierten/archivierten Objekten pro Seite. Form-Builder ergänzt manuell ausgelöstes `Load more forms` und behält bei einem Refresh die Auswahl eines außerhalb der ersten Seite geöffneten Formulars. Neue synthetische WordPress-/MariaDB-Regression legt 105 Formulare an, prüft 100+5 Ergebnisse, keinen ID-Leak sowie fehlerhafte Cursor. Der Frontend-/REST-Code verlangt keine zusätzlichen Secrets, kein neues Hosting, keine Live-E-Mails und keine neue Migration.
+
+**Prüf- und Freigabegrenze:** Nach dem Commit müssen PHPStan/WPCS/Unit/Integration/Browser und echter CircleCI-Job auf exakt demselben aktuellen HEAD erfolgreich durchlaufen. Formulare über 100 sind nun paginierbar; separate Profilfeld-, Event- und Occurrence-Listen sowie die globale Wertgrenze von 1000 benötigen eine eigene Folgeprüfung. Keine formale M3-, O09-, P4- oder V1-Abnahme vor vollständigem Review und verbindlichen Betriebsgates.
+
+
+### O09/M3 – Negativtest und WPCS-Lauf korrigiert (05.11.2026)
+
+**Fehlerdiagnose auf Commit `e8a94d1`:** Echter GitHub-Quality-Job `127534937560` meldete WPCS in `M3ReadService.php` (eine Array-Layoutregel, zwei Zuweisungsabstände) und fehlenden `@throws`-Hinweis im `M3Controller`. Der Integrationstest auf PHP 8.3 / MariaDB (`127534938026`) meldete in `M3PersistenceTest::test_existing_event_configuration_and_manual_dst_occurrence` einen tatsächlich verweigerten HTTP-403-Eventlistenaufruf, während der neue Test ausschließlich HTTP 200 erwartete. Die schreibende und lesende Fremdpost-Berechtigung wurde nicht gelockert. CircleCI source-integrity des Commit `e8a94d1` war ebenfalls rot; dessen Logursache ist nicht separat belegt, die GitHub-Fehler werden gezielt behoben.
+
+**Korrektur:** WPCS-Layout und `@throws` bereinigt; Test kontrolliert nun ausdrücklich, dass das neue `M3Controller`-/Projektions-DTO keine fremden Events liefert, und verlangt separat 403 von der tatsächlich registrierten WordPress-Route für einen Akteur ohne diese Rechte. Die gemeldeten CI-Ergebnisse sind echte Fehler, keine ignorierten Checks. Aktuelle Prüfungen werden auf dem neuen HEAD benötigt. M3 bleibt Draft, M 0/8, P4 0/4, R 0/18, V1 NO-GO.
+
+
+### O09/M3 – zweiter WPCS-Befund aus echtem GitHub-Quality-Log (05.11.2026)
+
+**Diagnose:** GitHub Quality Job `127536688571` auf `4da3ad8` reduziert alle zuvor gemeldeten Codeformatierungen auf genau einen fehlenden `@throws InvalidArgumentException`-Tag in `M3Controller::forms()`. Die PHP-/DB-Integration (8.3 MySQL/MariaDB) hatte den eigentlichen PHPUnit-Integrationstest bereits erfolgreich hinter sich und befand sich nach dem Logabruf in späteren WordPress-/Browser-Schritten. CircleCI `source-integrity` war noch rot. **Folgeschritt:** Methodendokumentation vollständig nachziehen, unveränderte Berechtigungs-/Cursor-Logik und echte CI auf neuem HEAD prüfen. Kein Test übersprungen, keine M-/O-/R-Abnahme erhöht.
+
+
+## 2026-11-05 – O09/M3: lückenlose Profil-Projektion über 100/1000-Grenzen
+
+**Auftrag:** Freigabevorbereitung für OrgaVela-M3 auf PR #62 fortsetzen, vor allem die truncating Profil-Datenbankreads. Prüfstand: GitHub Foundation #42111068584 mit 8/8 Jobs erfolgreich sowie CircleCI #255 grün auf `7cd540f`; main `d21976b7`, PR weiterhin Draft.
+
+**Technik:** Die `M3ReadService::profile()`-Leseseite ersetzt die festen einmaligen `PageRequest(100)`- und `ProfileValueRepository::for_person()`-Reads durch 100-zeilige, organization-gescoped Keyset-Iterationen. Neues `for_person_page()` nutzt `v.id > after`, nach wie vor gebunden an aktive Person/Definition und gleiche Organisation; gruppierte Multiselect-Werte werden unabhängig von Insert-Reihenfolge nach Ordinal sortiert, bevor die bestehende zentrale Feld-Policy/Projection angewandt wird. Bei >10.000 Definitionen oder Werten wird **fail-closed** eine RuntimeException ausgelöst, statt ohne Fehlermeldung nur einen Ausschnitt zurückzugeben. Diese harte Schutzgrenze ist kein globales Skalierungsversprechen und muss bei M7 Performance/Big Fixtures überprüft werden.
+
+**Regression:** Synthetischer Integrationsfall mit 101 Felddefinitionen und 1.010 Werten, inklusive absichtlich gegenläufiger Multiselect-Insert-Reihenfolge; verifiziert gesamte sichere Projektion und Cross-Org-Deny. Externer CI-Nachweis auf neuem Commit nötig. Keine Secrets, Live-Daten, DB-Migration, IONOS-Änderung oder Veröffentlichung. Formell weiterhin M 0/8, P4 0/4, O 0/12, R 0/18, V1 NO-GO.
+
+
+## 2026-11-05 – O09/M3: sichtbare Event-Pagination ohne fremde Cursor
+
+**Auftrag/Abhängigkeit:** PR #62 nach der separaten Profil-Pagination weiterentwickeln; Main und OrgaVela-Live unverändert. Die Profilkorrektur `8f61819` hatte GitHub-Quality, mehrere Integrationstests und CircleCI #259 erfolgreich; restliche GitHub-Jobs waren vor diesem Event-Commit noch nicht abgeschlossen.
+
+**Umsetzung:** `EventRepository::for_organization()` unterstützt einen gebundenen, 100-zeiligen `event_post_id`-Keyset. `M3ReadService::event_page()` liefert nach Policy- und WordPress-`edit_post`-Prüfung nur autorisierte Event-DTOs und einen Fortsetzungscursor, der stets die UUID des **letzten sichtbaren** Events ist. Verweigerte/unveröffentlichte falsche oder gelöschte WordPress-Posts werden nicht als Daten oder Cursor ausgegeben. Die Suche scannt höchstens 2.000 rohe Event-Zeilen je Anfrage und verweigert oberhalb dieses Schutzbudgets die Antwort, statt eine falsche Vollständigkeit zu behaupten. Der alte `events()`-Aufruf liefert weiterhin die erste autorisierte Seite; REST akzeptiert optional `after` und antwortet auf ungültige/fremde Cursor mit HTTP 400.
+
+**Regression:** Zusätzlicher echter WordPress-Integrationstest mit 105 synthetischen Event-Posts, 100+5-Seitenfolge, keinem internem WordPress-Post-ID-Leak, unberechtigtem Cursor und einem künstlich UOP-berechtigten, WordPress-seitig aber nicht berechtigten Subscriber. Diese Änderung berührt keine echten Teilnehmerdaten, Hosts, migrationspflichtigen Tabellen oder Deployments. Neue GitHub-/CircleCI-Matrix ist notwendig; PR bleibt Draft und sämtliche M/P4/O/R-Formalabnahmen bleiben null.
+
+
+### O09/M3 – echte Event-Listen-Testdiagnose (05.11.2026)
+
+**Rot auf `c9e5e4f`:** GitHub Quality-Log Job `127564803717` meldete genau zwei WPCS-Verstöße in `M3ReadService`: die zweite explizit geworfene Exception `RuntimeException` ist noch nicht im PHPDoc vermerkt, sowie ein Zwei-Eintrag-Array nicht auf getrennten Zeilen. GitHub Integration PHP 8.3/MariaDB Job `127564804327` meldete ausschließlich einen neu eingeführten falschen Teststatus: der REST-Zugriff des Subscribers wurde korrekt mit 403 abgewiesen, während der Test 200 erwartete. Die App-Projektion muss trotzdem leer bleiben, obwohl der Test-UOP-Capability-Resolver bewusst großzügig ist. Der direkte Event-Read und der registrierte WordPress-REST-Guard werden weiterhin nicht abgeschwächt. CircleCI #261 rot, benötigt Wiederholung nach Fehlerkorrektur. Neue Freigabe erst nach echter vollständiger grüner CI auf aktuellem HEAD.
+
+## 2026-11-06 – O09/M3-08/10: Codex korrigiert Reorder-Fokus und Konfliktwiederaufnahme
+
+Auftrag auf PR #62, Ausgangs-HEAD `65c0e74ea938e66d64d8c035903336900390415b`, Draft gegen main; Übergabe `6264853` gelesen. Die zwei dortigen Quellbefunde sind bestätigt. Betreiber erlaubt ausdrücklich synthetische Tests auf orgavela.com; ein späterer Reset wird vom Betreiber vorgenommen. Diese Freigabe ersetzt die frühere Beschränkung auf isoliertes WordPress für manuelle Tests; Deployment-/Backup-/Policy-Gates bleiben zu beachten. In diesem Entwicklungsabschnitt kein Website-Upload, keine Aktivierung oder Migration. Kein PHPStan-Level-10-Auftrag.
+
+Umsetzung: `assets/m3-form-builder.js` setzt nach Reorder den Fokus am verschobenen Feld auf den betätigten Reorder-Control, bei deaktivierter Auf-/Ab-Schaltfläche auf dessen Positionsauswahl. Statusmeldung bleibt erhalten. Bei REST-409 bleibt der lokale Entwurf unverändert; Save/Publish werden bis zur bewussten Konfliktentscheidung gesperrt. Aktuelle Serverfassung kann separat zur Ansicht geladen werden, ohne Speichern/Publizieren. Lokaler bearbeitbarer Entwurf und Server-JSON lassen sich vergleichen; Nutzer können den lokalen Entwurf bewusst auf der aktuellen Revision weiterbearbeiten (expliziter Hinweis auf vollständigen Ersatz beim nächsten Save) oder ihn bewusst verwerfen. Kein automatischer Merge/Retry; erneutes konkurrierendes Speichern wird weiter durch den unveränderten Server-CAS geschützt. Fehlgeschlagener GET erhält lokale Eingaben und bietet erneuten Abruf.
+
+Regression in `tests/Browser/form-builder.spec.js`: drei Felder, Tab-Navigation, Auf-/Ab-/Positions-Reorder mit Folgefokus einschließlich Randpositionen; Editor A speichert abweichenden Inhalt, B erhält 409, verweigerter Reload erhält Eingabe, erfolgreicher Reload und bewusste Übernahme speichern nichts, erst expliziter Save übernimmt B. Lokale Syntax, ESLint und Build erfolgreich. Vollständige GitHub-/CircleCI-Prüfung folgt auf diesem neuen Commit; frühere grüne Runs gelten nicht dafür. Keine kostenpflichtigen Ressourcen beauftragt.
+
+Übergabe nach CI an Work: neue Commit-ID prüfen, manuell Tastatur/Screenreader, Touch/320px, Fehler-/Leerzustände, fehlende/falsche/abgelaufene Nonce und zwei reale Editoren inklusive Konflikt-Verwerfen/erneutem Konflikt/Publikation prüfen. OrgaVela ist als Testwebsite autorisiert; Codebereitstellung separat nach geltendem Deploymentverfahren. PR bleibt Draft/ungemergt bis manueller und unabhängiger Architektur-/Policy-Freigabe. V1-Zählungen unverändert (62/71 historisch implementiert, M 0/8, P4 0/4, R 0/18); alpha.2 lediglich zuletzt dokumentierter Live-Stand, hier nicht neu live verifiziert.
+
+### M3-Reorder – erste CI-Diagnose und stabile Editoridentitäten
+
+Run #42220860926 auf `092ca34`: Quality, CircleCI und ZIP-Smoke erfolgreich; Browser PHP8.3/MySQL scheitert in der neuen Folgebewegung (erwarteter Auf-Fokus, Schaltfläche bereits an Randposition deaktiviert). Feldzeilen erhalten nun stabile, ausschließlich lokale Editoridentitäten unabhängig von Index und bearbeitbarem Feldschlüssel; sie werden beim Reorder mitgeführt und bei Löschen/Neuladen passend verworfen. Keine Editor-ID wird persistiert oder an REST gesendet. Zusätzlich unnötigen Shift-Tab-Schritt vor dem bereits explizit fokussierten Auf-Control entfernt. Neuer kompletter CI-Nachweis erforderlich. CLI-Joblogabruf war wegen Blob-HTTP-403 nicht möglich; GitHub-Connector lieferte den tatsächlichen Fehlerlog erfolgreich.
+
+### M3-Reorder – Trace belegt falsche Positionsauswahl im neuen Test
+
+Run #42221228903 auf `ec2ca3a` scheitert erneut an der Folgebewegung. Playwright-Trace/Fehlerkontext aus Artifact `13503347137` geprüft: selectOption mit String „2“ kann sichtbares Label 2 statt internem Wert 2 (dritte Position) wählen. Der bisherige li-Textvergleich war zu breit, da die Bedingungsauswahl auch Labels anderer Felder enthält. Test korrigiert auf explizites `{value:'2'}` und genaue Überschrift des verschobenen Feldes. Damit wird die Position selbst eindeutig geprüft; Fokusanforderungen bleiben unverändert. Die stabilen Editoridentitäten bleiben als sachlich notwendige Absicherung gegen indexbedingtes Remount erhalten.
