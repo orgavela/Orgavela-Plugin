@@ -573,3 +573,7 @@ Als Alternative zum lokalen Windows-/WSL-Host wird ein kurzlebiger Linuxrunner i
 ### O03 – private Linuxcompute freigegeben und verifiziert,06.11.2026
 
 Betreiber bestätigt0€-Budget; private Standard-Linux-/DockerprobeRun42231617036 erfolgreich. Die frühere Kostenfreigabe-/Compute-Unklarheit ist damit aufgelöst. Environmentanlage durch IntegrationHTTP403 verweigert, administrativer Setupschritt im privaten Repo2719278 vorbereitet. Echte Capture-/Receiver-/Writer-Orchestrierung und Snapshot-Restore weiterhin offen, keine neuen formalen Abnahmen.
+
+### O03 – gespeicherte Sourcebindung und private synthetische Orchestrierung bewiesen,06.11.2026
+
+Private Runnerprobe ist nun um gespeicherte Source-Hostkey-/Rootprüfung (Run42261464603) und echte private3-Job-Fixture-Orchestrierung mit ephemerem Schlüssel/Dualempfänger/isoliertem WP-MariaDB-Restore erweitert (430c000,Run42262492546,3/3success). Source-Secrets eingerichtet; Root darf eindeutig als Secret oder Variable vorliegen. Keine neuen formalen Abnahmen und kein echter Snapshot/Restore. Work-Review der neuen Controller-/Enginepfade und Parentintegration vor echter Source-/Publishanbindung; danach Codex.
