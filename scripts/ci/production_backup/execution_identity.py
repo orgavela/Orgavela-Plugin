@@ -13,6 +13,10 @@ from collector import ProbeError
 
 REPOSITORY = 'orgavela/orgavela-backups'
 ENGINE_REPOSITORY = 'orgavela/Orgavela-Plugin'
+# GitHub immutable subjects bind numeric owner/repository IDs across renames.
+OWNER_ID = '350482188'
+REPOSITORY_ID = '1416889964'
+SUBJECT_PREFIX = 'repo:orgavela@'+OWNER_ID+'/orgavela-backups@'+REPOSITORY_ID
 WORKFLOW = REPOSITORY + '/.github/workflows/o03-private-live-backup.yml@refs/heads/main'
 ISSUER = 'https://token.actions.githubusercontent.com'
 ROLES = {'source':'orgavela-backup-source', 'abort':'orgavela-backup-source', 'writer':'orgavela-backup-writer'}
@@ -68,9 +72,10 @@ def controller_claims(claims, role):
     if role not in ROLES:
         raise ProbeError('backup role refused')
     if (claims.get('repository')!=REPOSITORY or claims.get('repository_visibility')!='private' or
+            claims.get('repository_id')!=REPOSITORY_ID or claims.get('repository_owner_id')!=OWNER_ID or
             claims.get('ref')!='refs/heads/main' or claims.get('event_name')!='workflow_dispatch' or
             claims.get('workflow_ref')!=WORKFLOW or
-            claims.get('sub')!='repo:'+REPOSITORY+':environment:'+ROLES[role] or
+            claims.get('sub')!=SUBJECT_PREFIX+':environment:'+ROLES[role] or
             claims.get('aud')!='orgavela-o03-'+role or
             not re.fullmatch(r'[a-f0-9]{40}',claims.get('workflow_sha','')) or
             claims.get('sha')!=claims.get('workflow_sha') or

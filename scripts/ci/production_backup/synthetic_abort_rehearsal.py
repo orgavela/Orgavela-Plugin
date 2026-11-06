@@ -1,5 +1,6 @@
 """Exercise shared watchdog/locks on disposable MariaDB and local HTTP fixture."""
 import json
+import os
 import http.server
 from pathlib import Path
 import secrets
@@ -46,7 +47,7 @@ def run():
                 for path in state.iterdir():
                     if path.is_file():path.unlink()
                 runner=name+'-'+mode
-                docker('run','-d','--name',runner,'--network',name,'--user','0:0',
+                docker('run','-d','--name',runner,'--network',name,'--user',str(os.getuid())+':'+str(os.getgid()),
                     '-e','FIXTURE_DB_HOST='+name+'-db','-e','FIXTURE_PASSWORD='+password,
                     '-v',str(state)+':/state','-v',str(Path(__file__).parent.resolve())+':/checks:ro',
                     '--entrypoint','sh',WP_IMAGE,'-c','sleep 90')

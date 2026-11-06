@@ -17,9 +17,9 @@ def b64(value):
 
 class IdentityTests(unittest.TestCase):
     def setUp(self):
-        self.claims=dict(repository=gate.REPOSITORY,repository_visibility='private',ref='refs/heads/main',
+        self.claims=dict(repository=gate.REPOSITORY,repository_visibility='private',repository_id=gate.REPOSITORY_ID,repository_owner_id=gate.OWNER_ID,ref='refs/heads/main',
             event_name='workflow_dispatch',workflow_ref=gate.WORKFLOW,workflow_sha='a'*40,sha='a'*40,
-            sub='repo:'+gate.REPOSITORY+':environment:orgavela-backup-source',aud='orgavela-o03-source',
+            sub=gate.SUBJECT_PREFIX+':environment:orgavela-backup-source',aud='orgavela-o03-source',
             run_id='123',run_attempt='1',iss=gate.ISSUER,iat=1000,nbf=1000,exp=1300)
 
     def test_signed_jwt_signature_algorithm_audience_and_expiry(self):
@@ -36,7 +36,7 @@ class IdentityTests(unittest.TestCase):
 
     def test_foreign_controller_refs_workflows_and_cross_role_denied(self):
         self.assertEqual(gate.controller_claims(self.claims,'source'),'a'*40)
-        for name in ('repository','repository_visibility','ref','event_name','workflow_ref','workflow_sha','sha','sub','run_id'):
+        for name in ('repository','repository_id','repository_owner_id','repository_visibility','ref','event_name','workflow_ref','workflow_sha','sha','sub','run_id'):
             with self.subTest(name=name),self.assertRaises(ProbeError):gate.controller_claims({**self.claims,name:'wrong'},'source')
         with self.assertRaises(ProbeError):gate.controller_claims(self.claims,'writer')
 
