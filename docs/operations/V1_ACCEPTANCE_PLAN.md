@@ -565,3 +565,7 @@ orgavela.com ist das verbindliche dauerhaft zugriffsgeschützte Testziel. Reihen
 ### O03/PGP05 – ausführbare Capture-/Recoveryfolge 06.11.2026
 
 [PR64](https://github.com/orgavela/Orgavela-Plugin/pull/64) auf2d031a4 implementiert bounded SSH-Transport, separate Source-/Ciphertext-Publisher-Einstiege und private Restorewerkzeuge;27 Provider-Regressionen grün und lokaler verschlüsselter synthetischer WP/MariaDB-Restore bestanden. Abhängig von PR36-Parentkette. Vor echtem Sicherungs-/Restorelauf fehlen Review/Integration, getrennte vertrauenswürdige Runneranbindung und privater Betreiber-Restorehost. O01-Zugangsschutz/O10/M3-Upload bleiben davon abhängig; keine neue formale Abnahme.
+
+### O03 – private temporäre CI-Restorevariante,06.11.2026
+
+Als Alternative zum lokalen Windows-/WSL-Host wird ein kurzlebiger Linuxrunner im privaten Backuprepo geprüft. [Ephemerer Testempfänger, Snapshotgleichheit und offene Kosten-/Orchestrierungsprüfungen](O03_EPHEMERAL_CI_RESTORE_2026-11-06.md). Eigentümerkey bleibt außerhalb CI; separater persönlicher Recoverynachweis unverändert erforderlich. Vorschlag, noch kein neuer produktiver Workflow/Restorebeleg oder formaler Fortschritt.

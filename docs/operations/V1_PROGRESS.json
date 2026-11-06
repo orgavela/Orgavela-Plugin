@@ -185,7 +185,11 @@
       "live_runner_activated": false,
       "next": "independent security review PR64 and parent integration; private source/writer wiring and operator restorehost before live capture",
       "private_restore_target_available": false,
-      "private_restore_target_evidence": "Operator confirms no private restore target yet; existing computer OS requested, no paid provisioning"
+      "private_restore_target_evidence": "Operator confirms no private restore target yet; existing computer OS requested, no paid provisioning",
+      "preferred_restore_target": "proposed ephemeral Linux runner in private orgavela/orgavela-backups; not provisioned",
+      "free_private_ci_quota_verified": false,
+      "private_ci_settings_probe": "HTTP403; 0 existing backup repository workflow runs",
+      "windows_local_setup": "deferred alternative after operator CI-runner question"
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
