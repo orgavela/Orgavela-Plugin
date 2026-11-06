@@ -569,3 +569,7 @@ orgavela.com ist das verbindliche dauerhaft zugriffsgeschützte Testziel. Reihen
 ### O03 – private temporäre CI-Restorevariante,06.11.2026
 
 Als Alternative zum lokalen Windows-/WSL-Host wird ein kurzlebiger Linuxrunner im privaten Backuprepo geprüft. [Ephemerer Testempfänger, Snapshotgleichheit und offene Kosten-/Orchestrierungsprüfungen](O03_EPHEMERAL_CI_RESTORE_2026-11-06.md). Eigentümerkey bleibt außerhalb CI; separater persönlicher Recoverynachweis unverändert erforderlich. Vorschlag, noch kein neuer produktiver Workflow/Restorebeleg oder formaler Fortschritt.
+
+### O03 – private Linuxcompute freigegeben und verifiziert,06.11.2026
+
+Betreiber bestätigt0€-Budget; private Standard-Linux-/DockerprobeRun42231617036 erfolgreich. Die frühere Kostenfreigabe-/Compute-Unklarheit ist damit aufgelöst. Environmentanlage durch IntegrationHTTP403 verweigert, administrativer Setupschritt im privaten Repo2719278 vorbereitet. Echte Capture-/Receiver-/Writer-Orchestrierung und Snapshot-Restore weiterhin offen, keine neuen formalen Abnahmen.
