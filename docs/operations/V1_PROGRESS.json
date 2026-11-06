@@ -197,9 +197,15 @@
       "private_runner_probe_run": 42231617036,
       "private_runner_probe_result": "success",
       "private_runner_probe_used_source_data": false,
-      "private_ci_environments_created": false,
-      "private_ci_environment_setup_error": "PUT environment HTTP403 Resource not accessible by integration; readback []",
-      "next_administrative_step": "private backup repository administrator: create main-only source/writer/restore environments and bind own Source credentials; no secret values in chat"
+      "private_ci_environments_created": true,
+      "private_ci_environment_setup_error": "Historical API PUT403; operator subsequently created environments; metadata and main-only Source rule now verified",
+      "next_administrative_step": "copy verified known_hosts block and canonical root from private Run summaries into Source secret/variable; no password disclosure",
+      "private_source_environment_main_only_verified": true,
+      "private_source_host_key_probe_run": 42259779993,
+      "private_source_binding_probe_run": 42260121738,
+      "private_source_ssh_login_verified": true,
+      "canonical_source_root_verified_in_private_summary": true,
+      "private_source_data_exported": false
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
