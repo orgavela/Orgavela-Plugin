@@ -557,3 +557,7 @@ Der aktuelle Draft-[PR #11](https://github.com/janjrre/Projekt-Wordpress-Plugin/
 ### O09/M3-08/10 – Testbereitstellung 06.11.2026
 
 Für die ausstehende manuelle Abnahme ist alternativ eine lokale WordPress-Instanz mit dem unveränderten CI-Artefakt von `4fb50cb` bereitgestellt. Reproduzierbarer Start, SHA-256-Provenienz und Zugriffsbeschränkung: [M3-CI-Workbench](M3_CI_WORKBENCH_2026-11-06.md). Work übernimmt die manuellen Prüfungen; unabhängige Freigabe und Integration bleiben offen. Kein Update von orgavela.com, keine formale Abnahme, kein geänderter V1-Paketumfang.
+
+### O01/O03/O10 – dauerhaftes Testziel orgavela.com, Betreiberfreigabe 06.11.2026
+
+orgavela.com ist das verbindliche dauerhaft zugriffsgeschützte Testziel. Reihenfolge: echter konsistenter Datei+DB-Snapshot und separater Real-Restore → Hostschutz inklusive REST/Assets und Work-Zugang → synthetischer Testbetrieb ohne reale Nebenwirkungen → manueller CI-Paket-Testdeploy mit Rollback → M3-Abnahme. [Bestand, neue Main-Audits, technisch unvollständiger O03-Collector und nächste Arbeit](ORGAVELA_PERMANENT_TEST_ENVIRONMENT.md). Einrichtungsbeginn bestätigt, noch keine Websiteänderung und keine neue formale O-/M-/P4-/R-Abnahme.

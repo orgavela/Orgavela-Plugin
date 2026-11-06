@@ -323,3 +323,7 @@ Der [Masterplan v2.11](../operations/V1_ACCEPTANCE_PLAN.md) bleibt normativ unve
 ## O09/M3 – separate SHA-gebundene Testinstanz, 06.11.2026
 
 Das unveränderte CI-Paket von `4fb50cb` wurde in separatem lokalem Docker-WordPress installiert/aktiviert; alle 192 installierten Dateien und der ausgelieferte Editorhash stimmen. Zugriff nur auf dem ausführenden Rechner; für Works Screenreader-/Touch-Browser liegt ein reproduzierbares Startpaket vor. [Zugriff, Identität und Übergabe](../operations/M3_CI_WORKBENCH_2026-11-06.md). OrgaVela.com unverändert, PR #62 Draft/ungemergt, manuelle und unabhängige Freigaben fehlen. V1-Zählungen unverändert.
+
+## Dauerhafte OrgaVela-Testumgebung – Beginn am 06.11.2026
+
+Betreiberfreigabe für orgavela.com als dauerhaft geschütztes Testziel gilt. Neue echte Main-Audits: Backup-Preflight #42225546300 und Schema #42225685432 erfolgreich (29 UOP-Tabellen). Noch kein echter Snapshot/Restore, keine Hostschutz-/Websiteänderung; vorhandener PGP05-Collector/Writer ist unvollständiger Offline-Kandidat und endet mit78. Nächster Auftrag bleibt bei **Codex: O03/PGP05 ausführbare Sicherungs-/Restorekette**; erst danach Zugangsschutz, Testbetrieb und M3-Upload. [Aktueller Einrichtungsnachweis und genaue Blocker](../operations/ORGAVELA_PERMANENT_TEST_ENVIRONMENT.md). Work-Lokalzugriff auf die frühere Dockerinstanz war nicht möglich und zählt nicht als Abnahme. PR62 Draft/ungemergt; V1-Zählungen unverändert.
