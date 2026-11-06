@@ -222,7 +222,7 @@ def hard_disconnect_abort(binding, *, password, maintenance_approved=False):
         output=Path(folder)/'evidence.json'
         receive(binding.argv(),verify,output,env=env,max_bytes=4096,timeout=30)
         evidence=json.loads(output.read_bytes())
-    expected={'schema':'orgavela-hard-disconnect/v1','ssh_channel_killed':True,'own_processes_ended':True,
+    expected={'schema':'orgavela-hard-disconnect/v1','watchdog_completed':True,'ssh_channel_killed':True,'own_processes_ended':True,
               'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
     if evidence!=expected:raise ProbeError('independent abort recovery unverified')
     return evidence

@@ -69,3 +69,5 @@ jobs:
           /tmp/orgavela-pgp05-fixtures/bin/python scripts/ci/production_backup/temporary_key_roundtrip.py
       - name: Synthetic abort groups, registrations, database locks and HTTP recovery
         run: python3 scripts/ci/production_backup/synthetic_abort_rehearsal.py
+      - name: Assembled abort-only PHP protocol with disposable tables and simulated origin
+        run: python3 scripts/ci/production_backup/synthetic_abort_protocol.py

@@ -79,10 +79,10 @@ class TransportTests(unittest.TestCase):
 
     def test_hard_abort_requires_independent_complete_evidence(self):
         import transport
-        expected={'schema':'orgavela-hard-disconnect/v1','ssh_channel_killed':True,'own_processes_ended':True,
+        expected={'schema':'orgavela-hard-disconnect/v1','watchdog_completed':True,'ssh_channel_killed':True,'own_processes_ended':True,
                   'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
         binding=type('Fixture',(),{'argv':lambda self:['synthetic']})()
-        for missing in [None, 'own_processes_ended', 'fresh_connection_write_locks', 'maintenance_removed', 'origin_recovered']:
+        for missing in [None, 'watchdog_completed', 'own_processes_ended', 'fresh_connection_write_locks', 'maintenance_removed', 'origin_recovered']:
             proof=dict(expected)
             if missing:proof[missing]=False
             def receive(argv,program,path,**kwargs):

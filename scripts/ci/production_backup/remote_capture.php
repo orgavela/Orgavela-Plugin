@@ -237,6 +237,9 @@ try {
     if($abortVerify) {
         $receipt=$home.'/.orgavela-abort-'.$abortToken.'.json';
         if(!$abortOnly || !$abortToken || is_link($receipt)||!is_file($receipt)||fileowner($receipt)!==posix_geteuid()||filesize($receipt)>32768)throw new RuntimeException('abort receipt');
+        $completion=$home.'/.orgavela-abort-'.$abortToken.'.watchdog.json';
+        if(is_link($completion)||!is_file($completion)||fileowner($completion)!==posix_geteuid()||filesize($completion)>1024)throw new RuntimeException('watchdog receipt');
+        if(json_decode(file_get_contents($completion),true,8,JSON_THROW_ON_ERROR)!==['schema'=>'orgavela-watchdog-complete/v1','status'=>'complete'])throw new RuntimeException('watchdog incomplete');
         $proof=json_decode(file_get_contents($receipt),true,32,JSON_THROW_ON_ERROR);
         if(($proof['token']??null)!==$abortToken||($proof['work']??null)!==$home.'/.orgavela-capture-'.$abortToken)throw new RuntimeException('abort binding');
         if(is_dir($proof['work']))throw new RuntimeException('watchdog not complete');
@@ -245,8 +248,8 @@ try {
         foreach($proof['groups'] as $owned)if(orgavela_process_members($owned))throw new RuntimeException('group remains');
         if(file_exists($root.'/.maintenance')||!orgavela_probe_write_locks($db,$tables))throw new RuntimeException('abort cleanup incomplete');
         if(orgavela_capture_origin_status()!==200)throw new RuntimeException('origin not recovered');
-        $cleanup();unlink($receipt);
-        echo json_encode(['schema'=>'orgavela-hard-disconnect/v1','ssh_channel_killed'=>true,'own_processes_ended'=>true,'fresh_connection_write_locks'=>true,'maintenance_removed'=>true,'origin_recovered'=>true,'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
+        $cleanup();unlink($receipt);unlink($completion);
+        echo json_encode(['schema'=>'orgavela-hard-disconnect/v1','watchdog_completed'=>true,'ssh_channel_killed'=>true,'own_processes_ended'=>true,'fresh_connection_write_locks'=>true,'maintenance_removed'=>true,'origin_recovered'=>true,'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
     }
     $work=$home.'/.orgavela-capture-'.($abortToken??bin2hex(random_bytes(12))); if (!mkdir($work,0700)) throw new RuntimeException('work');
     $maintenance=$root.'/.maintenance';
@@ -256,7 +259,7 @@ try {
     $pid=getmypid(); $stat=trim(file_get_contents('/proc/'.$pid.'/stat'));
     $identity=explode(' ',substr($stat,strrpos($stat,')')+2))[19];
     if (!ctype_digit($identity)) throw new RuntimeException('process identity');
-    $watchdog=orgavela_capture_watchdog($work,$maintenance,$maintenanceHash,$pid,$identity,$dry?3:($abortToken?15:115),!$dry);
+    $watchdog=orgavela_capture_watchdog($work,$maintenance,$maintenanceHash,$pid,$identity,$dry?3:($abortToken?15:115),!$dry,$abortToken?$home.'/.orgavela-abort-'.$abortToken.'.watchdog.json':null);
     file_put_contents($work.'/watchdog.php',$watchdog);
     $phase('watchdog_starting');$launchAt=microtime(true);
     exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
