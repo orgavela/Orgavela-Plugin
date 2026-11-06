@@ -1160,3 +1160,11 @@ Die Ergebniskommunikation an die GitHub-Issues wurde ausgeführt: [W0 #16 Kommen
 **CI-Implementierung:** In `.github/workflows/orgavela-readonly-audit.yml` die lange eingebettete Fixture durch Aufruf desselben Skripts ersetzt, `shellcheck -S error` und Bash-Parserprüfung für beide ausführbaren Dateien erhalten. In `.circleci/config.yml` den identischen Offline-Test als separaten echten `source-integrity`-Jobschritt ergänzt, neben und unabhängig von PHP-/Composerprüfungen. Kein GitHub-Environment für PR-Tests, keine weitere App-Berechtigung und keine externen Kosten beauftragt. Die betroffenen Betriebsunterlagen wurden um die genaue Unterscheidung Offline-Proof vs. echten geplanten Live-Audit erweitert.
 
 **Abnahmebedingung:** Echte GHA-`static-safety`, die unabhängige O04-Premerge-Prüfung sowie `ci/circleci: source-integrity` **auf demselben aktuellen SHA** grün; erst dann GitHub-PR regulär integrieren. Der tägliche 07:17-UTC-Lauf, Host-Cron, Notification-, Worker-/Retry- und rechtliche Gate-Abnahmen bleiben unabhängig davon zu erfüllen. Kein künstlicher Fortschritt in O/M/P4/R-Zahlen.
+
+## 06.11.2026 – V1-Masterplan 2.12: Zuständigkeiten je Arbeitspaket
+
+**Auftrag:** Zuständigkeiten für Work, Codex und normalen Chat im verbindlichen V1-Masterplan festlegen. Ausgangsbasis ist OrgaVela `main` auf `d21976b73e94208db050d108a3761529ca953a9c`.
+
+**Ergebnis:** Für 71 M-Pakete, sechs M6-10-Teilpakete, vier P4-Pakete, zwölf O-Pakete, acht Arbeitswellen und 18 Release-Gates sind führender Modus und relevante Übergaben dokumentiert. Normaler Chat unterstützt bei Erklärungen und Entwürfen. Work und Codex übernehmen nacheinander. Fachliche, rechtliche und Release-Freigaben bleiben bei den benannten Personen.
+
+**Prüfung und nächster Schritt:** Paketkennungen auf vollständige, eindeutige Zuordnung geprüft. Der Fortschrittsdatensatz verweist auf Version 2.12. Die fachlichen Abnahmekriterien und Statuswerte wurden beibehalten. Nächster technischer Schritt ist der M3-Review in PR #62 durch Codex. Keine Betriebsprüfung oder produktive Aktion war Teil dieses Auftrags.

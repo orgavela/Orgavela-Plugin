@@ -1,6 +1,6 @@
 # OrgaVela / UOP Core – Verbindlicher Masterplan bis zur V1-Abnahme
 
-**Version:** 2.11 | **Bestandsaufnahme:** 12.10.2026 | **Status:** aktiv; V1 **nicht** abgenommen  
+**Version:** 2.12 | **Zuständigkeiten ergänzt:** 06.11.2026 | **Bestandsaufnahme:** 12.10.2026 | **Status:** aktiv; V1 **nicht** abgenommen  
 **Aktuell geltendes O03-Backupziel (Betreiberentscheid 13.10.2026):** nur **IONOS-Sicherungen** plus **separates privates GitHub-Repository mit vorverschlüsselten Release-Assets**. Die frühere Google-Drive-Entscheidung in historischen Nachträgen ist **widerrufen**; Details: [O03 GitHub-Backup-Runbook](W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md).  
 **Quellenhierarchie:** Phase 3 Specification Freeze > Phase 2 V1-Spezifikation > Phase 1 Produktstrategie; neuere freigegebene ADRs ergänzen den Freeze, ersetzen ihn nicht stillschweigend.  
 **Projekt:** janjrre/Projekt-Wordpress-Plugin | **Technischer Name:** UOP Core | **Produktname:** OrgaVela | **Staging:** https://orgavela.com
@@ -56,142 +56,156 @@ Fortschrittsänderungen bekommen stets Datum, Git-HEAD, letzte Testläufe, konkr
 
 **Jede UOP-Arbeitsantwort enthält am Schluss den Plan-Link plus das kompakte V1-Cockpit** (technische M-Pakete, abgenommene M-Meilensteine, P4-Status, offene Blocker, aktueller Schritt). Bei wirklicher neuer Prüfung/Implementierung zuerst diesen Plan und V1_PROGRESS.json überprüfen und falls nötig aktualisieren; parallel einen neuen append-only Eintrag im Arbeitslog anlegen. Reine Antworten ohne Änderungsbedarf erhalten einen dokumentierten Kontrollvermerk, nicht zwangsläufig neue Plan-Version. Das gilt **nur für Antworten zum UOP-/OrgaVela-Projekt**, nicht für beliebige andere Chat-Themen. Außerhalb aktiv laufender Chats findet kein stilles Hintergrundmonitoring statt.
 
+### 3.1 Zuständigkeit und Übergabe zwischen den Modi
+
+Die Spalte **Zuständig** benennt den führenden Modus je Arbeitspaket und bei Bedarf die konkrete Übergabe.
+
+| Modus | Zuständigkeit | Ergebnis für die Übergabe |
+|---|---|---|
+| **Codex** | Quellcode, Repository-Dokumentation, automatisierte Tests, Code- und Sicherheitsreviews, Build, CI, PRs und freigegebene technische Deployment-Schritte | Commit-SHA, PR, Prüfläufe, Paket-Hash, offene Befunde und nächste Aktion |
+| **Work** | Projektkoordination, lesende Betriebsprüfung, manuelle Browser- und Bedienprüfung, IONOS- und Mailnachweise, fachliche Abnahmevorbereitung und Fortschrittsabgleich | Umgebung, Datum, Version, erwartetes und beobachtetes Ergebnis, Nachweislink und offene Freigaben |
+| **Normaler Chat** | Erklärungen, Entscheidungsvorlagen, verständliche Anleitungen und Vorbereitung fachlicher Testszenarien | Formulierter Entwurf oder geklärte Anforderung an Work zur Dokumentation oder an Codex zur Umsetzung |
+
+Normaler Chat unterstützt vorbereitend. Jedes verbindliche Umsetzungspaket wird von Work oder Codex geführt. Die benannten Verantwortlichen treffen die fachlichen, rechtlichen und öffentlichen Release-Entscheidungen. Work koordiniert und dokumentiert sie.
+
+**Work und Codex bearbeiten OrgaVela nacheinander.** Vor dem Wechsel den Stand mit Nachweisen und nächster Aktion im Arbeitslog oder verlinkten PR festhalten. Der nächste technische Schritt ist der Review von M3 in PR #62 durch Codex. Work übernimmt die manuelle Bedienprüfung oder die Betriebsnachweise in einem getrennten Arbeitsabschnitt.
+
 ## 4. Vollständiger Work Breakdown M0–M7
 
 **Tabellenstatus I bedeutet: technisch in bestehendem PR mit Tests ausgewiesen, aber gerade nicht automatisch gemergt oder V1-abgenommen.** Die Einzelabnahme wird entlang der nachfolgenden Matrix nachgeholt.
 
 ### M0 – Foundation (6 Pakete; I 6/6; A 0/6; PR #1)
 
-| ID | Inhalt / bereits berichteter Stand | Offene Abnahmehandlungen |
-|---|---|---|
-| M0-01 | I – WordPress Plugin Bootstrap, Aktivierungsgates | Echtes Alpha-Plugin auf IONOS geprüft; Fatal-/Recovery- und Deaktivierungsfall erneut prüfen |
-| M0-02 | I – Composer/npm, Locks, reproduzierbarer Build | Zwei identische Builds/Hashes, SBOM/Third-party-Notices, ZIP-Inhaltsaudit |
-| M0-03 | I – WP/PHP/DB/InnoDB/utf8mb4 Compatibility Gate | Negativumgebungen vor Schreibzugriff ablehnen; aktuelle IONOS-Gatewerte protokollieren |
-| M0-04 | I – Kernel, DI-/Module-Registry | Hook-/Boot-Reihenfolge, inkompatible Erweiterungen, keine globalen Nebenwirkungen |
-| M0-05 | I – PHPCS/PHPStan/JS-Lint/SCA | Null offene unakzeptierte Findings; genaue Toolversion/Release-SHA |
-| M0-06 | I – Testharness / WP/DB-/Browser-CI | Frische, wiederholbare Matrix auf RC-SHA; Flakes beseitigen |
+| ID | Inhalt / bereits berichteter Stand | Offene Abnahmehandlungen | Zuständig |
+|---|---|---|---|
+| M0-01 | I – WordPress Plugin Bootstrap, Aktivierungsgates | Echtes Alpha-Plugin auf IONOS geprüft; Fatal-/Recovery- und Deaktivierungsfall erneut prüfen | **Codex** |
+| M0-02 | I – Composer/npm, Locks, reproduzierbarer Build | Zwei identische Builds/Hashes, SBOM/Third-party-Notices, ZIP-Inhaltsaudit | **Codex** |
+| M0-03 | I – WP/PHP/DB/InnoDB/utf8mb4 Compatibility Gate | Negativumgebungen vor Schreibzugriff ablehnen; aktuelle IONOS-Gatewerte protokollieren | **Codex** · Work liefert IONOS-Umgebungswerte. |
+| M0-04 | I – Kernel, DI-/Module-Registry | Hook-/Boot-Reihenfolge, inkompatible Erweiterungen, keine globalen Nebenwirkungen | **Codex** |
+| M0-05 | I – PHPCS/PHPStan/JS-Lint/SCA | Null offene unakzeptierte Findings; genaue Toolversion/Release-SHA | **Codex** |
+| M0-06 | I – Testharness / WP/DB-/Browser-CI | Frische, wiederholbare Matrix auf RC-SHA; Flakes beseitigen | **Codex** |
 
 **Exit M0:** Aktivieren/Deaktivieren ohne Fatal, Schutz in nicht unterstützten Umgebungen, reproducible ZIP und grüne vollständige CI; PR #1 review-/mergefähig. Bestehende Alpha-Aktivierung allein erfüllt den Exit nicht.
 
 ### M1 – Persistenz (8 Pakete; I 8/8; A 0/8; PR #1)
 
-| ID | Inhalt / technischer Stand | Offene Abnahmehandlungen |
-|---|---|---|
-| M1-01 | I – Normatives V1-Manifest mit 28 Tabellen | Feld-/Index-/Collation-Ist-Soll-Audit mit Live-Schema |
-| M1-02 | I – Migration Registry/Runner | Verriegelung, Retry, Versionszustand, Fail-Closed |
-| M1-03 | I – Install-Migrationen | Fresh Install + Upgrade inkl. Altersattest V2 |
-| M1-04 | I – UUID/Clock/Correlation | Uniqueness, UTC, keine internen IDs öffentlich |
-| M1-05 | I – Transaktionen, Deadlocks und Callback-Grenzen | Mehrprozess-Rollback/Lock-Ownership/Commit-Semantik |
-| M1-06 | I – Default Organization/OrgScope | Genau ein Default-Org; organisationsfremde Objekte unzugänglich |
-| M1-07 | I – Scoped Repository/Query Contract | Index-, Paging-, SQL-Injection-/Scope-Architekturtests |
-| M1-08 | I – Schema-/Migration-/Drift-Tests | Site-Health uop_schema good; unabhängiger Tabellen-/Indexvergleich und Restore |
+| ID | Inhalt / technischer Stand | Offene Abnahmehandlungen | Zuständig |
+|---|---|---|---|
+| M1-01 | I – Normatives V1-Manifest mit 28 Tabellen | Feld-/Index-/Collation-Ist-Soll-Audit mit Live-Schema | **Codex** · Work liefert bereinigte IONOS-Istwerte. |
+| M1-02 | I – Migration Registry/Runner | Verriegelung, Retry, Versionszustand, Fail-Closed | **Codex** |
+| M1-03 | I – Install-Migrationen | Fresh Install + Upgrade inkl. Altersattest V2 | **Codex** |
+| M1-04 | I – UUID/Clock/Correlation | Uniqueness, UTC, keine internen IDs öffentlich | **Codex** |
+| M1-05 | I – Transaktionen, Deadlocks und Callback-Grenzen | Mehrprozess-Rollback/Lock-Ownership/Commit-Semantik | **Codex** |
+| M1-06 | I – Default Organization/OrgScope | Genau ein Default-Org; organisationsfremde Objekte unzugänglich | **Codex** |
+| M1-07 | I – Scoped Repository/Query Contract | Index-, Paging-, SQL-Injection-/Scope-Architekturtests | **Codex** |
+| M1-08 | I – Schema-/Migration-/Drift-Tests | Site-Health uop_schema good; unabhängiger Tabellen-/Indexvergleich und Restore | **Codex** · Work liefert Site-Health- und Restore-Belege. |
 
 **Exit M1:** Physisch belegter Schema-Stand 2/2 samt Altersattestation-Tabelle, korrekte Migration aus unterstützten Ständen und getestete Wiederherstellung. **Nächster Live-Arbeitsschritt: M1-08.**
 
 ### M2 – Identity, Authorization, Audit, Outbox (10 Pakete; I 10/10; A 0/10; PR #2 Draft)
 
-| ID | Inhalt | Offene Abnahmehandlungen |
-|---|---|---|
-| M2-01 | I – Person und WP-Account-Link | Kein Matching gleicher E-Mail, Delete/Unlink, Doppelverknüpfung |
-| M2-02 | I – Beziehungen/Delegationen | Nur explizit geprüfte Rechte, Ablauf und Revoke sofort |
-| M2-03 | I – Actor Assignments | Organization-/Eventgrenzen, Deaktivierung, Sensitivity Ceiling |
-| M2-04 | I – Rollen primitive Capabilities | Default Deny, Rollenkonflikte, Member/Staff/Admin |
-| M2-05 | I – zentraler Policy Service | Cross-org/BOLA/IDOR, stale Rechte |
-| M2-06 | I – Field Policy und Projection | Keine unerlaubten Felder in REST/Admin/Portal/CSV/Mail |
-| M2-07 | I – minimiertes Audit | Revisionsfest, keine Tokens/Geheimnisse/unerlaubte PII |
-| M2-08 | I – transaktionale Outbox | Exactly-once Wirkung trotz at-least-once Worker-Ausführung, kein Side-Effect vor Commit |
-| M2-09 | I – öffentliche Post-Commit Hooks | Keine parallele dauerhafte Wahrheit und keine Secret-Exfiltration |
-| M2-10 | I – Authorization Regression Matrix | Vollständiger Rollen×Objekt×Feld×Kanal-Test mit Negativfällen |
+| ID | Inhalt | Offene Abnahmehandlungen | Zuständig |
+|---|---|---|---|
+| M2-01 | I – Person und WP-Account-Link | Kein Matching gleicher E-Mail, Delete/Unlink, Doppelverknüpfung | **Codex** |
+| M2-02 | I – Beziehungen/Delegationen | Nur explizit geprüfte Rechte, Ablauf und Revoke sofort | **Codex** |
+| M2-03 | I – Actor Assignments | Organization-/Eventgrenzen, Deaktivierung, Sensitivity Ceiling | **Codex** |
+| M2-04 | I – Rollen primitive Capabilities | Default Deny, Rollenkonflikte, Member/Staff/Admin | **Codex** |
+| M2-05 | I – zentraler Policy Service | Cross-org/BOLA/IDOR, stale Rechte | **Codex** |
+| M2-06 | I – Field Policy und Projection | Keine unerlaubten Felder in REST/Admin/Portal/CSV/Mail | **Codex** |
+| M2-07 | I – minimiertes Audit | Revisionsfest, keine Tokens/Geheimnisse/unerlaubte PII | **Codex** |
+| M2-08 | I – transaktionale Outbox | Exactly-once Wirkung trotz at-least-once Worker-Ausführung, kein Side-Effect vor Commit | **Codex** |
+| M2-09 | I – öffentliche Post-Commit Hooks | Keine parallele dauerhafte Wahrheit und keine Secret-Exfiltration | **Codex** |
+| M2-10 | I – Authorization Regression Matrix | Vollständiger Rollen×Objekt×Feld×Kanal-Test mit Negativfällen | **Codex** |
 
 **Exit M2:** Alle Kanäle greifen nur über OrgScope, Object Policy und Projection auf Daten zu, kein Rechtegewinn durch geteilte Kontaktdaten. Draft-Review/Upstream-Merge offen.
 
 ### M3 – Profile, Events, Forms (10 Pakete; I 10/10; A 0/10; PR #3 Draft)
 
-| ID | Inhalt | Offene Abnahmehandlungen |
-|---|---|---|
-| M3-01 | I – Profile Field Definitions | 11 erlaubte Feldtypen, Sensitivität, Schema-Migration |
-| M3-02 | I – typisierte Werte | Multiselect, Löschung, ungültige Typänderung, Private Values |
-| M3-03 | I – Condition-AST | Zyklus-, Referenz-, Consent- und Age-Fail-Closed |
-| M3-04 | I – uop_event CPT/Settings | Keine unveröffentlichten Events oder unpassenden WP-Capabilities |
-| M3-05 | I – manuelle Occurrences | IANA TZ/DST/UTC, Terminverschiebung, Limits |
-| M3-06 | I – Entwürfe/Optimistic Lock | Konflikt statt Überschreiben, Versionswechsel |
-| M3-07 | I – immutable Form-Publikation | Version/Hash/Feldbezug und spätere Historie erhalten |
-| M3-08 | I – barrierearmer Form Builder | Feldpalette, Bedingung, Publikation, Tastatur-Reorder, 320px |
-| M3-09 | I – Profil/Event/Form REST Reads | Scopes, Pagination, DTO, Status- und Versionskontrolle |
-| M3-10 | I – Domain-/Accessibility-Tests | Reale Editor-UI, Empty/Error/Denied/Conflict, Screenreader |
+| ID | Inhalt | Offene Abnahmehandlungen | Zuständig |
+|---|---|---|---|
+| M3-01 | I – Profile Field Definitions | 11 erlaubte Feldtypen, Sensitivität, Schema-Migration | **Codex** |
+| M3-02 | I – typisierte Werte | Multiselect, Löschung, ungültige Typänderung, Private Values | **Codex** |
+| M3-03 | I – Condition-AST | Zyklus-, Referenz-, Consent- und Age-Fail-Closed | **Codex** |
+| M3-04 | I – uop_event CPT/Settings | Keine unveröffentlichten Events oder unpassenden WP-Capabilities | **Codex** |
+| M3-05 | I – manuelle Occurrences | IANA TZ/DST/UTC, Terminverschiebung, Limits | **Codex** |
+| M3-06 | I – Entwürfe/Optimistic Lock | Konflikt statt Überschreiben, Versionswechsel | **Codex** |
+| M3-07 | I – immutable Form-Publikation | Version/Hash/Feldbezug und spätere Historie erhalten | **Codex** |
+| M3-08 | I – barrierearmer Form Builder | Feldpalette, Bedingung, Publikation, Tastatur-Reorder, 320px | **Codex** · Work prüft die manuelle Bedienung. |
+| M3-09 | I – Profil/Event/Form REST Reads | Scopes, Pagination, DTO, Status- und Versionskontrolle | **Codex** |
+| M3-10 | I – Domain-/Accessibility-Tests | Reale Editor-UI, Empty/Error/Denied/Conflict, Screenreader | **Codex** · Work protokolliert UI- und Screenreader-Tests. |
 
 **Exit M3:** Manager konfiguriert Event mit Terminen und veröffentlichter, unveränderlicher gültiger Formularversion. Draft-/Reviewstatus offen.
 
 ### M4 – Registration, Capacity, Waitlist (9 Pakete; I 9/9; A 0/9; PR #4)
 
-| ID | Inhalt | Offene Abnahmehandlungen |
-|---|---|---|
-| M4-01 | I – Registration + immutable Snapshot | Wiederholung, Idempotenz, historische Referenzen |
-| M4-02 | I – E-Mail-Verifizierung | Einmalig gehashte Challenge, Missbrauch/Rate/Expiry |
-| M4-03 | I – Registration-State-Machine | Jede erlaubte/gesperrte Transition + Audit |
-| M4-04 | I – Bucket/Capacity Claims | Kein Overbooking unter mindestens 50 parallelen Workern |
-| M4-05 | I – FIFO-Warteliste/Offers | Held/Expired/Accepted, private Links, Ownership |
-| M4-06 | I – Cancel/Release/Promotion | Atomar, keine doppelten Angebote oder Claims |
-| M4-07 | I – Concurrency Suite | Race Cancel/Accept/Expiry, DB-Rollback, aktuelle CI |
-| M4-08 | I – Event-Abbruch/Occurrence-Verschiebung | 100+ Registrations, Snapshots erhalten, Cursor |
-| M4-09 | I – Service Golden Paths | Reale REST/Browser/Mail-E2E zusätzlich mit M6 verifizieren |
+| ID | Inhalt | Offene Abnahmehandlungen | Zuständig |
+|---|---|---|---|
+| M4-01 | I – Registration + immutable Snapshot | Wiederholung, Idempotenz, historische Referenzen | **Codex** |
+| M4-02 | I – E-Mail-Verifizierung | Einmalig gehashte Challenge, Missbrauch/Rate/Expiry | **Codex** |
+| M4-03 | I – Registration-State-Machine | Jede erlaubte/gesperrte Transition + Audit | **Codex** |
+| M4-04 | I – Bucket/Capacity Claims | Kein Overbooking unter mindestens 50 parallelen Workern | **Codex** |
+| M4-05 | I – FIFO-Warteliste/Offers | Held/Expired/Accepted, private Links, Ownership | **Codex** |
+| M4-06 | I – Cancel/Release/Promotion | Atomar, keine doppelten Angebote oder Claims | **Codex** |
+| M4-07 | I – Concurrency Suite | Race Cancel/Accept/Expiry, DB-Rollback, aktuelle CI | **Codex** |
+| M4-08 | I – Event-Abbruch/Occurrence-Verschiebung | 100+ Registrations, Snapshots erhalten, Cursor | **Codex** |
+| M4-09 | I – Service Golden Paths | Reale REST/Browser/Mail-E2E zusätzlich mit M6 verifizieren | **Codex** · Work führt die Staging-Strecken mit Testpostfächern aus. |
 
 **Exit M4:** Erfolgreiche, sichere Anmeldung einschließlich verifizierter Gäste, deterministischer Warteliste/Angebotsannahme, Transaktions- und Race-Verträge über alle Kanäle abgenommen.
 
 ### M5 – Consent, Privacy, E-Mail, Export (10 Pakete; I 10/10; A 0/10; PR #5)
 
-| ID | Inhalt | Offene Abnahmehandlungen |
-|---|---|---|
-| M5-01 | I – Consent Definition/Document Versions | Hash, immutable History, passende Zwecke |
-| M5-02 | I – append-only Consent Records | Actor/Subject getrennt, Withdraw, keine Doppelwahrheit |
-| M5-03 | I – DE/EN E-Mail-Vorlagen | Kontext-Escaping, private Template-Overrides |
-| M5-04 | I – Queue/Delivery/Retry | Externer SMTP-Staging-Test, Scheduler, Crash/ambiguity |
-| M5-05 | I – WordPress Privacy Export/Eraser | Account-Link statt Familien-E-Mail; echte Testexports |
-| M5-06 | I – konfigurierbare Retention | Dry Run, Hold, Fristen fachlich/rechtlich geprüft |
-| M5-07 | I – private Export-Jobs | Wiederholte Autorisierung, 24h Ablauf, private Pfade |
-| M5-08 | I – CSV-Stream | Formula Injection, Größen-/Feldgrenze, Projection |
-| M5-09 | I – Mail/Privacy/Export Adminzustände | Leere/fehlgeschlagene Jobs, Recovery/Reconcile |
-| M5-10 | I – Failure- und Recovery-Tests | Massen-, Fehler-, Widerrufs-/Audit-Regression |
+| ID | Inhalt | Offene Abnahmehandlungen | Zuständig |
+|---|---|---|---|
+| M5-01 | I – Consent Definition/Document Versions | Hash, immutable History, passende Zwecke | **Codex** |
+| M5-02 | I – append-only Consent Records | Actor/Subject getrennt, Withdraw, keine Doppelwahrheit | **Codex** |
+| M5-03 | I – DE/EN E-Mail-Vorlagen | Kontext-Escaping, private Template-Overrides | **Codex** |
+| M5-04 | I – Queue/Delivery/Retry | Externer SMTP-Staging-Test, Scheduler, Crash/ambiguity | **Codex** · Work prüft SMTP und Cron auf der Zielumgebung. |
+| M5-05 | I – WordPress Privacy Export/Eraser | Account-Link statt Familien-E-Mail; echte Testexports | **Codex** |
+| M5-06 | I – konfigurierbare Retention | Dry Run, Hold, Fristen fachlich/rechtlich geprüft | **Codex** · Work koordiniert die Entscheidung über Fristen und Sperren. |
+| M5-07 | I – private Export-Jobs | Wiederholte Autorisierung, 24h Ablauf, private Pfade | **Codex** |
+| M5-08 | I – CSV-Stream | Formula Injection, Größen-/Feldgrenze, Projection | **Codex** |
+| M5-09 | I – Mail/Privacy/Export Adminzustände | Leere/fehlgeschlagene Jobs, Recovery/Reconcile | **Codex** |
+| M5-10 | I – Failure- und Recovery-Tests | Massen-, Fehler-, Widerrufs-/Audit-Regression | **Codex** |
 
 **Exit M5:** Kein ungeprüfter Consent, keine fremden Data-Exporte, stabile Outbox trotz Mailausfall und dokumentierte Lösch-/Aufbewahrungsgrenzen. **Juristische Einordnung** der Consent-Policies bleibt eine fachliche Freigabe, keine automatische Zertifizierung durch Tests.
 
 ### M6 – Admin, Portal, Blocks, REST (10 Pakete; I 9/10; M6-10 T; A 0/10; PR #6 Draft)
 
-| ID | Inhalt | Offene Abnahmehandlungen |
-|---|---|---|
-| M6-01 | I – gemeinsamer REST Controller/Error Contract | API-Version, Statuscodes, Feld-/Payload-Allowlist |
-| M6-02 | I – Personen-/Anmeldungs-Routen | Echt-Auth, stale PATCH, Review/Cancel, Objekt-Policies |
-| M6-03 | I – Events/Forms/Capacity/Consent/Audit/Exports inkl. Gast-Mail | Standardmäßig gesperrte Gast-/Offer-Opt-ins erst nach Mail-/Cron-/HTTPS-Abnahme einschalten |
-| M6-04 | I – Admin People/Registration | Screens mit Review/Audit, Filter, denied/empty/error |
-| M6-05 | I – Admin Forms/Privacy/Communications/Health | Queue-Störungen, Recovery, minimal sichtbare Daten |
-| M6-06 | I – fünf dynamische Gutenberg-Blocks | Editor/Frontend, CSP, Cache, veröffentlichte Inhalte |
-| M6-07 | I – persönliches/delegiertes Portal | Wechsel, Revoke in offener Session, Eigentümer-Filter |
-| M6-08 | I – Interactivity Adapter | Progressive Enhancement, no-JS, autoritative Serverprüfung |
-| M6-09 | I – Responsive/a11y Vorprüfung | Manuelle 320px/Zoom/Tastatur/Screenreader-Abnahme fehlt |
-| M6-10 | **T – gekoppelte End-to-End-Golden-Paths** | Paket 1–3 berichtete CI-Erfolge; Paket 4 Guardian/Consent erst teilweise; Pakete 5/6 und vollständige Live-Abnahme offen |
+| ID | Inhalt | Offene Abnahmehandlungen | Zuständig |
+|---|---|---|---|
+| M6-01 | I – gemeinsamer REST Controller/Error Contract | API-Version, Statuscodes, Feld-/Payload-Allowlist | **Codex** |
+| M6-02 | I – Personen-/Anmeldungs-Routen | Echt-Auth, stale PATCH, Review/Cancel, Objekt-Policies | **Codex** |
+| M6-03 | I – Events/Forms/Capacity/Consent/Audit/Exports inkl. Gast-Mail | Standardmäßig gesperrte Gast-/Offer-Opt-ins erst nach Mail-/Cron-/HTTPS-Abnahme einschalten | **Codex** · Work liefert Mail-, Cron- und HTTPS-Belege. |
+| M6-04 | I – Admin People/Registration | Screens mit Review/Audit, Filter, denied/empty/error | **Codex** |
+| M6-05 | I – Admin Forms/Privacy/Communications/Health | Queue-Störungen, Recovery, minimal sichtbare Daten | **Codex** |
+| M6-06 | I – fünf dynamische Gutenberg-Blocks | Editor/Frontend, CSP, Cache, veröffentlichte Inhalte | **Codex** |
+| M6-07 | I – persönliches/delegiertes Portal | Wechsel, Revoke in offener Session, Eigentümer-Filter | **Codex** |
+| M6-08 | I – Interactivity Adapter | Progressive Enhancement, no-JS, autoritative Serverprüfung | **Codex** |
+| M6-09 | I – Responsive/a11y Vorprüfung | Manuelle 320px/Zoom/Tastatur/Screenreader-Abnahme fehlt | **Work** · Codex behebt Befunde. |
+| M6-10 | **T – gekoppelte End-to-End-Golden-Paths** | Paket 1–3 berichtete CI-Erfolge; Paket 4 Guardian/Consent erst teilweise; Pakete 5/6 und vollständige Live-Abnahme offen | **Codex** · Work übernimmt manuelle Prüfungen und Staging. |
 
 **M6-10 eigene Rest-Pakete (Projektpakete, nicht weitere Milestones):**
-1. **Paket 1 – CI-Stabilität:** verbliebene intermittierende Browsertest-Timeouts auf aktuellem HEAD reproduzieren und beheben.
-2. **Paket 2 – Mobile/UX:** auf 320/375/768/1280px und bei 200/400 % Zoom alle relevanten Screens/Fehlerzustände.
-3. **Paket 3 – Security/Negativfälle:** invalid consent, Cross-Org, Sessionablauf, Replay, CSRF, Tokenleaks, Race. Frühere Tests sind vorhanden; auf RC-SHA wiederholen.
-4. **Paket 4 – Alters-/Guardian-/Consent-Vertrauen:** **P4-01…P4-04**, siehe Abschnitt 5, vollständig zum Abschluss bringen.
-5. **Paket 5 – permanente IONOS-Staging-E2E:** synthetische Erwachsene, zwei Familien-/Vertreterrollen, Admin, Gast, Warteliste, tatsächliche E-Mail-Verifikation, Frontend-/REST-/Audit-Konsistenz. Vorher Cron + Mail + Sichtbarkeit/Backup absichern. Keine Dritt-Mailadressen.
-6. **Paket 6 – Abschluss M6:** vollautomatisierte CI + manuelle UX/Accessibility + Staging-Golden-Path-Testprotokolle, keine hohen Findings, PR-Review und Mergefähigkeit.
+1. **Paket 1 – CI-Stabilität:** verbliebene intermittierende Browsertest-Timeouts auf aktuellem HEAD reproduzieren und beheben. **Zuständig:** Codex – Browser-CI stabilisieren.
+2. **Paket 2 – Mobile/UX:** auf 320/375/768/1280px und bei 200/400 % Zoom alle relevanten Screens/Fehlerzustände. **Zuständig:** Work – manuelle UX-Prüfung. Codex behebt Befunde.
+3. **Paket 3 – Security/Negativfälle:** invalid consent, Cross-Org, Sessionablauf, Replay, CSRF, Tokenleaks, Race. Frühere Tests sind vorhanden; auf RC-SHA wiederholen. **Zuständig:** Codex – Negativtests auf dem Kandidaten ausführen.
+4. **Paket 4 – Alters-/Guardian-/Consent-Vertrauen:** **P4-01…P4-04**, siehe Abschnitt 5, vollständig zum Abschluss bringen. **Zuständig:** Codex – technische Integration. Work führt P4-03 und P4-04 fachlich.
+5. **Paket 5 – permanente IONOS-Staging-E2E:** synthetische Erwachsene, zwei Familien-/Vertreterrollen, Admin, Gast, Warteliste, tatsächliche E-Mail-Verifikation, Frontend-/REST-/Audit-Konsistenz. Vorher Cron + Mail + Sichtbarkeit/Backup absichern. Keine Dritt-Mailadressen. **Zuständig:** Work – Staging und Testempfang. Codex liefert Paket und synthetische Testdaten.
+6. **Paket 6 – Abschluss M6:** vollautomatisierte CI + manuelle UX/Accessibility + Staging-Golden-Path-Testprotokolle, keine hohen Findings, PR-Review und Mergefähigkeit. **Zuständig:** Work – Abnahmebelege zusammenführen. Codex führt Review und Merge.
 
 **Exit M6:** Fachliche V1-Golden-Paths von React/Gutenberg/Portal bis Datenbank/Mail/Dashboard in derselben releasefähigen Version grün; kein Umgehen von Alters-/Vertretungs-Policies; alle relevanten UI-Zustände verständlich und zugänglich.
 
 ### M7 – Hardening und Release (8 Pakete; N 8/8; A 0/8; neue Issues/PRs erforderlich)
 
-| ID | Verbindliche Umsetzung | Messbarer Nachweis / Exit |
-|---|---|---|
-| M7-01 | Performance-/Large-Fixtures: 100/10.000/100.000 Persons; 500/50.000/500.000 Registrations; 10k/750k/7 Mio.+ Values, 10k/500k/3 Mio.+ Audits | p95 People/Registration List und Portal Reads ≤ 500ms; Registration Submit ≤ 1s (ohne asynchrone E-Mail); Capacity Transition ≤ 750ms ohne starke Konkurrenz, auf dokumentierter 4-vCPU-/8GB-Referenz |
-| M7-02 | Sicherheit: Threat Model, statische/dynamische Checks, IDOR/BOLA, Cross-Org, CSRF/XSS/SQLi, Mass Assignment, JWT/Bearer-Replay, WAF/Abuse, CSV, Session-/Rate-Tests | Kein offener Critical/High-Fund; Ergebnisse inkl. False-Positive-Auswertung und Retest dokumentiert |
-| M7-03 | Installation/Upgrade/Migration/Recovery: Alpha → Beta → RC, Schema 1→2, unterbrochene DDL/Backfills, Rollback, Backup/Restore, Drift | Reproduzierbarer Install/Upgrade; **Restore aus gesicherter IONOS-DB** erfolgreich demonstriert; keine orphan IDs |
-| M7-04 | WP/PHP/DB/Theme/Browser-Matrix: WP 6.9 und Release-current, PHP 8.3/8.4/8.5, MySQL 8.0 und MariaDB 10.11+, InnoDB/utf8mb4, Min-/Current-WordPress | Alle CI-Jobs stabil grün auf dem **gleichen** Kandidaten-SHA; Konflikt-Smoketests mit verbreiteten Themes/Plugins |
-| M7-05 | Manuelle WCAG 2.2 AA-Abnahme mit Keyboard, wenigstens einem Screenreader, mobilen Browsern, Fehlern/Timeouts/Fokus | Review-Protokoll pro Registrierung, Consent, Admin, Form Builder und Portal, keine bekannten AA-Blocker |
-| M7-06 | Betriebs-/Datenschutz-/Developer-Dokumentation | Deutsch/Englisch Setup, Admin/Teilnehmer-Guides, Data Inventory, Zweck/Rechtsgrundlage vom Betreiber, Audit, Export/Eraser, Retention, API/Hooks/Extensions, Troubleshooting, Upgrade/Recovery, Secret-/Mailkonzept |
-| M7-07 | finales Releaseartefakt und WordPress.org-Readiness | GPL/Third-party Notices/SBOM, readme.txt, Uninstall-Policy, Source/Build, reproduzierbares ZIP, externe Dienste deklariert, SHA-256 und Provenienz; keine Dev/CI-Secrets oder Test-MU-Plugins enthalten |
-| M7-08 | Alpha → Beta → RC → V1 Stable nach Release-Gates | Beta-Feature-Freeze, RC nur Blocker-Fixes, Upgrade von Beta, Security-/DPA-/A11y-Abnahme, signierter Decision Record, Tag/Release Notes/Versioning |
+| ID | Verbindliche Umsetzung | Messbarer Nachweis / Exit | Zuständig |
+|---|---|---|---|
+| M7-01 | Performance-/Large-Fixtures: 100/10.000/100.000 Persons; 500/50.000/500.000 Registrations; 10k/750k/7 Mio.+ Values, 10k/500k/3 Mio.+ Audits | p95 People/Registration List und Portal Reads ≤ 500ms; Registration Submit ≤ 1s (ohne asynchrone E-Mail); Capacity Transition ≤ 750ms ohne starke Konkurrenz, auf dokumentierter 4-vCPU-/8GB-Referenz | **Codex** |
+| M7-02 | Sicherheit: Threat Model, statische/dynamische Checks, IDOR/BOLA, Cross-Org, CSRF/XSS/SQLi, Mass Assignment, JWT/Bearer-Replay, WAF/Abuse, CSV, Session-/Rate-Tests | Kein offener Critical/High-Fund; Ergebnisse inkl. False-Positive-Auswertung und Retest dokumentiert | **Codex** |
+| M7-03 | Installation/Upgrade/Migration/Recovery: Alpha → Beta → RC, Schema 1→2, unterbrochene DDL/Backfills, Rollback, Backup/Restore, Drift | Reproduzierbarer Install/Upgrade; **Restore aus gesicherter IONOS-DB** erfolgreich demonstriert; keine orphan IDs | **Codex** · Work koordiniert die isolierte IONOS-Restore-Probe. |
+| M7-04 | WP/PHP/DB/Theme/Browser-Matrix: WP 6.9 und Release-current, PHP 8.3/8.4/8.5, MySQL 8.0 und MariaDB 10.11+, InnoDB/utf8mb4, Min-/Current-WordPress | Alle CI-Jobs stabil grün auf dem **gleichen** Kandidaten-SHA; Konflikt-Smoketests mit verbreiteten Themes/Plugins | **Codex** |
+| M7-05 | Manuelle WCAG 2.2 AA-Abnahme mit Keyboard, wenigstens einem Screenreader, mobilen Browsern, Fehlern/Timeouts/Fokus | Review-Protokoll pro Registrierung, Consent, Admin, Form Builder und Portal, keine bekannten AA-Blocker | **Work** · Codex behebt Befunde. |
+| M7-06 | Betriebs-/Datenschutz-/Developer-Dokumentation | Deutsch/Englisch Setup, Admin/Teilnehmer-Guides, Data Inventory, Zweck/Rechtsgrundlage vom Betreiber, Audit, Export/Eraser, Retention, API/Hooks/Extensions, Troubleshooting, Upgrade/Recovery, Secret-/Mailkonzept | **Work** · Codex liefert technische Details. Normaler Chat kann verständliche Entwürfe für das Teilnehmerhandbuch vorbereiten. |
+| M7-07 | finales Releaseartefakt und WordPress.org-Readiness | GPL/Third-party Notices/SBOM, readme.txt, Uninstall-Policy, Source/Build, reproduzierbares ZIP, externe Dienste deklariert, SHA-256 und Provenienz; keine Dev/CI-Secrets oder Test-MU-Plugins enthalten | **Codex** |
+| M7-08 | Alpha → Beta → RC → V1 Stable nach Release-Gates | Beta-Feature-Freeze, RC nur Blocker-Fixes, Upgrade von Beta, Security-/DPA-/A11y-Abnahme, signierter Decision Record, Tag/Release Notes/Versioning | **Work** · Codex baut, taggt und veröffentlicht das Paket nach separater Betreiberfreigabe. |
 
 **Exit M7:** Nur bei sämtlichen Gates grün und formellem dokumentiertem Go für V1. Ein grüner GitHub-Run auf irgendeinem älteren Commit ist kein Beleg.
 
@@ -199,12 +213,12 @@ Fortschrittsänderungen bekommen stets Datum, Git-HEAD, letzte Testläufe, konkr
 
 Dieses Zusatzpaket ist aus der M6-10-Härtung hervorgegangen und **zwingend für die zugesagte Nutzung mit Minderjährigen**, aber nicht in den ursprünglichen 71 Aufgaben enthalten. Die Organisations- und Rechtsprüfung muss für die tatsächlichen Zwecke gelten; technische Checkboxen sind kein amtlicher Identitäts- oder Sorgerechtsnachweis. Falls ein vollständig geprüfter Betriebsmodus für Minderjährige nicht rechtzeitig erreicht wird, **darf diese Funktion nicht als V1-tauglich freigeschaltet oder beworben werden**; der konkrete Release-Scope müsste vor Freigabe ausdrücklich angepasst und dokumentiert werden.
 
-| Paket / Issue | Aktueller Stand | Arbeitsliste bis Abnahme |
-|---|---|---|
-| **P4-01 / #7; PR #11** | T – ADR 311–313, Altersattestationsmigration und Eligibility-/Admin-/REST-Teil umgesetzt; Review/CI noch offen | Code/ADR-Review, Klasse unbekannt/selbstbehauptet/geprüft/abgelaufen; je Event konfigurierbare Regel; NOT/AND/OR dreiwertig; Ablauf/Revoke; Cross-Org; datensparsame Nachweise; Backfill/Schema; aktueller HEAD grün, UX-/Rechtsprüfung |
-| **P4-02 / #8** | N – echte unabhängige Consent-Entscheidung noch nicht umgesetzt | Neues ADR, State-/Schema-/Migrationsplan; pro Zweck self-only/delegate-only/beide; zwei **wirklich getrennte Actors/Sessions**, Revision/Widerruf einzeln, Version/hash/policy; UI/REST/Export/Audit, negative Browsercases |
-| **P4-03 / #9** | T – Guardian-Claim/Admin-Grundstrecke existiert; externe Nachweisprüfung und Betriebsprozess offen | unabhängige Reviewer-Checkliste; keine bloße E-Mail/Code-/Checkbox-Verifikation; private Einladungen mit Rate-Limit, befristete Grants, mehrere Guardians, konkurrierende Claims, Revoke, Rechts-/Datenschutzregeln |
-| **P4-04 / #10** | N – zusammenhängende Abnahme offen | echte Golden Paths für Erwachsene, Selbstentscheidung, Delegation, zwei Guardians/Actor-Entscheidungen, unklare Alterslage und alle Negativfälle; mobile/Screenreader, Privacyaudit, abgenommene Rechts-/Sicherheitsgrenzen |
+| Paket / Issue | Aktueller Stand | Arbeitsliste bis Abnahme | Zuständig |
+|---|---|---|---|
+| **P4-01 / #7; PR #11** | T – ADR 311–313, Altersattestationsmigration und Eligibility-/Admin-/REST-Teil umgesetzt; Review/CI noch offen | Code/ADR-Review, Klasse unbekannt/selbstbehauptet/geprüft/abgelaufen; je Event konfigurierbare Regel; NOT/AND/OR dreiwertig; Ablauf/Revoke; Cross-Org; datensparsame Nachweise; Backfill/Schema; aktueller HEAD grün, UX-/Rechtsprüfung | **Codex** · Work liefert UX- und fachliche Nachweise. |
+| **P4-02 / #8** | N – echte unabhängige Consent-Entscheidung noch nicht umgesetzt | Neues ADR, State-/Schema-/Migrationsplan; pro Zweck self-only/delegate-only/beide; zwei **wirklich getrennte Actors/Sessions**, Revision/Widerruf einzeln, Version/hash/policy; UI/REST/Export/Audit, negative Browsercases | **Codex** · Work klärt die Zweck- und Entscheidungsmatrix. Normaler Chat kann die Varianten erklären und als Entscheidungsvorlage formulieren. |
+| **P4-03 / #9** | T – Guardian-Claim/Admin-Grundstrecke existiert; externe Nachweisprüfung und Betriebsprozess offen | unabhängige Reviewer-Checkliste; keine bloße E-Mail/Code-/Checkbox-Verifikation; private Einladungen mit Rate-Limit, befristete Grants, mehrere Guardians, konkurrierende Claims, Revoke, Rechts-/Datenschutzregeln | **Work** · Codex implementiert Schutz und Regressionstests. |
+| **P4-04 / #10** | N – zusammenhängende Abnahme offen | echte Golden Paths für Erwachsene, Selbstentscheidung, Delegation, zwei Guardians/Actor-Entscheidungen, unklare Alterslage und alle Negativfälle; mobile/Screenreader, Privacyaudit, abgenommene Rechts-/Sicherheitsgrenzen | **Work** · Codex liefert Testmatrix und behebt Befunde. Work koordiniert die fachliche und rechtliche Freigabe. |
 
 **P4 Exit:** 4/4 Pakete abgeschlossen, alle gegen die zuletzt freigegebenen ADRs, mit 16/16 Release-CI-Jobs und relevanten HTTPS/Mailpit/IONOS-Stagingfällen auf demselben SHA; keine generische Zusage rechtswirksamer Unterschriften.
 
@@ -212,35 +226,35 @@ Dieses Zusatzpaket ist aus der M6-10-Härtung hervorgegangen und **zwingend für
 
 Diese Aufgaben sind **zusätzlich** zum Milestone-Katalog und aktuell Teil der V1-Freigabe; sie vermeiden ein irreführendes „62/71 bedeutet fast fertig“.
 
-| Ops-ID | Paket / Priorität | Status | Konkrete Arbeit und Abschlussbeleg |
-|---|---|---|---|
-| O01 | Staging-Isolation und Zugriff – P0 | T | Domain orgavela.com, feste SFTP-Root /public, eigene GitHub-Environment-Secrets belegt. Verzeichniszugriff ist technisch weitreichend: Kontrollplan für andere Websites, eingeschränkter separater Deploy-Account soweit möglich, keine Dreamloud-Pfade, Audit der Secrets |
-| O02 | Schema-/Datenintegrität – P0 | T | Aktuell DB-/Datenversion 2/2; unabhängig UOP-Site-Health „good“, 29 Tabellen inkl. Age-Attestation, Indizes, Org-Bindung, Option-Migrationsstatus und Recovery verifizieren |
-| O03 | Staging Backup/Restore – P0 | N | IONOS DB+Datei-Sicherung, Zeitpunkt/Retention, praktikabler Restore; in isolierter Testinstanz zurückspielen, Integrität und Notfallkontakt dokumentieren |
-| O04 | Cron/Action Scheduler – P0 | B | DISABLE_WP_CRON gesetzt; externe Cron-Route/Task und Frequenz beim Hosting klären, mindestens ein echtes Queue-Event erfolgreich ausführen, Stau-/Ausfall-/Retry-Monitoring |
-| O05 | SMTP/E-Mail-Transport – P0 | N | Geschützte SMTP-Zugangsdaten und Testempfänger, SPF/DKIM/DMARC, transaktionaler UOP-Mailtransport, Mailpit-Vergleich, tatsächlich empfangene Einmallinks ohne personenbezogene Drittadressaten |
-| O06 | Private Staging/Legal – P0 | B | Suchmaschinenabschreckung und ggf. Passwortschutz/Noindex; Datenschutzerklärung, Testdaten, tatsächliche Dienste, Logs/Retention, keine realen Teilnehmerdaten; vor öffentlichem Feature-Opt-in |
-| O07 | Browser-/REST-E2E auf OrgaVela – P0 | N | Versionsgleiche, synthetische Tests für Admin/Erwachsene/Gast/Guardian/Consent/Warteliste/Privacy; Testdaten/Accounts nach Rücksetzen löschen; keine Logs mit Secrets |
-| O08 | Security-/Betriebsüberwachung – P1 | N | Host-/Mail-/DB-/Queue-/PHP-Logs (redigiert), Alarme für Failed Jobs, Zugriffsprotokoll, Datenschutzkonforme Aufbewahrung; keine unbeobachtete öffentliche Beta |
-| O09 | CI-Gate und Abhängigkeiten – P0 | B | Neueste PR-#11-Browserfehler beheben; M0–M6/P4 CI auf aktuellem SHA; in Reihenfolge PR #1→#2→#3→#4→#5→#6→#11 reviewen, rebasen/re-targeten und nach bestandenen Gates integrieren |
-| O10 | Upgrade/Rollback-Pipeline – P0 | N | Bisheriger SFTP-Workflow kann nur Erstinstallation, kein Überschreiben. Versionierter atomarer Update-/Wiederherstellungsweg, freigegebene DB-Migration und prüfsummengebundene Deploys bauen und trocken testen |
-| O11 | V1-Produktdokumentation/UAT – P1 | N | Verbindliches Screen-Inventar, Rollenhandbuch, verständliche UI, fehlende Texte, Abnahmeszenarien und benannte fachliche Prüfer |
-| O12 | Release-/Freigabeprozess – P0 | N | Vollständige Go/No-Go-Checkliste, RC-Tag, SBOM, Security-/DPA-/A11y-Unterschriften und V1-Release-Protokoll; öffentlichen Launch gesondert entscheiden |
+| Ops-ID | Paket / Priorität | Status | Konkrete Arbeit und Abschlussbeleg | Zuständig |
+|---|---|---|---|---|
+| O01 | Staging-Isolation und Zugriff – P0 | T | Domain orgavela.com, feste SFTP-Root /public, eigene GitHub-Environment-Secrets belegt. Verzeichniszugriff ist technisch weitreichend: Kontrollplan für andere Websites, eingeschränkter separater Deploy-Account soweit möglich, keine Dreamloud-Pfade, Audit der Secrets | **Work** · Codex ergänzt technische SSH-/SFTP-Schutzprüfungen. |
+| O02 | Schema-/Datenintegrität – P0 | T | Aktuell DB-/Datenversion 2/2; unabhängig UOP-Site-Health „good“, 29 Tabellen inkl. Age-Attestation, Indizes, Org-Bindung, Option-Migrationsstatus und Recovery verifizieren | **Work** · Codex pflegt das Manifest und testet Migration und Fehlerfälle. |
+| O03 | Staging Backup/Restore – P0 | N | IONOS DB+Datei-Sicherung, Zeitpunkt/Retention, praktikabler Restore; in isolierter Testinstanz zurückspielen, Integrität und Notfallkontakt dokumentieren | **Work** · Codex baut und testet Erfassung, Verschlüsselung, Writer und Readback. Work koordiniert Inventar und isolierten Restore. |
+| O04 | Cron/Action Scheduler – P0 | B | DISABLE_WP_CRON gesetzt; externe Cron-Route/Task und Frequenz beim Hosting klären, mindestens ein echtes Queue-Event erfolgreich ausführen, Stau-/Ausfall-/Retry-Monitoring | **Work** · Codex verantwortet Worker-, Retry- und Backlog-Logik. |
+| O05 | SMTP/E-Mail-Transport – P0 | N | Geschützte SMTP-Zugangsdaten und Testempfänger, SPF/DKIM/DMARC, transaktionaler UOP-Mailtransport, Mailpit-Vergleich, tatsächlich empfangene Einmallinks ohne personenbezogene Drittadressaten | **Work** · Codex testet Vorlagen, Tokens, Outbox und Retry. Work prüft den echten Testempfang. |
+| O06 | Private Staging/Legal – P0 | B | Suchmaschinenabschreckung und ggf. Passwortschutz/Noindex; Datenschutzerklärung, Testdaten, tatsächliche Dienste, Logs/Retention, keine realen Teilnehmerdaten; vor öffentlichem Feature-Opt-in | **Work** · Codex setzt freigegebene Anforderungen technisch um. |
+| O07 | Browser-/REST-E2E auf OrgaVela – P0 | N | Versionsgleiche, synthetische Tests für Admin/Erwachsene/Gast/Guardian/Consent/Warteliste/Privacy; Testdaten/Accounts nach Rücksetzen löschen; keine Logs mit Secrets | **Work** · Codex liefert Testdaten und automatisierte Regressionstests. |
+| O08 | Security-/Betriebsüberwachung – P1 | N | Host-/Mail-/DB-/Queue-/PHP-Logs (redigiert), Alarme für Failed Jobs, Zugriffsprotokoll, Datenschutzkonforme Aufbewahrung; keine unbeobachtete öffentliche Beta | **Work** · Codex pflegt Monitor und Alarmregeln. Work prüft Lauf, Empfang und Eskalation. |
+| O09 | CI-Gate und Abhängigkeiten – P0 | B | Neueste PR-#11-Browserfehler beheben; M0–M6/P4 CI auf aktuellem SHA; in Reihenfolge PR #1→#2→#3→#4→#5→#6→#11 reviewen, rebasen/re-targeten und nach bestandenen Gates integrieren | **Codex** · Work liefert bei Bedarf Betriebsnachweise. |
+| O10 | Upgrade/Rollback-Pipeline – P0 | N | Bisheriger SFTP-Workflow kann nur Erstinstallation, kein Überschreiben. Versionierter atomarer Update-/Wiederherstellungsweg, freigegebene DB-Migration und prüfsummengebundene Deploys bauen und trocken testen | **Codex** · Work koordiniert das IONOS-Fenster und protokolliert die Wiederanlaufprobe. |
+| O11 | V1-Produktdokumentation/UAT – P1 | N | Verbindliches Screen-Inventar, Rollenhandbuch, verständliche UI, fehlende Texte, Abnahmeszenarien und benannte fachliche Prüfer | **Work** · Codex liefert technische Inhalte und behebt UAT-Befunde. Normaler Chat kann Anleitungen und fachliche Testszenarien vorformulieren. |
+| O12 | Release-/Freigabeprozess – P0 | N | Vollständige Go/No-Go-Checkliste, RC-Tag, SBOM, Security-/DPA-/A11y-Unterschriften und V1-Release-Protokoll; öffentlichen Launch gesondert entscheiden | **Work** · Codex liefert Commit-, CI- und Paketnachweise. Der Betreiber entscheidet über Go/No-Go. |
 
 **Beschlossene Risikoreihenfolge:** O02 → O03 → O04/O06 → PR-#11-CI-Fix → P4 → O05/O07 → O09/O10 → M7 + O08/O11 → O12. Einige Pakete können parallel entwickelt werden, jedoch nicht ihre abhängigen Gates überspringen.
 
 ## 7. Arbeitswellen, Reihenfolge und konkrete Lieferobjekte
 
-| Welle | Arbeit | Abhängigkeiten | Ende erst bei |
-|---|---|---|---|
-| **W0: Bestands- und Sicherheitsabnahme** | O01/O02/O03/O06: Schema-Health, isolierter Webspace, Backup-/Restore, Datenschutz-/Staging-Sichtbarkeit; Issue #13 neu bewerten | aktive Alpha-Site | belegte Datenbank-/Backup-/Recovery-Ausgangsbasis, keine echten Daten |
-| **W1: Betriebsfähigkeit** | O04/O05/O08: externer Cron, Scheduler-Queue, E-Mail, Fehlerprotokoll, Alarmregeln | W0 | verlässlich zugestellte synthetische UOP-Mail, 0 unbehandelte überfällige UOP-Queue-Jobs |
-| **W2: CI-/Branch-Gesundheit** | O09: PR #11 HEAD Browserfehler root-causen; Draft-PRs reviewen, Security-Regressions, M0–M6-Abnahmebelege | W0; CI unabhängig von Live-WP möglich | ein und derselbe HEAD für alle vorgesehenen Checks grün, keine kritischen Review-Findings |
-| **W3: Minderjährige/Consent** | P4-01→P4-02→P4-03→P4-04 inkl. ADRs, Datenmigration, UX, Browser/Privacy-Legal | W2; W1 für echten Mail-E2E | vier Issues mit belastbarem Nachweis abschließbar |
-| **W4: Vollständige Nutzerabläufe** | M6-10 Pakete 1–6, O07: Adult/Guardian/Guest/Waitlist/Admin/Privacy auf temporärer CI und IONOS | W1–W3 | Golden Paths und Negativmatrix auf RC-Source und Staging vollständig nachgewiesen |
-| **W5: Integration und Updatefähigkeit** | PR-Kette geordnet integrieren, O10: neuer voll versionierter Update-/Rollback-Weg; Alpha-Staging kontrolliert auf RC bringen | W2–W4 | Hauptbranch repräsentiert freigegebenen V1-Code, Rollforward/Rollback real getestet |
-| **W6: M7 Release Hardening** | M7-01 bis M7-07, O08/O11; Review aller Phase-2-/3-Stopconditions | W4/W5 | alle belastbaren Perf-/Security-/Accessibility-/Datenschutz-/Compatibility-Berichte grün |
-| **W7: RC & Stable-Abnahme** | M7-08, O12; Freeze, Upgrade-Matrix, RC-UAT, Go/No-Go, Tag, Changelog, Produktdokumentation | W6 | schriftlicher, datierter und nach Belegen nachvollziehbarer V1-Freigabeentscheid |
+| Welle | Arbeit | Abhängigkeiten | Ende erst bei | Zuständig |
+|---|---|---|---|---|
+| **W0: Bestands- und Sicherheitsabnahme** | O01/O02/O03/O06: Schema-Health, isolierter Webspace, Backup-/Restore, Datenschutz-/Staging-Sichtbarkeit; Issue #13 neu bewerten | aktive Alpha-Site | belegte Datenbank-/Backup-/Recovery-Ausgangsbasis, keine echten Daten | **Work** |
+| **W1: Betriebsfähigkeit** | O04/O05/O08: externer Cron, Scheduler-Queue, E-Mail, Fehlerprotokoll, Alarmregeln | W0 | verlässlich zugestellte synthetische UOP-Mail, 0 unbehandelte überfällige UOP-Queue-Jobs | **Work** |
+| **W2: CI-/Branch-Gesundheit** | O09: PR #11 HEAD Browserfehler root-causen; Draft-PRs reviewen, Security-Regressions, M0–M6-Abnahmebelege | W0; CI unabhängig von Live-WP möglich | ein und derselbe HEAD für alle vorgesehenen Checks grün, keine kritischen Review-Findings | **Codex** |
+| **W3: Minderjährige/Consent** | P4-01→P4-02→P4-03→P4-04 inkl. ADRs, Datenmigration, UX, Browser/Privacy-Legal | W2; W1 für echten Mail-E2E | vier Issues mit belastbarem Nachweis abschließbar | **Codex** |
+| **W4: Vollständige Nutzerabläufe** | M6-10 Pakete 1–6, O07: Adult/Guardian/Guest/Waitlist/Admin/Privacy auf temporärer CI und IONOS | W1–W3 | Golden Paths und Negativmatrix auf RC-Source und Staging vollständig nachgewiesen | **Work** |
+| **W5: Integration und Updatefähigkeit** | PR-Kette geordnet integrieren, O10: neuer voll versionierter Update-/Rollback-Weg; Alpha-Staging kontrolliert auf RC bringen | W2–W4 | Hauptbranch repräsentiert freigegebenen V1-Code, Rollforward/Rollback real getestet | **Codex** |
+| **W6: M7 Release Hardening** | M7-01 bis M7-07, O08/O11; Review aller Phase-2-/3-Stopconditions | W4/W5 | alle belastbaren Perf-/Security-/Accessibility-/Datenschutz-/Compatibility-Berichte grün | **Codex** |
+| **W7: RC & Stable-Abnahme** | M7-08, O12; Freeze, Upgrade-Matrix, RC-UAT, Go/No-Go, Tag, Changelog, Produktdokumentation | W6 | schriftlicher, datierter und nach Belegen nachvollziehbarer V1-Freigabeentscheid | **Work** |
 
 **Keine Kalendertermine erfunden:** Termin-/Aufwandsschätzung erst nach W0-/W2-Triage und belastbarem Team-/Zeitbudget. Priorität ist Sicherheits- und Freigabefähigkeit, nicht das früheste denkbare Veröffentlichungsdatum.
 
@@ -264,26 +278,26 @@ Diese Aufgaben sind **zusätzlich** zum Milestone-Katalog und aktuell Teil der V
 
 Die Abnahme-Matrix ist die letzte Sperre, nicht eine Ergebnisbeschreibung im Nachhinein.
 
-| Gate | Abnahmekriterium | Ausgangszustand |
-|---|---|---|
-| R01 Scope | Alle Muss-Funktionen, keine als „fertig“ beworbenen Out-of-Scope-Features | offen |
-| R02 Source | PRs korrekt integriert, identischer freigegebener Commit in Main/Build/RC | offen |
-| R03 CI | Alle verpflichtenden Checks aktuell grün, Flakes und PR-#11-Failures behoben | rot |
-| R04 Schema | Fresh/Upgrade/V2/Health/Backfill/Restore nachgewiesen | offen |
-| R05 Org/Auth | Keine Cross-Org-/BOLA-/Field-Policy-Umgehung | offen |
-| R06 Registrations | Adult/Gast/Delegation/Admin + Consent konsistent | offen |
-| R07 Capacity | FIFO, Lock, Last Seat, Offer Expiry, 50-Worker-Stress | offen |
-| R08 Mail/Jobs | Sicherer Scheduler, nachweislicher Empfang, Replay/Crash/Retry | rot |
-| R09 Minderjährige | P4-01…P4-04 vollständig oder ausdrücklich eingegrenzter V1-Scope | offen |
-| R10 Privacy | Export/Eraser/Retention/legal hold/Notice abgenommen | offen |
-| R11 Security | Keine Critical/High Findings, Threat Model und Retest | offen |
-| R12 A11y | WCAG 2.2 AA Baseline, Mobile + Manual Screenreader | offen |
-| R13 Performance | Large Fixture + alle festgelegten p95-Budgets | offen |
-| R14 Compatibility | WordPress/PHP/MySQL/MariaDB/Browser-Matrix | offen |
-| R15 Rollback | GitHub→IONOS Upgrade/Rollback + DB-Restore ausprobiert | rot |
-| R16 Artefakt | Reproduzierbares GPL-/SBOM-/WordPress.org-taugliches Paket | offen |
-| R17 Betriebs-/Rechtssicherheit | Staging Privacy, Mail, Datenschutz, Verantwortlichkeit, Monitoring | rot |
-| R18 Releaseentscheidung | Beta→RC→Stable, Abnahmeprotokoll und begründetes GO | offen |
+| Gate | Abnahmekriterium | Ausgangszustand | Zuständig |
+|---|---|---|---|
+| R01 Scope | Alle Muss-Funktionen, keine als „fertig“ beworbenen Out-of-Scope-Features | offen | **Work** · Codex belegt den technischen Umfang. Normaler Chat kann eine verständliche Scope-Entscheidungsvorlage formulieren. |
+| R02 Source | PRs korrekt integriert, identischer freigegebener Commit in Main/Build/RC | offen | **Codex** |
+| R03 CI | Alle verpflichtenden Checks aktuell grün, Flakes und PR-#11-Failures behoben | rot | **Codex** |
+| R04 Schema | Fresh/Upgrade/V2/Health/Backfill/Restore nachgewiesen | offen | **Codex** · Work liefert IONOS-Schema- und Restore-Belege. |
+| R05 Org/Auth | Keine Cross-Org-/BOLA-/Field-Policy-Umgehung | offen | **Codex** |
+| R06 Registrations | Adult/Gast/Delegation/Admin + Consent konsistent | offen | **Codex** · Work liefert fachliche Staging-Nachweise. |
+| R07 Capacity | FIFO, Lock, Last Seat, Offer Expiry, 50-Worker-Stress | offen | **Codex** |
+| R08 Mail/Jobs | Sicherer Scheduler, nachweislicher Empfang, Replay/Crash/Retry | rot | **Work** · Codex liefert Retry- und Recovery-Tests. |
+| R09 Minderjährige | P4-01…P4-04 vollständig oder ausdrücklich eingegrenzter V1-Scope | offen | **Work** · Codex liefert P4-Code und Regressionstests. |
+| R10 Privacy | Export/Eraser/Retention/legal hold/Notice abgenommen | offen | **Work** · Codex liefert Export-, Lösch- und Retention-Tests. |
+| R11 Security | Keine Critical/High Findings, Threat Model und Retest | offen | **Codex** |
+| R12 A11y | WCAG 2.2 AA Baseline, Mobile + Manual Screenreader | offen | **Work** · Codex behebt Befunde und ergänzt Regressionstests. |
+| R13 Performance | Large Fixture + alle festgelegten p95-Budgets | offen | **Codex** |
+| R14 Compatibility | WordPress/PHP/MySQL/MariaDB/Browser-Matrix | offen | **Codex** |
+| R15 Rollback | GitHub→IONOS Upgrade/Rollback + DB-Restore ausprobiert | rot | **Codex** · Work koordiniert die IONOS-Probe. |
+| R16 Artefakt | Reproduzierbares GPL-/SBOM-/WordPress.org-taugliches Paket | offen | **Codex** |
+| R17 Betriebs-/Rechtssicherheit | Staging Privacy, Mail, Datenschutz, Verantwortlichkeit, Monitoring | rot | **Work** · Codex liefert technische Betriebsnachweise. |
+| R18 Releaseentscheidung | Beta→RC→Stable, Abnahmeprotokoll und begründetes GO | offen | **Work** · Codex liefert das Releaseartefakt. Der Betreiber entscheidet. |
 
 **Stop bei einem roten/ungeklärten zwingenden Gate**. Eine Ausnahme ist nur durch eine neue, benannte, risikobewertete und ausdrücklich genehmigte Scope-/Release-Entscheidung zulässig; keinesfalls durch stilles Ignorieren von Sicherheits-, Consent- oder Datenintegritätsfehlern.
 
