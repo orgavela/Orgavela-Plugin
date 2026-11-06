@@ -2091,3 +2091,6 @@ O03-Kindprozessprobe: Öffentliche CI auf6b802c9 zweimal grün (42271383567/4227
 
 
 Run42271790486 aufe733537: erste vier Fälle und drei echte TAR/gzip-Abbruchfälle durchlaufen, Aufbau der Dump-Fixture noch fehlgeschlagen; kein Gesamt-PASS. Expliziten Commit der synthetischen Dump-Payload vor Readlocks und gleiche private umask wie im echten Capture ergänzt; begrenzte Diagnose nur aus bewusst synthetischer Worker-/Toolausgabe und festem Exitcode. Öffentliche CI e733537 zweimal grün (42271755723/42271767159). Wiederholung der Dump-Probe erforderlich.
+
+
+Run42272252201 bestätigt erneut alle sieben bisherigen/TAR-Fälle, Dumpaufbau verweigert konkret TLS/SSL2026: neuer CLI-Client erzwingt TLS, die ausdrücklich lokale synthetische MariaDB hat kein TLS eingerichtet. Nur für diesen internen Fixture-Dump --skip-ssl ergänzt; Produktions-Dumpargumente, SSH-Pin und HTTPS-/TLS-Prüfungen bleiben unverändert. Vorige explizite Transaktions-/umask-Korrektur war nicht die nachgewiesene Ursache; die neue begrenzte Diagnose liefert nun den konkreten Befund. Noch kein Gesamt-PASS vor Wiederholung.

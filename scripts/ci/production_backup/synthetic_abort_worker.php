@@ -33,7 +33,7 @@ if($childKind) {
         file_put_contents('/state/payload',random_bytes(4*1024*1024));
         $args=['tar','--gzip','-cf','-','-C','/state','payload'];
     }else {
-        $args=['mariadb-dump','--defaults-file=/proc/self/fd/3','--single-transaction','--skip-lock-tables','fixture'];
+        $args=['mariadb-dump','--defaults-file=/proc/self/fd/3','--skip-ssl','--single-transaction','--skip-lock-tables','fixture'];
         $spec[3]=['pipe','r'];
     }
     $child=orgavela_process_open($args,$spec,$pipes,$work);
