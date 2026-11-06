@@ -27,6 +27,8 @@
 		const [notice, setNotice] = useState('');
 		const [conflict, setConflict] = useState(null);
 		const fieldRows = useRef([]);
+		const fieldIds = useRef([]);
+		const nextFieldId = useRef(0);
 		const reorderFocus = useRef(null);
 		const alertRef = useRef(null);
 		const dragIndex = useRef(null);
@@ -59,6 +61,7 @@
 			if (!uuid) { setSelected(''); setRecord(null); setDraft(null); setDirty(false); return; }
 			try {
 				const data = await api({ path: '/uop/v1/forms/' + uuid });
+				fieldIds.current = [];
 				setRecord(data); setDraft(clone(data.draft)); setSelected(uuid); setDirty(false);
 			} catch (e) { failed(e); }
 		}
@@ -81,6 +84,8 @@
 		}, [draft]);
 		function move(from, to, control = 'position') {
 			if (!draft || from === to || from < 0 || to < 0 || to >= draft.fields.length) return;
+			const [identity] = fieldIds.current.splice(from, 1);
+			fieldIds.current.splice(to, 0, identity);
 			reorderFocus.current = { index: to, control };
 			edit(items => { const [item] = items.splice(from, 1); items.splice(to, 0, item); });
 			setNotice(t('Field order changed. Save the draft to keep your changes.', 'uop-core'));
@@ -114,7 +119,7 @@
 		}
 		function resolveConflict(keepLocal) {
 			setRecord(conflict.latest);
-			if (!keepLocal) setDraft(clone(conflict.latest.draft));
+			if (!keepLocal) { fieldIds.current = []; setDraft(clone(conflict.latest.draft)); }
 			setDirty(keepLocal); setConflict(null); setError('');
 			setNotice(keepLocal ? t('Local draft retained on the current revision. Review and save explicitly.', 'uop-core') : t('Server draft selected. Local changes discarded.', 'uop-core'));
 		}
@@ -148,6 +153,7 @@
 		}
 		function renderField(field, index) {
 			const length = draft.fields.length;
+			if (!fieldIds.current[index]) fieldIds.current[index] = ++nextFieldId.current;
 			const prefix = fieldId(field.key + '-' + index, 'required');
 			const options = selectable.includes(field.type) ? h('label', { className: 'uop-m3__control' },
 				t('Options (one per line)', 'uop-core') + ': ' + field.label,
@@ -168,7 +174,7 @@
 			}
 			return h('li', {
 				ref: row => { fieldRows.current[index] = row; },
-				key: field.key + '-' + index, className: 'uop-m3__field',
+				key: fieldIds.current[index], className: 'uop-m3__field',
 				draggable: !busy, onDragStart: () => { dragIndex.current = index; },
 				onDragOver: ev => ev.preventDefault(),
 				onDrop: ev => { ev.preventDefault(); move(dragIndex.current, index); dragIndex.current = null; },
@@ -184,7 +190,7 @@
 							draft.fields.map((item, i) => h('option', { key: i, value: i }, i + 1))
 						)
 					),
-					h('button', { type: 'button', disabled: busy || length === 1, 'aria-label': t('Remove', 'uop-core') + ': ' + field.label, onClick: () => edit(items => items.splice(index, 1)) }, t('Remove', 'uop-core'))
+					h('button', { type: 'button', disabled: busy || length === 1, 'aria-label': t('Remove', 'uop-core') + ': ' + field.label, onClick: () => { fieldIds.current.splice(index, 1); edit(items => items.splice(index, 1)); } }, t('Remove', 'uop-core'))
 				)
 			),
 			h('div', { className: 'uop-m3__cols' },

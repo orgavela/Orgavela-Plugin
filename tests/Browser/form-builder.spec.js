@@ -53,7 +53,6 @@ test('form builder supports accessible keyboard reorder, saving and immutable pu
   await expect(position).toBeFocused();
   await expect(page.locator('.uop-m3__form-fields li').last()).toContainText('New field');
   const moveUp = page.getByRole('button', { name: 'Move field up: New field' });
-  await position.press('Shift+Tab');
   // Move via keyboard from the up button, then down to the disabled boundary.
   await moveUp.focus();
   await moveUp.press('Enter');
