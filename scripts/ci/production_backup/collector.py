@@ -11,7 +11,7 @@ class ProbeError(ValueError): pass
 NAMES={'database.sql.gz','wordpress-files.tar.gz','capture-evidence.json'}
 
 def validate_evidence(data, work):
-    if (not isinstance(data, dict) or data.get('schema') != 'orgavela-ssh-capture-evidence/v1' or
+    if (not isinstance(data, dict) or data.get('schema') != 'orgavela-ssh-capture-evidence/v2' or
             data.get('capture_mode') != 'production' or data.get('filesystem_consistency') != 'quiesced' or
             data.get('database_consistency') != 'single-transaction' or
             data.get('scope') != dict.fromkeys(('database','wordpress_filesystem','uploads','wp_config'), True)):
@@ -21,9 +21,9 @@ def validate_evidence(data, work):
     if any(type(v) is not bool for v in data['scope'].values()): raise ProbeError('scope types')
     if type(data.get('filesystem_entries')) is not int or not 0<data['filesystem_entries']<=50000: raise ProbeError('entry count')
     q = data.get('quiescence', {})
-    if not isinstance(q,dict) or set(q)!={'wordpress_maintenance','all_table_read_locks','stable_file_hashes','maintenance_removed','maintenance_origin_verified','source_origin_recovered','maintenance_seconds'}: raise ProbeError('quiescence fields')
+    if not isinstance(q,dict) or set(q)!={'wordpress_maintenance','all_table_read_locks','stable_file_hashes','archive_matches_inventory','maintenance_removed','maintenance_origin_verified','source_origin_recovered','maintenance_seconds'}: raise ProbeError('quiescence fields')
     if type(data.get('components')) is not dict or set(data['components'])!={'database','wordpress'}: raise ProbeError('component scope')
-    for flag in ('wordpress_maintenance','all_table_read_locks','stable_file_hashes','maintenance_removed','maintenance_origin_verified','source_origin_recovered'):
+    for flag in ('wordpress_maintenance','all_table_read_locks','stable_file_hashes','archive_matches_inventory','maintenance_removed','maintenance_origin_verified','source_origin_recovered'):
         if q.get(flag) is not True:
             raise ProbeError('missing real quiescence evidence')
     if type(q.get('maintenance_seconds')) not in (int,float) or not math.isfinite(q['maintenance_seconds']) or not 0 < q['maintenance_seconds'] < 105:

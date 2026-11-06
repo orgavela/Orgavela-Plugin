@@ -954,3 +954,8 @@ unverändert 62/71, M0–M7 0/8, P4 0/4, R0/18; alpha.2 zuletzt belegt.
 ### O03/PGP05 – Implementierungsfolge 06.11.2026
 
 Bounded SSHtransport, getrennte Capture-/Writer-Einstiege und private Restorewerkzeuge ergänzt. [Neue synthetische Prüfungen und konkrete Livevoraussetzungen](O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md). Parentintegration, Review, private Runner-/Ciphertextanbindung und tatsächlicher Website-Snapshot+Restore bleiben Voraussetzung vor O01/O10/M3-Bereitstellung. Keine formalen Statuszähler geändert.
+
+
+### O03-Nachtrag 06.11.2026 – Sicherheitskorrekturen zur erneuten Work-Prüfung
+
+PR64 bleibt Draft/unintegriert: ausführbaren Restore von Source-PHP getrennt, tatsächlichen TAR-Inhalt gegen Inventar gebunden und private Controller-/integrierte Engineidentität getrennt geprüft. Lokal34 Regressionen und synthetische PHP-Drop-in-/DB-/Abbruchproben erfolgreich; kein echter Snapshot oder IONOS-Abbruchnachweis. Nächste Zuständigkeit Work: unabhängige Sicherheitsnachprüfung des neuen Kandidaten; anschließend reguläre Parentintegration und Codex für echte Abbruch-/private Sicherungs-/Readback-/Restoreprobe. PR62 Draft4fb50cb; kein Sitechange, alpha.2 letzter Livebeleg. V1-Zähler unverändert62/71 historisch,M0–M7 0/8,P4 0/4,R0/18. Aktuelle Run-/Commitbelege im append-only Arbeitslog.

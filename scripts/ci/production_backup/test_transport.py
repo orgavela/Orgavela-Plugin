@@ -33,13 +33,28 @@ class TransportTests(unittest.TestCase):
                 self.assertFalse(target.exists())
                 raise
 
+    def test_abort_program_has_no_unvalidated_output_or_snapshot(self):
+        import transport
+        expected={'schema':'orgavela-controlled-abort/v1','aborted_after_table_locks':True,
+                  'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
+        import json
+        binding=type('Fixture',(),{'argv':lambda self:['synthetic']})()
+        def receive_fixture(argv,program,path,**kwargs):
+            self.assertIn(b'ORGAVELA_CAPTURE_ABORT_AFTER_LOCK = true',program)
+            Path(path).write_text(json.dumps(expected))
+        with patch.object(transport,'live_program',return_value=b'<?php fixture'),patch.object(transport,'receive',side_effect=receive_fixture):
+            self.assertEqual(transport.controlled_abort(binding,password='fixture',maintenance_approved=True),expected)
+        expected['snapshot_created']=True
+        with patch.object(transport,'live_program',return_value=b'<?php fixture'),patch.object(transport,'receive',side_effect=receive_fixture),self.assertRaises(ProbeError):
+            transport.controlled_abort(binding,password='fixture',maintenance_approved=True)
+
     def test_publisher_refuses_source_credentials_before_network(self):
         env = dict(GITHUB_REPOSITORY='orgavela/Orgavela-Plugin', GITHUB_REF='refs/heads/main',
                    GITHUB_EVENT_NAME='workflow_dispatch', GITHUB_SHA='a'*40,
                    ORGAVELA_APPROVED_CODE_SHA='a'*40, ORGAVELA_CONFIRM_MAINTENANCE='orgavela.com',
                    ORGAVELA_CONFIRM_PUBLISH='orgavela/orgavela-backups',
                    BACKUP_GITHUB_TOKEN='synthetic-token', PGP05_SSH_PASSWORD='synthetic-source')
-        with patch.dict(os.environ, env, clear=True), patch.object(sys, 'argv', ['publish_cli', '--ciphertext', '/synthetic']), patch.object(publish_cli, 'verify_repository') as network:
+        with patch.dict(os.environ, env, clear=True), patch.object(sys, 'argv', ['publish_cli', '--ciphertext', '/synthetic']), patch.object(publish_cli, 'authorize', return_value={}), patch.object(publish_cli, 'verify_repository') as network:
             with self.assertRaises(ValueError):
                 publish_cli.main()
             network.assert_not_called()
@@ -113,11 +128,12 @@ class TransportTests(unittest.TestCase):
         allowed = dict(GITHUB_REPOSITORY='orgavela/Orgavela-Plugin', GITHUB_REF='refs/heads/main',
                        GITHUB_EVENT_NAME='workflow_dispatch', GITHUB_SHA='a'*40,
                        ORGAVELA_APPROVED_CODE_SHA='a'*40, ORGAVELA_CONFIRM_MAINTENANCE='orgavela.com')
-        trusted_main(allowed)
+        # Plain environment values are not a signed workflow identity.
+        with self.assertRaises(ProbeError):
+            trusted_main(allowed)
         for key in allowed:
-            bad = {**allowed, key: 'wrong'}
             with self.subTest(key=key), self.assertRaises(ProbeError):
-                trusted_main(bad)
+                trusted_main({**allowed,key:'wrong'})
 
     def test_recovery_component_tamper_and_trailing_data_rejected(self):
         with tempfile.TemporaryDirectory() as folder:

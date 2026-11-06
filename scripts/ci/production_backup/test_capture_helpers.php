@@ -37,6 +37,18 @@ try {
     $archive=$root.'.tar.gz';file_put_contents($archive,$tar);
     $listing=shell_exec('tar -tzf '.escapeshellarg($archive));unlink($archive);
     check(str_contains($listing,'./wp-content/cache/docket-cache/fixture.txt') && !str_contains($listing,'./.maintenance'));
+    $stable=orgavela_capture_inventory($root);
+    orgavela_verify_tar_inventory($tar,$stable);
+    // A->B->A during packing: equal before/after inventories do not prove TAR contents.
+    file_put_contents($root.'/wp-config.php','transient different bytes');
+    $proc=proc_open(orgavela_capture_tar_args($root),[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
+    $transient=stream_get_contents($pipes[1]);stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);check(proc_close($proc)===0);
+    file_put_contents($root.'/wp-config.php','changed synthetic retained config');
+    check($stable===orgavela_capture_inventory($root));
+    refused(fn()=>orgavela_verify_tar_inventory($transient,$stable));
+    refused(fn()=>orgavela_verify_tar_inventory(substr($tar,0,-4),$stable));
+    refused(fn()=>orgavela_verify_tar_inventory($tar.'suffix',$stable));
+    $missing=$stable;unset($missing['wp-config.php']);refused(fn()=>orgavela_verify_tar_inventory($tar,$missing));
     $names=['options','posts','users','usermeta','comments','uop_organizations','uop_persons','uop_consent_records','uop_registrations','uop_waitlist_entries'];
     for($i=count($names);$i<52;$i++)$names[]='synthetic_'.$i;
     $tables=array_map(fn($t)=>'fixture_'.$t,$names);

@@ -64,11 +64,23 @@ def run():
     for index in range(12):
         sql += ('\nCREATE TABLE wp_restore_fixture_%d (id BIGINT PRIMARY KEY, marker VARCHAR(32));\n'
                 'INSERT INTO wp_restore_fixture_%d VALUES (1,\'synthetic-only\');\n' % (index, index)).encode()
+    # Regression: recovered PHP must remain inert even when a normal bootstrap
+    # would load a drop-in or an auto-prepend file before ordinary plugins.
+    with tarfile.open(fileobj=io.BytesIO(files)) as source_archive:
+        entries = [(member.name, None if member.isdir() else source_archive.extractfile(member).read())
+                   for member in source_archive]
+    marker = b"<?php file_put_contents('/var/www/html/snapshot-executed','executed'); exit(91);"
+    entries = [(name, marker if str(Path(name)) in ('wp-load.php','index.php') else content)
+               for name, content in entries]
+    entries.extend([('wp-content/db.php', marker), ('wp-content/object-cache.php', marker),
+                    ('wp-content/advanced-cache.php', marker),
+                    ('.user.ini', b'auto_prepend_file=/var/www/html/wp-content/db.php')])
+    files = gzip.compress(tar_bytes(entries))
     components = {'database.sql.gz': gzip.compress(sql), 'wordpress-files.tar.gz': files}
-    evidence = dict(schema='orgavela-ssh-capture-evidence/v1', capture_mode='production',
+    evidence = dict(schema='orgavela-ssh-capture-evidence/v2', capture_mode='production',
         filesystem_consistency='quiesced', database_consistency='single-transaction',
         scope=dict.fromkeys(('database', 'wordpress_filesystem', 'uploads', 'wp_config'), True),
-        quiescence=dict.fromkeys(('wordpress_maintenance', 'all_table_read_locks', 'stable_file_hashes',
+        quiescence=dict.fromkeys(('wordpress_maintenance', 'all_table_read_locks', 'stable_file_hashes','archive_matches_inventory',
                                  'maintenance_removed', 'maintenance_origin_verified', 'source_origin_recovered'), True),
         table_count=52, filesystem_entries=1,
         components={'database': {'sha256': hashlib.sha256(components['database.sql.gz']).hexdigest()},

@@ -17,6 +17,8 @@ on:
     paths:
       - 'scripts/ci/production_backup/**'
       - '.github/workflows/pgp05-offline-regression.yml'
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
 permissions:
   contents: read
 jobs:
@@ -60,6 +62,6 @@ jobs:
           set -euo pipefail
           find scripts/ci/production_backup -name '*.php' -print0 | xargs -0 -n1 php -l
           php scripts/ci/production_backup/test_capture_helpers.php
-          python3 -m unittest discover -s scripts/ci/production_backup -p "test_*.py" -v
+          /tmp/orgavela-pgp05-fixtures/bin/python -m unittest discover -s scripts/ci/production_backup -p "test_*.py" -v
           python3 scripts/ci/production_backup/offline_integration.py --synthetic-only
           /tmp/orgavela-pgp05-fixtures/bin/python scripts/ci/production_backup/temporary_key_roundtrip.py

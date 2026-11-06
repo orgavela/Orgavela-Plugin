@@ -8,17 +8,15 @@ import tempfile
 from collector import ProbeError
 from crypto import package
 from github_api import reject_mixed_credentials
-from transport import Binding, capture
+from transport import Binding, capture, controlled_abort
 
 
 def trusted_main(env):
-    if (env.get('GITHUB_REPOSITORY') != 'orgavela/Orgavela-Plugin' or
-            env.get('GITHUB_REF') != 'refs/heads/main' or
-            env.get('GITHUB_EVENT_NAME') != 'workflow_dispatch' or
-            not re.fullmatch(r'[0-9a-f]{40}', env.get('GITHUB_SHA', '')) or
-            env.get('ORGAVELA_APPROVED_CODE_SHA') != env.get('GITHUB_SHA') or
-            env.get('ORGAVELA_CONFIRM_MAINTENANCE') != 'orgavela.com'):
-        raise ProbeError('trusted main and exact maintenance confirmation required')
+    if env.get('ORGAVELA_CONFIRM_MAINTENANCE') != 'orgavela.com':
+        raise ProbeError('explicit maintenance confirmation required')
+    # Legacy callers cannot authorize themselves by rewriting GITHUB_* variables.
+    from execution_identity import authorize
+    return authorize(env, 'source')
 
 
 def main():
@@ -34,6 +32,7 @@ def main():
         raise ProbeError('private empty ciphertext directory required')
     binding = Binding(os.environ.get('PGP05_SSH_HOST', ''), os.environ.get('PGP05_SSH_USER', ''),
                       os.environ.get('PGP05_WP_ROOT', ''), Path(os.environ.get('PGP05_KNOWN_HOSTS_FILE', '')))
+    controlled_abort(binding, password=os.environ.get('PGP05_SSH_PASSWORD', ''), maintenance_approved=True)
     with tempfile.TemporaryDirectory(prefix='orgavela-private-components-') as tmp:
         capture(binding, Path(tmp), password=os.environ.get('PGP05_SSH_PASSWORD', ''), maintenance_approved=True)
         package(Path(tmp), args.output, args.backup_id)

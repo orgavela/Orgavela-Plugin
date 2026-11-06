@@ -5,6 +5,7 @@ MU plugins and active plugin options are not executed in the recovery clone.
 All resources are invocation-owned and removed on completion or failure.
 """
 import gzip
+import hashlib
 from pathlib import Path
 import re
 import secrets
@@ -25,6 +26,25 @@ def docker(*args, data=None):
     return result.stdout
 
 
+def inspect_snapshot_files(path):
+    """Hash every recovered regular file without loading PHP or extracting it."""
+    inventory = hashlib.sha256()
+    files = 0
+    with tarfile.open(path, 'r:gz') as archive:
+        for member in archive:
+            if member.isdir():
+                continue
+            if not member.isreg():
+                raise ValueError('recovered file type refused')
+            digest = hashlib.sha256()
+            with archive.extractfile(member) as content:
+                while block := content.read(65536):
+                    digest.update(block)
+            inventory.update(member.name.encode('utf-8') + b'\0' + digest.digest())
+            files += 1
+    return {'files': files, 'inventory_sha256': inventory.hexdigest()}
+
+
 def restore_components(components, *, expected_home):
     if expected_home not in ('https://orgavela.com', 'http://127.0.0.1:8762'):
         raise ValueError('unexpected source identity')
@@ -33,7 +53,11 @@ def restore_components(components, *, expected_home):
     from collector import validate_components
     validate_components(components)
     sql = gzip.decompress((components / 'database.sql.gz').read_bytes())
-    files = (components / 'wordpress-files.tar.gz').read_bytes()
+    # Snapshot files are inspected as data only, never mounted into executable WordPress.
+    inspected = inspect_snapshot_files(components / 'wordpress-files.tar.gz')
+    from trusted_core import download_core, CORES
+    core_version = '7.1.4' if expected_home == 'https://orgavela.com' else '6.9'
+    core = download_core(core_version)
     with tarfile.open(components / 'wordpress-files.tar.gz') as archive:
         config = next((m for m in archive if str(Path(m.name)) == 'wp-config.php'), None)
         if config is None or config.size > 1024*1024:
@@ -82,9 +106,9 @@ def restore_components(components, *, expected_home):
                    'mariadb --user=restore --password="$MARIADB_PASSWORD" restore_private', data=query.encode())
             docker('run', '--rm', '-i', '--network', 'none', '--user', '0:0', '--entrypoint', 'sh',
                    '-v', prefix + '-wp:/restore', WP_IMAGE, '-c',
-                   'set -eu; tar -xzf - -C /restore; rm /restore/wp-config.php; '
-                   'if [ -d /restore/wp-content/mu-plugins ]; then mv /restore/wp-content/mu-plugins /restore/.recovery-disabled-mu; fi; '
-                   'chown -R 33:33 /restore', data=files)
+                   'set -eu; tar -xzf - --strip-components=1 -C /restore; '
+                   'rm -rf /restore/wp-content; mkdir /restore/wp-content; '
+                   'chown -R 33:33 /restore', data=core)
             args = ['run', '--rm', '--network', prefix, '--user', '33:33',
                     '-v', prefix + '-wp:/var/www/html', '--entrypoint', 'wp', WP_IMAGE]
             docker(*args, 'config', 'create', '--dbname=restore_private', '--dbuser=restore',
@@ -95,6 +119,7 @@ def restore_components(components, *, expected_home):
             assertion = ("global $wpdb; if ((int)$wpdb->get_var('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()')!==52) exit(2); "
                          "foreach(['options','posts','users','usermeta','comments','uop_organizations','uop_persons','uop_consent_records','uop_registrations','uop_waitlist_entries'] as $suffix) "
                          "{if($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s',$wpdb->esc_like($wpdb->prefix.$suffix)))!==$wpdb->prefix.$suffix)exit(3);} "
+                         "if(file_exists(ABSPATH.'snapshot-executed') || file_exists(WP_CONTENT_DIR.'/db.php') || file_exists(WP_CONTENT_DIR.'/object-cache.php'))exit(4); "
                          "echo 'ISOLATED_WP_DB_RESTORE=PASS';")
             result = docker(*args, 'eval', assertion, '--skip-plugins', '--skip-themes')
             if b'ISOLATED_WP_DB_RESTORE=PASS' not in result:
@@ -109,4 +134,6 @@ def restore_components(components, *, expected_home):
             if failures:
                 raise RuntimeError('private recovery cleanup incomplete; inspect local Docker resources')
     return {'isolated_wordpress_bootstrap': True, 'restored_tables': 52, 'public_ports': 0,
-            'source_accessed': False, 'clone_plugins_disabled': True, 'temporary_target_removed': True}
+            'source_accessed': False, 'clone_plugins_disabled': True, 'temporary_target_removed': True,
+            'snapshot_files_inspected': inspected['files'], 'snapshot_inventory_sha256': inspected['inventory_sha256'],
+            'snapshot_php_executed': False, 'trusted_core_version': core_version, 'trusted_core_sha256': CORES[core_version]}

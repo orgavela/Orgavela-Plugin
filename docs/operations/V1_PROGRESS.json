@@ -1,7 +1,7 @@
 {
   "schema": "uop-v1-progress-v1",
   "project": "UOP Core / OrgaVela",
-  "snapshot_date": "2026-10-23",
+  "snapshot_date": "2026-11-06",
   "snapshot_basis": "CP5 accepted 10/10; independently approved offline Dreamloud collector/encryption/writer candidate, local synthetic tests passed; new provider CI pending. No production capture or restoration.",
   "plan_path": "docs/operations/V1_ACCEPTANCE_PLAN.md",
   "source_refs": [
@@ -796,5 +796,16 @@
       "next_owner": "Codex after security review",
       "report": "docs/operations/O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md"
     }
+  },
+  "o03_review_followup": {
+    "status": "draft-security-recheck-pending",
+    "pull_request": 64,
+    "local_python_regressions": 34,
+    "snapshot_php_execution": false,
+    "archive_inventory_check": "required-v2",
+    "production_abort_verified": false,
+    "real_snapshot_restored": false,
+    "next_owner": "Work",
+    "next_action": "independent security recheck; then regular parent integration and gated real abort/capture/readback/restore"
   }
 }

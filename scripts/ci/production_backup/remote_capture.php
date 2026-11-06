@@ -209,7 +209,7 @@ try {
     $pid=getmypid(); $stat=trim(file_get_contents('/proc/'.$pid.'/stat'));
     $identity=explode(' ',substr($stat,strrpos($stat,')')+2))[19];
     if (!ctype_digit($identity)) throw new RuntimeException('process identity');
-    $watchdog='<?php $w='.var_export($work,true).'; file_put_contents($w."/ready","ready"); $end=microtime(true)+'.($dry?3:115).'; while(microtime(true)<$end){clearstatcache(true,$w);if(!is_dir($w)||is_link($w))exit;usleep(100000);} if(!is_dir($w)||is_link($w))exit; $p='.var_export($maintenance,true).'; $h='.var_export($maintenanceHash,true).'; if(is_file($p)&&!is_link($p)&&hash_equals($h,(string)hash_file("sha256",$p)))unlink($p); $s=@file_get_contents("/proc/'.$pid.'/stat"); if($s!==false){$a=explode(" ",substr(trim($s),strrpos(trim($s),")")+2));if('.($dry?'false':'true').'&&($a[19]??"")==='.var_export($identity,true).')exec("/bin/kill -TERM '.$pid.'");} foreach(["database.sql.gz","wordpress-files.tar.gz","capture-evidence.json","watchdog.php","maintenance-template","ready"] as $f)@unlink($w."/".$f); @rmdir($w);';
+    $watchdog=orgavela_capture_watchdog($work,$maintenance,$maintenanceHash,$pid,$identity,$dry?3:115,!$dry);
     file_put_contents($work.'/watchdog.php',$watchdog);
     $phase('watchdog_starting');$launchAt=microtime(true);
     exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
@@ -244,6 +244,7 @@ try {
     $phase('maintenance_origin_verified');usleep(2000000);
     if (!orgavela_lock_capture_tables($db,$tables)) throw new RuntimeException('read lock');
     $phase('tables_locked');
+    if (defined('ORGAVELA_CAPTURE_ABORT_AFTER_LOCK') && ORGAVELA_CAPTURE_ABORT_AFTER_LOCK===true) throw new OrgaVelaControlledAbort('controlled abort');
     // Existing requests cannot commit DB writes; any still-running file writer makes this capture fail.
     usleep(500000); $before=orgavela_capture_inventory($root); $checkTime();
     $client="[client]\n";
@@ -257,15 +258,17 @@ try {
     if (array_sum(array_map('strlen',$buffers))>134217728) throw new RuntimeException('combined memory limit');
     $after=orgavela_capture_inventory($root); $checkTime();
     if ($before!==$after) throw new RuntimeException('files changed during capture');
+    orgavela_verify_tar_inventory($buffers['wordpress-files.tar.gz'],$before);
+    $phase('archive_inventory_verified');
     $phase('files_verified');
     if (!$db->query('UNLOCK TABLES')) throw new RuntimeException('unlock'); $db->close();$db=null;
     if (!orgavela_remove_owned_maintenance($maintenance,$maintenanceHash)) throw new RuntimeException('maintenance cleanup');
     $phase('maintenance_removed');
     if(orgavela_capture_origin_status()!==200)throw new RuntimeException('origin recovery unverified');
     $phase('origin_recovered');
-    $evidence=['schema'=>'orgavela-ssh-capture-evidence/v1','capture_mode'=>'production',
+    $evidence=['schema'=>'orgavela-ssh-capture-evidence/v2','capture_mode'=>'production',
         'filesystem_consistency'=>'quiesced','database_consistency'=>'single-transaction',
-        'quiescence'=>['wordpress_maintenance'=>true,'all_table_read_locks'=>true,'stable_file_hashes'=>true,
+        'quiescence'=>['wordpress_maintenance'=>true,'all_table_read_locks'=>true,'stable_file_hashes'=>true,'archive_matches_inventory'=>true,
             'maintenance_seconds'=>round(microtime(true)-$maintenanceAt,3),'maintenance_removed'=>true,
             'maintenance_origin_verified'=>true,'source_origin_recovered'=>true],
         'scope'=>['database'=>true,'wordpress_filesystem'=>true,'uploads'=>true,'wp_config'=>true],
@@ -279,6 +282,20 @@ try {
     $write(str_repeat("\0",1024)); unset($buffers,$data);
     $phase('stream_complete');
     $cleanup(); exit(0);
+} catch (OrgaVelaControlledAbort $e) {
+    $cleanup();
+    try {
+        clearstatcache(true,$maintenance);
+        if(file_exists($maintenance))throw new RuntimeException('maintenance remains');
+        // A fresh connection must acquire conflicting write locks after cleanup.
+        $probe=@new mysqli($host,$config['DB_USER'],$config['DB_PASSWORD'],$config['DB_NAME'],$port);
+        if($probe->connect_errno || !orgavela_probe_write_locks($probe,$tables))throw new RuntimeException('locks remain');
+        $probe->close();unset($config);
+        if(orgavela_capture_origin_status()!==200)throw new RuntimeException('origin not recovered');
+        echo json_encode(['schema'=>'orgavela-controlled-abort/v1','aborted_after_table_locks'=>true,
+            'fresh_connection_write_locks'=>true,'maintenance_removed'=>true,'origin_recovered'=>true,
+            'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
+    } catch(Throwable $failure) { fwrite(STDERR,"Controlled abort recovery unverified\n");exit(1); }
 } catch (Throwable $e) { $cleanup(); fwrite(STDERR,"Quiesced capture failed; details suppressed\n"); exit(1); }
 
 

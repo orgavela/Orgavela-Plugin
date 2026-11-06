@@ -27,10 +27,10 @@ def snapshot(path,mutate=None,extra_wordpress=()):
         ('wp-content/uploads',None),('wp-content/uploads/fixture.txt',MARKER),
         *extra_wordpress]))
     database=gzip.compress(SQL)
-    evidence={'schema':'orgavela-ssh-capture-evidence/v1','capture_mode':'production',
+    evidence={'schema':'orgavela-ssh-capture-evidence/v2','capture_mode':'production',
         'filesystem_consistency':'quiesced','database_consistency':'single-transaction',
         'scope':dict.fromkeys(('database','wordpress_filesystem','uploads','wp_config'),True),
-        'quiescence':dict.fromkeys(('wordpress_maintenance','all_table_read_locks','stable_file_hashes',
+        'quiescence':dict.fromkeys(('wordpress_maintenance','all_table_read_locks','stable_file_hashes','archive_matches_inventory',
             'maintenance_removed','maintenance_origin_verified','source_origin_recovered'),True),
         'table_count':52,'filesystem_entries':5,
         'components':{'database':{'sha256':hashlib.sha256(database).hexdigest()},

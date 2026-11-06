@@ -145,3 +145,21 @@ def capture(binding, components, *, password, maintenance_approved=False):
         receive(binding.argv(), program, snapshot,
                 env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C', 'SSHPASS': password})
         return accept_snapshot(snapshot, components)
+
+
+def controlled_abort(binding, *, password, maintenance_approved=False):
+    """No dump/archive: abort after locks, verify cleanup before any real capture."""
+    import json
+    program=live_program(binding,maintenance_approved=maintenance_approved)
+    program=program.replace(b'<?php',b'<?php\nconst ORGAVELA_CAPTURE_ABORT_AFTER_LOCK = true;',1)
+    if not password or '\0' in password:
+        raise ProbeError('source credential required')
+    with tempfile.TemporaryDirectory(prefix='orgavela-abort-') as folder:
+        output=Path(folder)/'abort.json'
+        receive(binding.argv(),program,output,env={'PATH':'/usr/bin:/bin','LC_ALL':'C','SSHPASS':password},max_bytes=4096)
+        evidence=json.loads(output.read_bytes())
+    expected={'schema':'orgavela-controlled-abort/v1','aborted_after_table_locks':True,
+              'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
+    if evidence!=expected:
+        raise ProbeError('controlled abort cleanup unverified')
+    return evidence
