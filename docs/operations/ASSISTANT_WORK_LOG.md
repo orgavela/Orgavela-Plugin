@@ -2088,3 +2088,6 @@ Live-Sicherheitsfreigabe, Parentintegration, echte IONOS-Abbruchprobe und vollst
 
 
 O03-Kindprozessprobe: Öffentliche CI auf6b802c9 zweimal grün (42271383567/42271391725). Privater gezielter Run42271437757 scheiterte im frischen Lockprobe-Schritt. Testsentinel war vom DB-verbundenen PHP-Worker gestartet und konnte dessen DB-Socket erben; für einen wirklich unabhängigen Kontrollprozess wird er jetzt über separates docker exec gestartet. Das ist eine Fixturekorrektur, die behauptete harte Abbruchfreigabe bleibt bis erfolgreicher Wiederholung offen. Feste Case-/Fehlerkategorien ergänzt; keine vertraulichen Outputs. Gruppen-Cleanup toleriert zusätzlich natürliches Prozessende zwischen Prüfung und Signal, ohne ein echtes überlebendes Gruppenmitglied zu ignorieren.
+
+
+Run42271790486 aufe733537: erste vier Fälle und drei echte TAR/gzip-Abbruchfälle durchlaufen, Aufbau der Dump-Fixture noch fehlgeschlagen; kein Gesamt-PASS. Expliziten Commit der synthetischen Dump-Payload vor Readlocks und gleiche private umask wie im echten Capture ergänzt; begrenzte Diagnose nur aus bewusst synthetischer Worker-/Toolausgabe und festem Exitcode. Öffentliche CI e733537 zweimal grün (42271755723/42271767159). Wiederholung der Dump-Probe erforderlich.

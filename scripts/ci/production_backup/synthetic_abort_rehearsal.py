@@ -53,10 +53,10 @@ def run():
                     '-v',str(state)+':/state','-v',str(Path(__file__).parent.resolve())+':/checks:ro',
                     '--entrypoint','sh',WP_IMAGE,'-c','sleep 90')
                 resources.append(('container',runner))
-                docker('exec','-d',runner,'php','/checks/synthetic_abort_worker.php',mode)
+                docker('exec','-d',runner,'/bin/sh','-c','php /checks/synthetic_abort_worker.php "$1" > /state/worker.log 2>&1; echo $? > /state/worker-exit','fixture',mode)
                 deadline=time.monotonic()+12
                 while not (state/'locked').exists() and time.monotonic()<deadline:time.sleep(.05)
-                if not (state/'locked').exists():raise RuntimeError('abort fixture lock setup failed')
+                if not (state/'locked').exists():raise RuntimeError('abort fixture setup failed: '+mode+' code='+((state/'worker-exit').read_text().strip() if (state/'worker-exit').exists() else 'running')+' synthetic tool error='+((state/'tool-error').read_text()[:1500] if (state/'tool-error').exists() else 'none')+' worker='+((state/'worker.log').read_text()[-500:] if (state/'worker.log').exists() else 'none'))
                 sentinel=None
                 if (state/'children.json').exists():
                     # Separate exec, not a child inheriting the worker's DB socket.
