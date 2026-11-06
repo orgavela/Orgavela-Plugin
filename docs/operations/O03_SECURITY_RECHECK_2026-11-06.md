@@ -1,0 +1,18 @@
+# O03: Codex → Work, Sicherheitsnachprüfung vom 06.11.2026
+
+PR64 bleibt Draft, Basis PR36-Branch `fix/pgp05-backup-repo-pin-20261104`. Engine `317ce93cd5a97869e2ace6e28de279dc7eb78f07`; privater Controller `cb834f3002967f0648162b04dbccb224a909470e`. Keine Websiteänderung oder echte Sicherung.
+
+| Befund | Korrektur und tatsächlich geprüfter Nachweis |
+| --- | --- |
+| Snapshot-PHP bootet mit | `isolated_restore.py` prüft Snapshotfiles als Daten. Nur separat SHA256-gepinnter offizieller Core, neue Konfiguration und leeres wp-content laufen. Private Receiverprobe:3354 Dateien, präparierte Core-/Drop-in-/Auto-prepend-Dateien nicht ausgeführt, DB/Core-Bootstrap erfolgreich. Vollständige Pluginfunktion oder fachlicher Dateirestore damit nicht abgenommen. |
+| TAR kann temporäre Änderung verbergen | Tatsächliches GZIP/USTAR gegen alle Inventarmitglieder und jeden Dateiinhaltshash; striktes v2-Evidenzfeld. A→B→A-, Trunkierungs-/Suffix-/Inventarnegativtests. Kein v1-Snapshot als neuer Konsistenzbeleg akzeptiert. |
+| Controller und Engine nicht separat gebunden | Signiertes GitHub-OIDC, immutable Repo-/Owner-ID, private/main/manueller konkreter Workflow, Environment/Rolle/Run/Attempt; saubere exakte physische Checkouts separat. Engine muss Vorfahr von öffentlichem main sein. Privater OIDC-Lauf bestätigt beide Rollen und verweigert unintegrierte Engine. Keine GITHUB-Kontextumdeklarierung. |
+| Abbruch nicht belegt | Vier synthetische MariaDB-/HTTP-Fälle mit gemeinsamer Watchdogimplementation: Exception, Timeout, Kanalverlust, Fremdmarker. Neue Verbindung erlangt konfliktierende Writelocks; HTTP200, Fremdmarker erhalten. Capture-CLI verlangt zusätzlich kontrollierten echten Abbruch nach Locks vor jedem Capture. IONOS-Nachweis noch offen. |
+
+Öffentlich: [42268076080](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42268076080) / [42268085720](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42268085720),34 Python-Regressionen, fünf PHP-Lints/Helper, synthetische Kryptotests. Privat: [42268124152](https://github.com/orgavela/orgavela-backups/actions/runs/42268124152),3/3 Jobs, sowie [42268119301](https://github.com/orgavela/orgavela-backups/actions/runs/42268119301),2/2 Identitätsjobs. Alle auf oben genannten Pins. Frühere private Fehlversuche wegen Runner-Dateirechten/immutable Subject wurden fail-closed beendet und korrigiert; Details im append-only Log.
+
+Work prüft Code und Negativtests unabhängig, einschließlich Watchdog-PID-Startbindung, Fremdmarkergrenze, kryptografischer Controlleridentität, tatsächlichem Enginecheckout und Rechte-/Credentialtrennung. Die private Datei o03-private-live-backup.yml ist derzeit ausschließlich ein Identitäts-Preflight ohne Hostingsecrets, Liveoperationen oder Release-Schreibrechte. Ein grüner Preflight ist keine Sicherheitsfreigabe.
+
+Danach: Parentstack regulär integrieren. Codex bindet den integrierten Engine-SHA und freigegebenen privaten Controller; nur Capture erhält Hostingsecrets, ausschließlich separater Publisher contents:write. Vor echtem Snapshot kontrollierte echte Abbruch-/Kanal-/Watchdogprobe mit Lockfreigabe und Origin-Erreichbarkeit nachweisen. Dann echte private ephemere Capture-/Release-/Rückdownload-/Restorekette vervollständigen und prüfen. Kein Eigentümerkey in CI, keine öffentlichen Klartext-/Backup-Artefakte. Erst nach echtem Restore folgen O01-Zugangsschutz, Nebenwirkungsbegrenzung, Update/Rollback und M3-Bereitstellung für Work. Kein PHPStan-Level10-Auftrag.
+
+V1 offen, Zahlen unverändert62/71 historisch,M0–M7 0/8,P4 0/4,R0/18. PR62/64 Draft/ungemergt, alpha.2 letzter Livebeleg.

@@ -577,3 +577,8 @@ Betreiber bestätigt0€-Budget; private Standard-Linux-/DockerprobeRun422316170
 ### O03 – gespeicherte Sourcebindung und private synthetische Orchestrierung bewiesen,06.11.2026
 
 Private Runnerprobe ist nun um gespeicherte Source-Hostkey-/Rootprüfung (Run42261464603) und echte private3-Job-Fixture-Orchestrierung mit ephemerem Schlüssel/Dualempfänger/isoliertem WP-MariaDB-Restore erweitert (430c000,Run42262492546,3/3success). Source-Secrets eingerichtet; Root darf eindeutig als Secret oder Variable vorliegen. Keine neuen formalen Abnahmen und kein echter Snapshot/Restore. Work-Review der neuen Controller-/Enginepfade und Parentintegration vor echter Source-/Publishanbindung; danach Codex.
+
+
+### O03-Sicherheitskorrekturen – Rückgabe an Work,06.11.2026
+
+PR64-Engine317ce93: Snapshot-PHP inert/separater gepinnter Core, tatsächlicher TAR-Inventarabgleich und signierter privater Controller mit unabhängigem integriertem Engine-Gate. Öffentliche34 Regressionen grün (42268076080/42268085720). Privater Controllercb834f3: synthetische Pipeline42268124152 mit3/3 Jobs erfolgreich, vier Abbruchfälle und3354 inert geprüfte Dateien; Identitätsprobe42268119301 mit2/2 erfolgreich und unintegrierte Engine erwartungsgemäß verweigert. Kein echter Snapshot, IONOS-Abbruch, privater Release-Readback oder echter Restore. Nächste Zuständigkeit Work: [unabhängige Sicherheitsnachprüfung](O03_SECURITY_RECHECK_2026-11-06.md), dann reguläre Parentintegration; anschließend Codex für echte private Sicherungs-/Restorekette. PR62/64 Draft/ungemergt, Website unverändert, alpha.2 letzter Livebeleg; V1-Zähler unverändert.
