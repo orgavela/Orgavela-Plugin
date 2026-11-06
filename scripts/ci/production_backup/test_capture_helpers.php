@@ -63,5 +63,10 @@ try {
     check(str_contains(orgavela_client_value("quote\"newline\n"),'\\n'));
     check(strlen(orgavela_tar_header('database.sql.gz',3))===512);
     refused(fn()=>orgavela_tar_header('../escape',3));
+    $self=orgavela_process_current(getmypid());check($self['pid']===getmypid());
+    // A caller's inherited process group must never be signaled.
+    refused(fn()=>orgavela_process_members(['pid'=>getmypid(),'group'=>1,'session'=>1,'start'=>$self['start']]));
+    $record=$root.'/child-negative.stat';file_put_contents($record,file_get_contents('/proc/'.getmypid().'/stat'));
+    check(!orgavela_process_stop_groups($root));check(posix_kill(getmypid(),0));unlink($record);
     echo "ORGAVELA_CAPTURE_HELPERS_SYNTHETIC=PASS\n";
 } finally { remove_fixture($root); }

@@ -1,4 +1,5 @@
 <?php
+if(!function_exists('orgavela_process_stop_groups'))require __DIR__.'/backup_process_safety.php';
 /** Pure bounded filesystem helpers; no database or network access. */
 final class OrgaVelaInventoryRejection extends RuntimeException {
     private ?string $privateRelativeFile;
@@ -183,5 +184,14 @@ function orgavela_probe_write_locks(mysqli $db, array $tables): bool {
 /** The same independent watchdog is exercised by the synthetic abort rehearsal. */
 function orgavela_capture_watchdog(string $work,string $maintenance,string $hash,int $pid,string $identity,int $seconds,bool $terminate): string {
     if($seconds<1||$seconds>115||!ctype_digit($identity)||$pid<2||!preg_match('/^[a-f0-9]{64}$/D',$hash))throw new RuntimeException('watchdog binding');
-    return '<?php $w='.var_export($work,true).'; file_put_contents($w."/ready","ready"); $end=microtime(true)+'.$seconds.'; while(microtime(true)<$end){clearstatcache(true,$w);if(!is_dir($w)||is_link($w))exit;usleep(100000);} if(!is_dir($w)||is_link($w))exit; $s=@file_get_contents("/proc/'.$pid.'/stat"); if($s!==false){$a=explode(" ",substr(trim($s),strrpos(trim($s),")")+2));if('.($terminate?'true':'false').'&&($a[19]??"")==='.var_export($identity,true).')exec("/bin/kill -KILL '.$pid.'");} $p='.var_export($maintenance,true).'; $h='.var_export($hash,true).'; if(is_file($p)&&!is_link($p)&&hash_equals($h,(string)hash_file("sha256",$p)))unlink($p); foreach(["database.sql.gz","wordpress-files.tar.gz","capture-evidence.json","watchdog.php","maintenance-template","ready"] as $f)@unlink($w."/".$f); @rmdir($w);';
+    return '<?php '.orgavela_process_helper_source().' $w='.var_export($work,true).'; file_put_contents($w."/ready","ready"); $end=microtime(true)+'.$seconds.'; while(microtime(true)<$end){clearstatcache(true,$w);if(!is_dir($w)||is_link($w))exit;usleep(100000);} if(!is_dir($w)||is_link($w))exit;
+    $pid='.$pid.'; $identity='.var_export($identity,true).'; $parent=orgavela_process_current($pid);
+    if('.($terminate?'true':'false').' && $parent && $parent["start"]===$identity)posix_kill($pid,19);
+    usleep(100000); $stopped=orgavela_process_stop_groups($w);
+    $parent=orgavela_process_current($pid);
+    if('.($terminate?'true':'false').' && $parent && $parent["start"]===$identity)posix_kill($pid,9);
+    if(!$stopped)exit(71);
+    $p='.var_export($maintenance,true).'; $h='.var_export($hash,true).'; if(is_file($p)&&!is_link($p)&&hash_equals($h,(string)hash_file("sha256",$p)))unlink($p);
+    foreach(glob($w."/child-*.stat") as $f)unlink($f);
+    foreach(["database.sql.gz","wordpress-files.tar.gz","capture-evidence.json","watchdog.php","maintenance-template","ready"] as $f)@unlink($w."/".$f); @rmdir($w);';
 }

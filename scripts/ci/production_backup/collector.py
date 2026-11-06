@@ -123,11 +123,15 @@ def build_remote_candidate(root,user):
     if not re.fullmatch(r'/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+',root) or any(p in ('.','..') for p in root.split('/')): raise ProbeError('root')
     if not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}',user): raise ProbeError('user')
     folder=Path(__file__).parent
+    import base64
+    process_helpers=(folder/'lib/backup_process_safety.php').read_bytes()
     prefix='\n'.join(['const ORGAVELA_CAPTURE_ENTRYPOINT_ENABLED = false;',
+        'const ORGAVELA_PROCESS_HELPERS_BASE64 = '+json.dumps(base64.b64encode(process_helpers).decode())+';',
         'const ORGAVELA_EXPECTED_ROOT = '+json.dumps(root)+';',
         'const ORGAVELA_EXPECTED_USER = '+json.dumps(user)+';'])
     # No dynamic config evaluation, include or WordPress bootstrap.
     return b'\n'.join([(folder/'lib/backup_wp_config.php').read_bytes().replace(b'<?php',b'<?php\n'+prefix.encode(),1),
+        process_helpers.removeprefix(b'<?php'),
         (folder/'lib/backup_capture_safety.php').read_bytes().removeprefix(b'<?php'),
         (folder/'remote_capture.php').read_bytes().removeprefix(b'<?php')])
 

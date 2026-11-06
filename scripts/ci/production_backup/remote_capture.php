@@ -13,26 +13,30 @@ $active = []; $buffers=[]; $started = microtime(true); $cleaned = false;
 $cleanup = static function() use (&$db,&$work,&$maintenance,&$maintenanceHash,&$active,&$cleaned,&$buffers): void {
     if ($cleaned) return; $cleaned = true;
     $buffers=[];
+    $childrenClean=!$work || orgavela_process_stop_groups($work);
     foreach ($active as $p) if (is_resource($p)) { try { @proc_terminate($p, 9); @proc_close($p); } catch (Throwable $e) {} }
     if ($db instanceof mysqli) { try { @$db->query('UNLOCK TABLES'); @$db->close(); } catch (Throwable $e) {} $db=null; }
+    if(!$childrenClean)return;
     $maintenanceClean=true;
     if ($maintenance && $maintenanceHash) $maintenanceClean=@orgavela_remove_owned_maintenance($maintenance,$maintenanceHash);
     // Keep watchdog metadata if normal marker cleanup failed, so it can retry.
     if(!$maintenanceClean)return;
     if ($work && is_dir($work) && !is_link($work)) {
+        foreach(glob($work.'/child-*.stat') as $file)@unlink($file);
         foreach (['database.sql.gz','wordpress-files.tar.gz','capture-evidence.json','watchdog.php','maintenance-template','ready'] as $file) @unlink($work.'/'.$file);
         @rmdir($work);
     }
 };
 register_shutdown_function($cleanup);
 $checkTime = static function() use ($started): void { if (microtime(true)-$started > 100) throw new RuntimeException('deadline'); };
-$run = static function(array $args, ?string $config, bool $compress, int $limit=60) use (&$active,$checkTime,$phase,$filesystemOnly,&$entryCount,$cleanup): string {
+$run = static function(array $args, ?string $config, bool $compress, int $limit=60) use (&$active,$checkTime,$phase,$filesystemOnly,&$entryCount,$cleanup,&$work): string {
     $runAt=microtime(true);
     $kind=$args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump');
     if($kind!=='client_help')$phase($kind.'_started');
     $spec = [0=>['file','/dev/null','r'], 1=>['pipe','w'], 2=>['pipe','w']];
     if ($config !== null) $spec[3]=['pipe','r'];
-    $p=proc_open($args,$spec,$pipes); if (!is_resource($p)) throw new RuntimeException('process');
+    $pipes=[];
+    $p=$work ? orgavela_process_open($args,$spec,$pipes,$work) : proc_open($args,$spec,$pipes); if (!is_resource($p)) throw new RuntimeException('process');
     $active[]=$p;
     if ($config !== null) { fwrite($pipes[3],$config); fclose($pipes[3]); }
     $gz = $compress ? deflate_init(ZLIB_ENCODING_GZIP,['level'=>6]) : null;
@@ -81,6 +85,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
 };
 try {
     $phase('source_validating');
+    if(!is_executable('/usr/bin/setsid')||!function_exists('posix_kill')||!function_exists('posix_getsid'))throw new RuntimeException('process isolation unavailable');
     if (!defined('ORGAVELA_EXPECTED_ROOT') || !defined('ORGAVELA_EXPECTED_USER')) throw new RuntimeException('binding absent');
     $root=realpath(ORGAVELA_EXPECTED_ROOT); $home=$root?dirname($root):false;
     if (!function_exists('posix_geteuid') || !function_exists('posix_getpwuid') ||
