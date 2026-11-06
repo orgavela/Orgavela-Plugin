@@ -8,7 +8,7 @@ import tempfile
 from collector import ProbeError
 from crypto import package
 from github_api import reject_mixed_credentials
-from transport import Binding, capture, controlled_abort
+from transport import Binding, capture
 
 
 def trusted_main(env):
@@ -32,7 +32,6 @@ def main():
         raise ProbeError('private empty ciphertext directory required')
     binding = Binding(os.environ.get('PGP05_SSH_HOST', ''), os.environ.get('PGP05_SSH_USER', ''),
                       os.environ.get('PGP05_WP_ROOT', ''), Path(os.environ.get('PGP05_KNOWN_HOSTS_FILE', '')))
-    controlled_abort(binding, password=os.environ.get('PGP05_SSH_PASSWORD', ''), maintenance_approved=True)
     with tempfile.TemporaryDirectory(prefix='orgavela-private-components-') as tmp:
         capture(binding, Path(tmp), password=os.environ.get('PGP05_SSH_PASSWORD', ''), maintenance_approved=True)
         package(Path(tmp), args.output, args.backup_id)

@@ -6,14 +6,20 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $dry=defined('ORGAVELA_CAPTURE_SAFETY_ONLY') && ORGAVELA_CAPTURE_SAFETY_ONLY===true;
 $databaseOnly=defined('ORGAVELA_CAPTURE_DATABASE_ONLY') && ORGAVELA_CAPTURE_DATABASE_ONLY===true;
 $filesystemOnly=defined('ORGAVELA_CAPTURE_FILESYSTEM_ONLY') && ORGAVELA_CAPTURE_FILESYSTEM_ONLY===true;
+$abortOnly=defined('ORGAVELA_CAPTURE_ABORT_AFTER_LOCK') && ORGAVELA_CAPTURE_ABORT_AFTER_LOCK===true;
+$abortToken=defined('ORGAVELA_ABORT_TOKEN')?ORGAVELA_ABORT_TOKEN:null;
+$abortVerify=defined('ORGAVELA_ABORT_VERIFY') && ORGAVELA_ABORT_VERIFY===true;
+if($abortToken!==null && (!is_string($abortToken)||!preg_match('/^[a-f0-9]{32}$/D',$abortToken)))exit(78);
 $sourceOnly=defined('ORGAVELA_CAPTURE_SOURCE_ONLY') && ORGAVELA_CAPTURE_SOURCE_ONLY===true;
 $phase=static function(string $name): void { fwrite(STDERR,'ORGAVELA_CAPTURE_PHASE='.$name."\n"); };
 $db = null; $work = null; $maintenance = null; $maintenanceHash = null;
+$cleanupStatus='unknown';
 $active = []; $buffers=[]; $started = microtime(true); $cleaned = false;
-$cleanup = static function() use (&$db,&$work,&$maintenance,&$maintenanceHash,&$active,&$cleaned,&$buffers): void {
+$cleanup = static function() use (&$db,&$work,&$maintenance,&$maintenanceHash,&$active,&$cleaned,&$buffers,&$cleanupStatus): void {
     if ($cleaned) return; $cleaned = true;
     $buffers=[];
-    $childrenClean=!$work || orgavela_process_stop_groups($work);
+    $cleanupStatus=$work?orgavela_process_stop_groups_result($work)['status']:'complete';
+    $childrenClean=$cleanupStatus==='complete';
     foreach ($active as $p) if (is_resource($p)) { try { @proc_terminate($p, 9); @proc_close($p); } catch (Throwable $e) {} }
     if ($db instanceof mysqli) { try { @$db->query('UNLOCK TABLES'); @$db->close(); } catch (Throwable $e) {} $db=null; }
     if(!$childrenClean)return;
@@ -84,6 +90,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
     return $output;
 };
 try {
+    if($abortOnly && ($dry||$sourceOnly||$databaseOnly||$filesystemOnly))throw new RuntimeException('conflicting abort mode');
     $phase('source_validating');
     if(!is_executable('/usr/bin/setsid')||!function_exists('posix_kill')||!function_exists('posix_getsid'))throw new RuntimeException('process isolation unavailable');
     if (!defined('ORGAVELA_EXPECTED_ROOT') || !defined('ORGAVELA_EXPECTED_USER')) throw new RuntimeException('binding absent');
@@ -110,7 +117,7 @@ try {
     }
     // Validate scope before ever making the site unavailable. Suppress the
     // exception text: it can include private source paths or filenames.
-    try { $inventory=orgavela_capture_inventory($root); }
+    try { $inventory=$abortOnly?[]:orgavela_capture_inventory($root); }
     catch (Throwable $e) {
         $phase('source_inventory_rejected');
         // No user-controlled exception messages, paths, filenames or PHP warnings leave the server.
@@ -158,11 +165,13 @@ try {
             'maintenance_created'=>false,'remote_files_written'=>false,'backup_saved'=>false];
         $cleanup();echo json_encode($result,JSON_THROW_ON_ERROR)."\n";exit(0);
     }
+    if(!$abortOnly) {
     // Query only local client capabilities; no defaults, connection or secrets.
     $help=$run(['mariadb-dump','--no-defaults','--help'],null,false,3);
     $dumpArgs=orgavela_dump_client_args($help,$dry);
     $statementLimitSupported=str_contains($help,'--max-statement-time');unset($help);
     $phase('dump_client_validated');
+    }
     $config=orgavela_parse_config(file_get_contents($root.'/wp-config.php'));
     $host=$config['DB_HOST']; $port=3306;
     if (preg_match('/^([^:]+):([0-9]{1,5})$/D',$host,$m)) { $host=$m[1];$port=(int)$m[2]; }
@@ -206,7 +215,40 @@ try {
             'maintenance_created'=>false,'table_locks_used'=>false,'row_data_logged'=>false,'data_discarded'=>true,'backup_saved'=>false];
         $cleanup();echo json_encode($result,JSON_THROW_ON_ERROR)."\n";exit(0);
     }
-    $work=$home.'/.orgavela-capture-'.bin2hex(random_bytes(12)); if (!mkdir($work,0700)) throw new RuntimeException('work');
+    if(defined('ORGAVELA_ABORT_PREFLIGHT') && ORGAVELA_ABORT_PREFLIGHT===true) {
+        if(!$abortOnly || orgavela_capture_origin_status()!==200)throw new RuntimeException('preflight origin');
+        if(!orgavela_lock_capture_tables($db,$tables)||!$db->query('UNLOCK TABLES')||!orgavela_probe_write_locks($db,$tables))throw new RuntimeException('preflight locks');
+        $work=$home.'/.orgavela-capture-'.bin2hex(random_bytes(12));if(!mkdir($work,0700))throw new RuntimeException('preflight work');
+        $fake=$root.'/.orgavela-hardlink-probe-'.bin2hex(random_bytes(12));
+        $source=$work.'/maintenance-template';file_put_contents($source,'capability-only');
+        if(!link($source,$fake))throw new RuntimeException('preflight hardlink');
+        $probePipes=[];$active[]=orgavela_process_open(['/bin/sleep','30'],[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']],$probePipes,$work);
+        $owned=orgavela_process_stat(file_get_contents(glob($work.'/child-*.stat')[0]));
+        $self=orgavela_process_current(getmypid());
+        $code=orgavela_capture_watchdog($work,$fake,hash('sha256','capability-only'),getmypid(),$self['start'],1,false);
+        file_put_contents($work.'/watchdog.php',$code);
+        exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
+        $end=microtime(true)+5;
+        do {usleep(100000);clearstatcache();}while(is_dir($work)&&microtime(true)<$end);
+        if(is_dir($work)||file_exists($fake)||orgavela_process_members($owned))throw new RuntimeException('preflight watchdog');
+        $cleanup();
+        echo json_encode(['schema'=>'orgavela-abort-preflight/v1','runtime'=>PHP_VERSION,'posix_sessions'=>true,'proc_identity'=>true,'hardlink'=>true,'independent_watchdog'=>true,'table_scope'=>true,'table_locks'=>true,'origin_reachable'=>true,'maintenance_created'=>false,'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
+    }
+    if($abortVerify) {
+        $receipt=$home.'/.orgavela-abort-'.$abortToken.'.json';
+        if(!$abortOnly || !$abortToken || is_link($receipt)||!is_file($receipt)||fileowner($receipt)!==posix_geteuid()||filesize($receipt)>32768)throw new RuntimeException('abort receipt');
+        $proof=json_decode(file_get_contents($receipt),true,32,JSON_THROW_ON_ERROR);
+        if(($proof['token']??null)!==$abortToken||($proof['work']??null)!==$home.'/.orgavela-capture-'.$abortToken)throw new RuntimeException('abort binding');
+        if(is_dir($proof['work']))throw new RuntimeException('watchdog not complete');
+        $parent=orgavela_process_current($proof['parent']['pid']);
+        if($parent && $parent['start']===$proof['parent']['start'] && $parent['state']!=='Z')throw new RuntimeException('parent remains');
+        foreach($proof['groups'] as $owned)if(orgavela_process_members($owned))throw new RuntimeException('group remains');
+        if(file_exists($root.'/.maintenance')||!orgavela_probe_write_locks($db,$tables))throw new RuntimeException('abort cleanup incomplete');
+        if(orgavela_capture_origin_status()!==200)throw new RuntimeException('origin not recovered');
+        $cleanup();unlink($receipt);
+        echo json_encode(['schema'=>'orgavela-hard-disconnect/v1','ssh_channel_killed'=>true,'own_processes_ended'=>true,'fresh_connection_write_locks'=>true,'maintenance_removed'=>true,'origin_recovered'=>true,'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
+    }
+    $work=$home.'/.orgavela-capture-'.($abortToken??bin2hex(random_bytes(12))); if (!mkdir($work,0700)) throw new RuntimeException('work');
     $maintenance=$root.'/.maintenance';
     $content='<?php $upgrading = '.time().'; /* OrgaVela backup '.bin2hex(random_bytes(12)).' */ ?>';
     $maintenanceHash=hash('sha256',$content);
@@ -214,7 +256,7 @@ try {
     $pid=getmypid(); $stat=trim(file_get_contents('/proc/'.$pid.'/stat'));
     $identity=explode(' ',substr($stat,strrpos($stat,')')+2))[19];
     if (!ctype_digit($identity)) throw new RuntimeException('process identity');
-    $watchdog=orgavela_capture_watchdog($work,$maintenance,$maintenanceHash,$pid,$identity,$dry?3:115,!$dry);
+    $watchdog=orgavela_capture_watchdog($work,$maintenance,$maintenanceHash,$pid,$identity,$dry?3:($abortToken?15:115),!$dry);
     file_put_contents($work.'/watchdog.php',$watchdog);
     $phase('watchdog_starting');$launchAt=microtime(true);
     exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
@@ -249,6 +291,20 @@ try {
     $phase('maintenance_origin_verified');usleep(2000000);
     if (!orgavela_lock_capture_tables($db,$tables)) throw new RuntimeException('read lock');
     $phase('tables_locked');
+    if($abortOnly && $abortToken) {
+        // Synthetic process only; no dump, TAR or encryption in this mode.
+        $probePipes=[];
+        $active[]=orgavela_process_open(['/bin/sleep','90'],[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']],$probePipes,$work);
+        $groups=[];foreach(glob($work.'/child-*.stat') as $file)$groups[]=orgavela_process_stat(file_get_contents($file));
+        $proof=['token'=>$abortToken,'work'=>$work,'parent'=>orgavela_process_current(getmypid()),'groups'=>$groups];
+        $receipt=$home.'/.orgavela-abort-'.$abortToken.'.json';
+        $handle=fopen($receipt,'x');if(!$handle)throw new RuntimeException('receipt collision');
+        $data=json_encode($proof,JSON_THROW_ON_ERROR);
+        if(fwrite($handle,$data)!==strlen($data)||!fflush($handle))throw new RuntimeException('receipt write');fclose($handle);
+        fwrite(STDOUT,"ORGAVELA_ABORT_ARMED\n");fflush(STDOUT);
+        // Client kills its SSH session; independent watchdog must end this process.
+        sleep(120);throw new RuntimeException('watchdog did not terminate abort');
+    }
     if (defined('ORGAVELA_CAPTURE_ABORT_AFTER_LOCK') && ORGAVELA_CAPTURE_ABORT_AFTER_LOCK===true) throw new OrgaVelaControlledAbort('controlled abort');
     // Existing requests cannot commit DB writes; any still-running file writer makes this capture fail.
     usleep(500000); $before=orgavela_capture_inventory($root); $checkTime();
@@ -290,6 +346,7 @@ try {
 } catch (OrgaVelaControlledAbort $e) {
     $cleanup();
     try {
+        if($cleanupStatus!=='complete')throw new RuntimeException('process cleanup unverified');
         clearstatcache(true,$maintenance);
         if(file_exists($maintenance))throw new RuntimeException('maintenance remains');
         // A fresh connection must acquire conflicting write locks after cleanup.
@@ -297,7 +354,7 @@ try {
         if($probe->connect_errno || !orgavela_probe_write_locks($probe,$tables))throw new RuntimeException('locks remain');
         $probe->close();unset($config);
         if(orgavela_capture_origin_status()!==200)throw new RuntimeException('origin not recovered');
-        echo json_encode(['schema'=>'orgavela-controlled-abort/v1','aborted_after_table_locks'=>true,
+        echo json_encode(['schema'=>'orgavela-controlled-abort/v2','own_processes_ended'=>true,'aborted_after_table_locks'=>true,
             'fresh_connection_write_locks'=>true,'maintenance_removed'=>true,'origin_recovered'=>true,
             'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
     } catch(Throwable $failure) { fwrite(STDERR,"Controlled abort recovery unverified\n");exit(1); }

@@ -187,11 +187,19 @@ function orgavela_capture_watchdog(string $work,string $maintenance,string $hash
     return '<?php '.orgavela_process_helper_source().' $w='.var_export($work,true).'; file_put_contents($w."/ready","ready"); $end=microtime(true)+'.$seconds.'; while(microtime(true)<$end){clearstatcache(true,$w);if(!is_dir($w)||is_link($w))exit;usleep(100000);} if(!is_dir($w)||is_link($w))exit;
     $pid='.$pid.'; $identity='.var_export($identity,true).'; $parent=orgavela_process_current($pid);
     if('.($terminate?'true':'false').' && $parent && $parent["start"]===$identity)posix_kill($pid,19);
-    usleep(100000); $stopped=orgavela_process_stop_groups($w);
+    usleep(100000); $cleanup=orgavela_process_stop_groups_result($w);
     $parent=orgavela_process_current($pid);
     if('.($terminate?'true':'false').' && $parent && $parent["start"]===$identity)posix_kill($pid,9);
+    if('.($terminate?'true':'false').') {
+        $parentEnd=microtime(true)+1;
+        do {$parent=orgavela_process_current($pid);$parentAlive=$parent && $parent["start"]===$identity && $parent["state"]!=="Z";if($parentAlive)usleep(10000);}while($parentAlive && microtime(true)<$parentEnd);
+        if($parentAlive)$cleanup["status"]="survivors";
+    }
+    if($cleanup["status"]!=="complete") {
+        file_put_contents($w."/escalation.json",json_encode(["schema"=>"orgavela-cleanup-escalation/v1","status"=>$cleanup["status"],"maintenance_released"=>false],JSON_THROW_ON_ERROR));
+        exit($cleanup["status"]==="survivors"?72:71);
+    }
     $p='.var_export($maintenance,true).'; $h='.var_export($hash,true).'; if(is_file($p)&&!is_link($p)&&hash_equals($h,(string)hash_file("sha256",$p)))unlink($p);
-    if(!$stopped)exit(71);
     foreach(glob($w."/child-*.stat.tmp") as $f)unlink($f);
     foreach(glob($w."/child-*.stat") as $f)unlink($f);
     foreach(["database.sql.gz","wordpress-files.tar.gz","capture-evidence.json","watchdog.php","maintenance-template","ready"] as $f)@unlink($w."/".$f); @rmdir($w);';

@@ -35,7 +35,7 @@ class TransportTests(unittest.TestCase):
 
     def test_abort_program_has_no_unvalidated_output_or_snapshot(self):
         import transport
-        expected={'schema':'orgavela-controlled-abort/v1','aborted_after_table_locks':True,
+        expected={'schema':'orgavela-controlled-abort/v2','own_processes_ended':True,'aborted_after_table_locks':True,
                   'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
         import json
         binding=type('Fixture',(),{'argv':lambda self:['synthetic']})()
@@ -47,6 +47,52 @@ class TransportTests(unittest.TestCase):
         expected['snapshot_created']=True
         with patch.object(transport,'live_program',return_value=b'<?php fixture'),patch.object(transport,'receive',side_effect=receive_fixture),self.assertRaises(ProbeError):
             transport.controlled_abort(binding,password='fixture',maintenance_approved=True)
+
+    def test_abort_cli_cannot_fall_through_to_capture_or_package(self):
+        import abort_cli
+        import capture_cli
+        for success in (True, False):
+            with self.subTest(success=success), patch.dict(os.environ, {'ORGAVELA_CONFIRM_MAINTENANCE':'orgavela.com'}, clear=True), patch.object(sys, 'argv', ['abort_cli', '--mode', 'exception']), patch.object(abort_cli, 'authorize') as auth, patch.object(abort_cli, 'controlled_abort', side_effect=None if success else ProbeError('fixture'), return_value={'snapshot_created':False}) as abort, patch.object(capture_cli, 'capture') as capture, patch.object(capture_cli, 'package') as package:
+                if success:
+                    abort_cli.main()
+                else:
+                    with self.assertRaises(ProbeError):abort_cli.main()
+                auth.assert_called_once_with(os.environ, 'abort')
+                abort.assert_called_once()
+                capture.assert_not_called()
+                package.assert_not_called()
+        with patch.object(sys, 'argv', ['abort_cli', '--mode', 'capture']), patch.object(abort_cli, 'authorize') as auth, self.assertRaises(SystemExit):
+            abort_cli.main()
+        auth.assert_not_called()
+
+    def test_hard_channel_kills_real_local_session_only_after_armed(self):
+        import transport
+        with tempfile.TemporaryDirectory() as folder:
+            pidfile=Path(folder)/'pid'
+            script='import os,time;from pathlib import Path;Path('+repr(str(pidfile))+').write_text(str(os.getpid()));print("ORGAVELA_ABORT_ARMED",flush=True);time.sleep(30)'
+            transport.disconnect_when_armed([sys.executable,'-c',script],b'fixture',env={})
+            pid=int(pidfile.read_text())
+            with self.assertRaises(ProcessLookupError):os.kill(pid,0)
+        for script in ['print("wrong")','import time;time.sleep(30)']:
+            with self.assertRaises(ProbeError):
+                transport.disconnect_when_armed([sys.executable,'-c',script],b'fixture',env={},timeout=.2)
+
+    def test_hard_abort_requires_independent_complete_evidence(self):
+        import transport
+        expected={'schema':'orgavela-hard-disconnect/v1','ssh_channel_killed':True,'own_processes_ended':True,
+                  'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
+        binding=type('Fixture',(),{'argv':lambda self:['synthetic']})()
+        for missing in [None, 'own_processes_ended', 'fresh_connection_write_locks', 'maintenance_removed', 'origin_recovered']:
+            proof=dict(expected)
+            if missing:proof[missing]=False
+            def receive(argv,program,path,**kwargs):
+                self.assertIn(b'ORGAVELA_ABORT_VERIFY = true',program)
+                Path(path).write_text(json.dumps(proof))
+            with patch.object(transport,'live_program',return_value=b'<?php fixture'),patch.object(transport,'disconnect_when_armed') as interrupt,patch.object(transport.time,'sleep'),patch.object(transport,'receive',side_effect=receive):
+                if missing:
+                    with self.assertRaises(ProbeError):transport.hard_disconnect_abort(binding,password='fixture',maintenance_approved=True)
+                else:self.assertEqual(transport.hard_disconnect_abort(binding,password='fixture',maintenance_approved=True),expected)
+                interrupt.assert_called_once()
 
     def test_publisher_refuses_source_credentials_before_network(self):
         env = dict(GITHUB_REPOSITORY='orgavela/Orgavela-Plugin', GITHUB_REF='refs/heads/main',
