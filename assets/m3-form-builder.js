@@ -25,6 +25,9 @@
 		const [busy, setBusy] = useState(false);
 		const [error, setError] = useState('');
 		const [notice, setNotice] = useState('');
+		const [conflict, setConflict] = useState(null);
+		const fieldRows = useRef([]);
+		const reorderFocus = useRef(null);
 		const alertRef = useRef(null);
 		const dragIndex = useRef(null);
 
@@ -67,8 +70,18 @@
 			});
 			setDirty(true); setNotice(''); setError('');
 		}
-		function move(from, to) {
+		useEffect(() => {
+			if (!reorderFocus.current) return;
+			const { index, control } = reorderFocus.current;
+			const row = fieldRows.current[index];
+			const target = row && row.querySelector('[data-reorder="' + control + '"]:not(:disabled)');
+			const fallback = row && row.querySelector('[data-reorder="position"]');
+			if (target || fallback) (target || fallback).focus();
+			reorderFocus.current = null;
+		}, [draft]);
+		function move(from, to, control = 'position') {
 			if (!draft || from === to || from < 0 || to < 0 || to >= draft.fields.length) return;
+			reorderFocus.current = { index: to, control };
 			edit(items => { const [item] = items.splice(from, 1); items.splice(to, 0, item); });
 			setNotice(t('Field order changed. Save the draft to keep your changes.', 'uop-core'));
 		}
@@ -86,7 +99,24 @@
 				const result = await api({ path: '/uop/v1/forms/' + record.public_id + '/draft', method: 'PUT', data: { revision: record.revision, draft } });
 				setRecord(result); setDraft(clone(result.draft)); setDirty(false);
 				await refreshForms(); setNotice(t('Draft saved.', 'uop-core'));
+			} catch (e) {
+				if (e && e.data && e.data.status === 409) setConflict({ latest: null });
+				failed(e);
+			} finally { setBusy(false); }
+		}
+		async function loadLatest() {
+			setBusy(true); setError(''); setConflict({ latest: null });
+			try {
+				const latest = await api({ path: '/uop/v1/forms/' + record.public_id });
+				setConflict({ latest });
+				setNotice(t('Current version loaded for comparison. Nothing has been saved.', 'uop-core'));
 			} catch (e) { failed(e); } finally { setBusy(false); }
+		}
+		function resolveConflict(keepLocal) {
+			setRecord(conflict.latest);
+			if (!keepLocal) setDraft(clone(conflict.latest.draft));
+			setDirty(keepLocal); setConflict(null); setError('');
+			setNotice(keepLocal ? t('Local draft retained on the current revision. Review and save explicitly.', 'uop-core') : t('Server draft selected. Local changes discarded.', 'uop-core'));
 		}
 		async function publish() {
 			setBusy(true); setError(''); setNotice('');
@@ -137,6 +167,7 @@
 				});
 			}
 			return h('li', {
+				ref: row => { fieldRows.current[index] = row; },
 				key: field.key + '-' + index, className: 'uop-m3__field',
 				draggable: !busy, onDragStart: () => { dragIndex.current = index; },
 				onDragOver: ev => ev.preventDefault(),
@@ -146,10 +177,10 @@
 			h('div', { className: 'uop-m3__field-header' },
 				h('h3', { className: 'uop-m3__heading' }, (index + 1) + '. ' + field.label),
 				h('div', { className: 'uop-m3__field-tools' },
-					h('button', { type: 'button', disabled: busy || index === 0, onClick: () => move(index, index - 1), 'aria-label': t('Move field up', 'uop-core') + ': ' + field.label }, '↑'),
-					h('button', { type: 'button', disabled: busy || index === length - 1, onClick: () => move(index, index + 1), 'aria-label': t('Move field down', 'uop-core') + ': ' + field.label }, '↓'),
+					h('button', { type: 'button', disabled: busy || index === 0, onClick: () => move(index, index - 1, 'up'), 'data-reorder': 'up', 'aria-label': t('Move field up', 'uop-core') + ': ' + field.label }, '↑'),
+					h('button', { type: 'button', disabled: busy || index === length - 1, onClick: () => move(index, index + 1, 'down'), 'data-reorder': 'down', 'aria-label': t('Move field down', 'uop-core') + ': ' + field.label }, '↓'),
 					h('label', null, t('Position', 'uop-core') + ' ',
-						h('select', { disabled: busy, value: index, 'aria-label': t('Move field to position', 'uop-core') + ': ' + field.label, onChange: ev => move(index, Number(ev.target.value)) },
+						h('select', { disabled: busy, value: index, 'data-reorder': 'position', 'aria-label': t('Move field to position', 'uop-core') + ': ' + field.label, onChange: ev => move(index, Number(ev.target.value)) },
 							draft.fields.map((item, i) => h('option', { key: i, value: i }, i + 1))
 						)
 					),
@@ -212,6 +243,16 @@
 				h('h2', null, record.title),
 				h('p', null, t('Draft revision:', 'uop-core') + ' ' + record.revision + ' · ' + t('Status:', 'uop-core') + ' ' + record.status),
 				record.published ? h('p', { className: 'uop-m3__hint' }, t('Last published version:', 'uop-core') + ' ' + record.published.version) : null,
+				conflict ? h('section', { 'aria-label': t('Resolve revision conflict', 'uop-core') },
+					h('p', null, t('Your unsaved draft is retained below. Load the current version to compare. No changes are saved automatically.', 'uop-core')),
+					h('button', { type: 'button', disabled: busy, onClick: loadLatest }, t('Load current version for comparison', 'uop-core')),
+					conflict.latest ? h('div', null,
+						h('label', null, t('Current server draft', 'uop-core'), h('textarea', { readOnly: true, value: JSON.stringify(conflict.latest.draft, null, 2), rows: 8 })),
+						h('p', null, t('Keeping your local draft replaces the entire server draft when you next save. Edit it below to include the server changes you want to retain.', 'uop-core')),
+						h('button', { type: 'button', disabled: busy, onClick: () => resolveConflict(true) }, t('Keep local draft for review', 'uop-core')),
+						h('button', { type: 'button', disabled: busy, onClick: () => resolveConflict(false) }, t('Discard local changes and use server draft', 'uop-core'))
+					) : null
+				) : null,
 				h('ol', { className: 'uop-m3__form-fields' }, draft.fields.map(renderField)),
 				h('div', { className: 'uop-m3__actions' },
 					h('button', { type: 'button', className: 'button', disabled: busy || draft.fields.length >= 100,
@@ -221,8 +262,8 @@
 							while (used.has(key)) key += '_new';
 							items.push({ key, label: t('New field', 'uop-core'), type: 'text', required: false });
 						}) }, t('Add field', 'uop-core')),
-					h('button', { type: 'button', className: 'button button-primary', disabled: busy || !dirty, onClick: save }, t('Save draft', 'uop-core')),
-					h('button', { type: 'button', className: 'button', disabled: busy || dirty, onClick: publish }, t('Publish immutable version', 'uop-core'))
+					h('button', { type: 'button', className: 'button button-primary', disabled: busy || !dirty || Boolean(conflict), onClick: save }, t('Save draft', 'uop-core')),
+					h('button', { type: 'button', className: 'button', disabled: busy || dirty || Boolean(conflict), onClick: publish }, t('Publish immutable version', 'uop-core'))
 				),
 				dirty ? h('p', { className: 'uop-m3__hint', role: 'status' }, t('Unsaved changes. Publish is disabled until the draft is saved.', 'uop-core')) : null
 			)
