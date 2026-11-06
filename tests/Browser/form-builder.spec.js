@@ -46,12 +46,12 @@ test('form builder supports accessible keyboard reorder, saving and immutable pu
   await page.keyboard.press('Tab');
   await expect(upButton).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.uop-m3__form-fields li').first()).toContainText('New field');
+  await expect(page.locator('.uop-m3__form-fields li').first().getByRole('heading')).toHaveText('1. New field');
   const position = page.getByRole('combobox', { name: 'Move field to position: New field' });
   await expect(position).toBeFocused(); // up is now disabled: focus stays in moved field
-  await position.selectOption('2');
+  await position.selectOption({ value: '2' });
   await expect(position).toBeFocused();
-  await expect(page.locator('.uop-m3__form-fields li').last()).toContainText('New field');
+  await expect(page.locator('.uop-m3__form-fields li').last().getByRole('heading')).toHaveText('3. New field');
   const moveUp = page.getByRole('button', { name: 'Move field up: New field' });
   // Move via keyboard from the up button, then down to the disabled boundary.
   await moveUp.focus();
@@ -60,7 +60,7 @@ test('form builder supports accessible keyboard reorder, saving and immutable pu
   await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
   await expect(position).toBeFocused();
-  await expect(page.locator('.uop-m3__form-fields li').last()).toContainText('New field');
+  await expect(page.locator('.uop-m3__form-fields li').last().getByRole('heading')).toHaveText('3. New field');
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByRole('status')).toContainText('Draft saved', { timeout: 30000 });
 
