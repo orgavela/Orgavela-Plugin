@@ -46,6 +46,7 @@ def run():
             for mode in ('exception','timeout','disconnected','foreign-marker','tar-exception','tar-timeout','tar-disconnected','dump-exception','dump-timeout','dump-disconnected'):
                 for path in state.iterdir():
                     if path.is_file():path.unlink()
+                print('SYNTHETIC_ABORT_CASE='+mode,flush=True)
                 runner=name+'-'+mode
                 docker('run','-d','--name',runner,'--network',name,'--user',str(os.getuid())+':'+str(os.getgid()),
                     '-e','FIXTURE_DB_HOST='+name+'-db','-e','FIXTURE_PASSWORD='+password,
@@ -56,6 +57,13 @@ def run():
                 deadline=time.monotonic()+12
                 while not (state/'locked').exists() and time.monotonic()<deadline:time.sleep(.05)
                 if not (state/'locked').exists():raise RuntimeError('abort fixture lock setup failed')
+                sentinel=None
+                if (state/'children.json').exists():
+                    # Separate exec, not a child inheriting the worker's DB socket.
+                    docker('exec','-d',runner,'/bin/sh','-c','echo $$ > /state/sentinel; exec sleep 45')
+                    deadline=time.monotonic()+2
+                    while not (state/'sentinel').exists() and time.monotonic()<deadline:time.sleep(.05)
+                    sentinel=int((state/'sentinel').read_text())
                 if not mode.endswith('exception'):
                     if status()!=503:raise RuntimeError('synthetic HTTP maintenance missing')
                     # The conflicting lock probe must fail before cleanup.
@@ -70,7 +78,8 @@ def run():
                 deadline=time.monotonic()+12
                 while (state/'watch').exists() and time.monotonic()<deadline:time.sleep(.05)
                 if (state/'watch').exists():raise RuntimeError('watchdog fixture cleanup timeout: '+mode+' '+(state/'watchdog.log').read_text()[-1000:])
-                docker('exec',runner,'php','/checks/synthetic_abort_worker.php','probe')
+                try:docker('exec',runner,'php','/checks/synthetic_abort_worker.php','probe')
+                except RuntimeError:raise RuntimeError('fresh write lock probe failed: '+mode) from None
                 if mode=='foreign-marker':
                     if (state/'.maintenance').read_text()!='foreign-owner':raise RuntimeError('foreign maintenance removed')
                     (state/'.maintenance').unlink()
@@ -84,8 +93,8 @@ def run():
                     owned=next(m for m in children['members'] if m['pid']==m['session'])
                     code='exit(orgavela_process_members(json_decode('+json.dumps(json.dumps(owned))+',true))?1:0);'
                     docker('exec',runner,'php','-r','require "/checks/lib/backup_process_safety.php";'+code)
-                    docker('exec',runner,'/bin/kill','-0',str(children['sentinel']))
-                    docker('exec',runner,'/bin/kill','-KILL',str(children['sentinel']))
+                    docker('exec',runner,'/bin/kill','-0',str(sentinel))
+                    docker('exec',runner,'/bin/kill','-KILL',str(sentinel))
                 results[mode]=True
                 docker('rm','-f',runner);resources.pop()
         finally:

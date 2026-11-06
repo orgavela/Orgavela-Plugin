@@ -63,7 +63,8 @@ function orgavela_process_stop_groups(string $work): bool {
             $owned=orgavela_process_stat(file_get_contents($record));
             if(orgavela_process_members($owned)) {
                 // Freeze the whole group before KILL so it cannot add descendants.
-                if(!posix_kill(-$owned['pid'],19)||!posix_kill(-$owned['pid'],9))return false;
+                if(!posix_kill(-$owned['pid'],19)&&orgavela_process_members($owned))return false;
+                if(orgavela_process_members($owned)&&!posix_kill(-$owned['pid'],9)&&orgavela_process_members($owned))return false;
             }
             $end=microtime(true)+1;
             while(orgavela_process_members($owned)&&microtime(true)<$end)usleep(10000);

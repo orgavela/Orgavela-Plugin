@@ -51,10 +51,7 @@ if($childKind) {
     if(!$members||($childKind==='tar'&&count($members)<2)||!proc_get_status($child)['running'])exit(11);
     $comm=trim(file_get_contents('/proc/'.$owned['pid'].'/comm'));
     if($comm!==($childKind==='tar'?'tar':'mariadb-dump'))exit(12);
-    // A deliberately unrelated child must survive cleanup of the registered group.
-    $sentinel=proc_open(['/usr/bin/setsid','sleep','45'],$spec=[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']],$unused);
-    $sentinelPid=proc_get_status($sentinel)['pid'];
-    file_put_contents('/state/children.json',json_encode(['tool'=>$comm,'members'=>$members,'sentinel'=>$sentinelPid,'output_observed'=>true],JSON_THROW_ON_ERROR));
+    file_put_contents('/state/children.json',json_encode(['tool'=>$comm,'members'=>$members,'output_observed'=>true],JSON_THROW_ON_ERROR));
 }
 file_put_contents('/state/locked','ready');
 // Graceful exception path mirrors capture cleanup; timeout/disconnect rely on watchdog.
