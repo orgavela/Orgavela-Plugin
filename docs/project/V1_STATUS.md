@@ -331,3 +331,5 @@ Betreiberfreigabe für orgavela.com als dauerhaft geschütztes Testziel gilt. Ne
 ## O03/PGP05 – Implementierung PR64 CI-grün, 06.11.2026
 
 [PR64](https://github.com/orgavela/Orgavela-Plugin/pull/64) ergänzt tatsächlichen bounded SSH-Capture, getrennten Ciphertext-Writer und private Recoverywerkzeuge auf2d031a4. GitHub #42228477498/#42228601061 success,27 Python-Tests; zusätzlich lokaler verschlüsselter synthetischer WP/MariaDB-Restore bestanden. Kein echter Snapshot/Restore und keine Websiteänderung. Als Nächstes unabhängiges Securityreview/Parentintegration, vertrauenswürdige Runneranbindung und privater Betreiber-Restorehost; danach echter Capture/Readback/Restore. M3-PR62 bleibt Draft,formale Zahlen unverändert. Details im append-only Arbeitslog und Reviewbericht auf PR64.
+
+**O03-Betreiberklärung 06.11.2026:** Noch kein privates Restoreziel vorhanden. Passenden lokalen Weg nach Rechner-/Betriebssystemklärung vorbereiten; keine kostenpflichtige Infrastruktur angelegt. PR64-Sicherheitsreview kann unabhängig fortgesetzt werden. Echter Restore und Websiteumstellung weiterhin offen, formale Zahlen unverändert.
