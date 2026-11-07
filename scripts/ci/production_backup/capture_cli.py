@@ -23,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--backup-id', required=True)
+    parser.add_argument('--restore-public',type=Path)
     args = parser.parse_args()
     trusted_main(os.environ)
     reject_mixed_credentials(os.environ, 'source')
@@ -32,9 +33,13 @@ def main():
         raise ProbeError('private empty ciphertext directory required')
     binding = Binding(os.environ.get('PGP05_SSH_HOST', ''), os.environ.get('PGP05_SSH_USER', ''),
                       os.environ.get('PGP05_WP_ROOT', ''), Path(os.environ.get('PGP05_KNOWN_HOSTS_FILE', '')))
+    record=None
+    if args.restore_public is not None:
+        from restore_recipient import load
+        record=load(args.restore_public,env=os.environ,require_live=True,minimum_remaining=300)
     with tempfile.TemporaryDirectory(prefix='orgavela-private-components-') as tmp:
         capture(binding, Path(tmp), password=os.environ.get('PGP05_SSH_PASSWORD', ''), maintenance_approved=True)
-        package(Path(tmp), args.output, args.backup_id)
+        package(Path(tmp), args.output, args.backup_id,restore_public=args.restore_public,restore_record=record)
     print('ORGAVELA_ENCRYPTED_CAPTURE=PASS')
 
 

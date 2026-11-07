@@ -20,7 +20,7 @@ def opener():
     return urllib.request.build_opener(NoRedirect())
 
 
-def assets(work, *, synthetic=False):
+def assets(work, *, synthetic=False,restore_record=None):
     reject_mixed_credentials(os.environ,'writer')
     work=Path(work)
     if not work.is_dir() or work.is_symlink(): raise WriterError('invalid ciphertext directory')
@@ -49,9 +49,14 @@ def assets(work, *, synthetic=False):
         'synthetic':synthetic,'contains_production_data':not synthetic,'archive_sha256':result[archive]['sha256'],
         'archive_bytes':result[archive]['size'],'public_key_fingerprint':PRIMARY_FPR,
         'encrypted':True,'source_components_encrypted':True}
+    if restore_record is not None:
+        from restore_recipient import validate
+        validate(restore_record)
+        expected['schema']='orgavela-github-release-backup-public-manifest/v2'
+        expected['restore_recipient']=restore_record
     if manifest!=expected or any(type(manifest.get(k)) is not type(v) for k,v in expected.items()): raise WriterError('public manifest policy mismatch')
     if (work/sidecar).read_text()!=result[archive]['sha256']+'  '+archive+'\n': raise WriterError('sidecar mismatch')
-    try: inspect_cipher(work/archive,SUBKEY_FPR)
+    try: inspect_cipher(work/archive,SUBKEY_FPR,restore_subkey=restore_record['subkey'] if restore_record else None)
     except ValueError: raise WriterError('ciphertext packet recipient refused') from None
     return bid,result
 
@@ -66,7 +71,14 @@ def upload(token, release_id, name, entry):
     except (OSError,ValueError): raise WriterError('asset upload failed; response suppressed') from None
 
 
-def readback_asset(token, asset_id, expected):
+def readback_asset(token, asset_id, expected, *, destination=None):
+    if type(asset_id) is not int or asset_id<1 or type(expected.get('size')) is not int or not 0<expected['size']<=536870912:raise WriterError('invalid asset identity/limit')
+    target=None;made=False;accepted=False
+    if destination is not None:
+        destination=Path(destination)
+        if destination.parent.is_symlink() or not destination.parent.is_dir() or destination.parent.stat().st_mode & 0o077:raise WriterError('private download target required')
+        fd=os.open(destination,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+        target=os.fdopen(fd,'wb');made=True
     request=urllib.request.Request('https://api.github.com/repos/'+REPOSITORY+'/releases/assets/'+str(asset_id),headers={
         'Authorization':'Bearer '+token,'Accept':'application/octet-stream',
         'X-GitHub-Api-Version':'2026-03-10','User-Agent':'orgavela-backup-writer'})
@@ -85,8 +97,14 @@ def readback_asset(token, asset_id, expected):
                 size+=len(chunk)
                 if size>expected['size']: raise WriterError('remote asset size mismatch')
                 digest.update(chunk)
+                if target is not None:target.write(chunk)
         if size!=expected['size'] or digest.hexdigest()!=expected['sha256']: raise WriterError('remote asset hash mismatch')
+        if target is not None:target.flush();os.fsync(target.fileno())
+        accepted=True
     except OSError: raise WriterError('asset readback failed; details suppressed') from None
+    finally:
+        if target is not None:target.close()
+        if made and not accepted:destination.unlink(missing_ok=True)
 
 
 def verify_release(token, rid, bid, expected, *, draft):
@@ -107,7 +125,9 @@ def verify_release(token, rid, bid, expected, *, draft):
     return release
 
 
-def publish(token,bid,entries):
+def publish(token,bid,entries,*,synthetic=False,target_sha=None):
+    if type(synthetic) is not bool or not bid.startswith('orgavela-synthetic-' if synthetic else 'orgavela-wordpress-'):raise WriterError('publication mode refused')
+    if target_sha is not None and not re.fullmatch(r'[a-f0-9]{40}',target_sha):raise WriterError('publication commit refused')
     path='/repos/'+REPOSITORY+'/releases'
     try: request_json(path+'/tags/'+bid,token)
     except WriterError as e:
@@ -117,9 +137,9 @@ def publish(token,bid,entries):
     except WriterError as error:
         if error.status!=404: raise
     else: raise WriterError('backup tag already exists; refusing overwrite')
-    created=request_json(path,token,method='POST',data={'tag_name':bid,'name':bid,'target_commitish':'main',
-        'body':'Client-side OpenPGP encrypted production backup. All assets fully read back before and after publication.',
-        'draft':True,'prerelease':False,'make_latest':'false'})
+    created=request_json(path,token,method='POST',data={'tag_name':bid,'name':bid,'target_commitish':target_sha or 'main',
+        'body':('Synthetic-only' if synthetic else 'Production')+' OpenPGP encrypted backup. All assets fully read back before and after publication.',
+        'draft':True,'prerelease':synthetic,'make_latest':'false'})
     rid=created.get('id')
     if type(rid) is not int or rid<1 or created.get('draft') is not True or created.get('tag_name')!=bid:
         raise WriterError('draft creation result mismatch')
@@ -130,7 +150,7 @@ def publish(token,bid,entries):
     verify_release(token,rid,bid,entries,draft=True)
     request_json(path+'/'+str(rid),token,method='PATCH',data={'draft':False,'make_latest':'false'})
     verify_release(token,rid,bid,entries,draft=False)
-    return {'schema':'orgavela-production-release-evidence/v1','backup_id':bid,'release_id':rid,
+    return {'schema':'orgavela-synthetic-release-evidence/v1' if synthetic else 'orgavela-production-release-evidence/v1','backup_id':bid,'release_id':rid,
         'repository':REPOSITORY,'immutable_verified':True,'draft_full_readback':True,
         'published_full_readback':True,'asset_count':len(entries),'restore_tested':False}
 

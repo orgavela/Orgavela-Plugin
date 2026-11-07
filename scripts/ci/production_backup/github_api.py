@@ -43,7 +43,7 @@ def verify_repository(token):
 
 def reject_mixed_credentials(env,role):
     import re
-    if role not in ('source','writer'): raise WriterError('credential role refused')
+    if role not in ('source','writer','restore'): raise WriterError('credential role refused')
     for name,value in env.items():
         if not value: continue
         # Runtime network-policy flag, not private recovery/key material. Keep it
@@ -53,5 +53,5 @@ def reject_mixed_credentials(env,role):
         source=name.startswith(('PGP05_SSH_','BACKUP_SSH_','IONOS_','SFTP_')) or name=='PGP05_WP_ROOT'
         writer=name in ('GH_TOKEN','GITHUB_TOKEN','BACKUP_GITHUB_TOKEN') or name.startswith('BACKUP_GITHUB_')
         raw_database=name in ('DB_PASSWORD','MYSQL_PWD','WP_DB_PASSWORD','SSHPASS') or name.startswith(('PGPASSWORD','DATABASE_URL'))
-        if private or raw_database or (role=='writer' and source) or (role=='source' and writer):
+        if private or raw_database or (role in ('writer','restore') and source) or (role in ('source','restore') and writer):
             raise WriterError('credential boundary refused')

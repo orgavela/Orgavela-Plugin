@@ -65,7 +65,7 @@ def live_program(binding, *, maintenance_approved=False):
 
 
 def receive(argv, program, destination, *, env, timeout=150,
-            max_bytes=MAX_SNAPSHOT, diagnostic_limit=MAX_DIAGNOSTIC):
+            max_bytes=MAX_SNAPSHOT, diagnostic_limit=MAX_DIAGNOSTIC,phase_callback=None):
     """Private exclusive file, both pipes drained, deadline and group cleanup.
 
     stdout is a binary TAR, stderr is discarded after counting. A rejected or
@@ -89,6 +89,7 @@ def receive(argv, program, destination, *, env, timeout=150,
                                      env=env, start_new_session=True, close_fds=True)
             deadline = time.monotonic() + timeout
             received = diagnostics = 0
+            diagnostic_buffer=b''
             with selectors.DefaultSelector() as poll:
                 poll.register(child.stdout, selectors.EVENT_READ, 'data')
                 poll.register(child.stderr, selectors.EVENT_READ, 'diagnostic')
@@ -110,6 +111,12 @@ def receive(argv, program, destination, *, env, timeout=150,
                             diagnostics += len(block)
                             if diagnostics > diagnostic_limit:
                                 raise ProbeError('capture diagnostic limit exceeded')
+                            if phase_callback is not None:
+                                diagnostic_buffer+=block
+                                while b'\n' in diagnostic_buffer:
+                                    line,diagnostic_buffer=diagnostic_buffer.split(b'\n',1)
+                                    match=re.fullmatch(rb'ORGAVELA_CAPTURE_PHASE=([a-z_]+)',line)
+                                    if match and match[1].decode() in SAFE_PHASES:phase_callback(match[1].decode())
                 left = deadline - time.monotonic()
                 if left <= 0 or child.wait(timeout=left) != 0 or received == 0:
                     raise ProbeError('capture process refused or empty')
@@ -132,7 +139,7 @@ def receive(argv, program, destination, *, env, timeout=150,
             destination.unlink(missing_ok=True)
 
 
-def capture(binding, components, *, password, maintenance_approved=False):
+def capture(binding, components, *, password, maintenance_approved=False,phase_callback=None):
     """Capture and validate before exposing any component to encryption."""
     program = live_program(binding, maintenance_approved=maintenance_approved)
     components = Path(components)
@@ -143,7 +150,7 @@ def capture(binding, components, *, password, maintenance_approved=False):
     with tempfile.TemporaryDirectory(prefix='orgavela-source-', dir=components.parent) as temporary:
         snapshot = Path(temporary) / 'snapshot.tar'
         receive(binding.argv(), program, snapshot,
-                env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C', 'SSHPASS': password})
+                env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C', 'SSHPASS': password},phase_callback=phase_callback)
         return accept_snapshot(snapshot, components)
 
 
@@ -240,4 +247,26 @@ def abort_preflight(binding, *, password, maintenance_approved=False):
               'hardlink':True,'independent_watchdog':True,'table_scope':True,'table_locks':True,'origin_reachable':True,
               'maintenance_created':False,'snapshot_created':False}
     if evidence!=expected:raise ProbeError('abort capabilities unverified')
+    return evidence
+
+
+SAFE_PHASES={'source_validating','source_root_rejected','source_core_files_rejected','source_uploads_rejected','source_disk_space_rejected','source_maintenance_rejected','source_inventory_rejected','inventory_invalid_name','inventory_entry_limit','inventory_symlink','inventory_total_size','inventory_unreadable_file','inventory_unsupported_entry','inventory_ustar_path','scope_validated','dump_client_validated','database_validated','database_tls_probe_started','database_tls_verified','database_dump_started','filesystem_tar_started','database_dump_deadline','database_dump_stream_deadline','database_dump_no_output_deadline','filesystem_tar_deadline','dump_process_failed','dump_auth_failed','dump_database_missing','dump_lock_timeout','dump_statement_timeout','dump_connection_failed','dump_connection_lost','dump_tls_error','dump_permission_denied','dump_option_unsupported','watchdog_starting','watchdog_ready','maintenance_active','maintenance_origin_verified','tables_locked','dump_complete','files_complete','archive_inventory_verified','files_verified','maintenance_removed','origin_recovered','stream_complete'}
+
+
+def resource_probe(binding, kind, *, password, maintenance_approved=False,phase_callback=None):
+    import json
+    flags={'database':'ORGAVELA_CAPTURE_DATABASE_ONLY','filesystem':'ORGAVELA_CAPTURE_FILESYSTEM_ONLY'}
+    if kind not in flags or not password or '\0' in password:raise ProbeError('invalid resource probe')
+    program=live_program(binding,maintenance_approved=maintenance_approved).replace(b'<?php',b'<?php\nconst '+flags[kind].encode()+b' = true;',1)
+    with tempfile.TemporaryDirectory(prefix='orgavela-resource-probe-') as folder:
+        output=Path(folder)/'result.json'
+        receive(binding.argv(),program,output,env={'PATH':'/usr/bin:/bin','LC_ALL':'C','SSHPASS':password},timeout=110,max_bytes=4096,phase_callback=phase_callback)
+        evidence=json.loads(output.read_bytes())
+    common={'completed':True,'maintenance_created':False,'table_locks_used':False,'data_discarded':True,'backup_saved':False}
+    expected={'schema':'orgavela-database-dump-probe/v2','tls_verified':True,'server_certificate_verified':True,'table_count':52,'row_data_logged':False} if kind=='database' else {'schema':'orgavela-filesystem-memory-probe/v2','ustar_paths_verified':True,'file_data_logged':False}
+    if set(evidence)!=set(common)|set(expected)|{'compressed_bytes','seconds'}|({'filesystem_entries'} if kind=='filesystem' else set()):raise ProbeError('resource evidence shape')
+    for k,v in {**common,**expected}.items():
+        if evidence[k]!=v or type(evidence[k]) is not type(v):raise ProbeError('resource probe incomplete')
+    if type(evidence['compressed_bytes']) is not int or not 0<evidence['compressed_bytes']<=100663296 or type(evidence['seconds']) not in (int,float) or not 0<evidence['seconds']<=(25 if kind=='database' else 60):raise ProbeError('resource limits exceeded')
+    if kind=='filesystem' and (type(evidence['filesystem_entries']) is not int or not 0<evidence['filesystem_entries']<=50000):raise ProbeError('filesystem scope')
     return evidence

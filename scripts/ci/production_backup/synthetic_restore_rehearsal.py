@@ -77,7 +77,7 @@ def run():
                     ('.user.ini', b'auto_prepend_file=/var/www/html/wp-content/db.php')])
     files = gzip.compress(tar_bytes(entries))
     components = {'database.sql.gz': gzip.compress(sql), 'wordpress-files.tar.gz': files}
-    evidence = dict(schema='orgavela-ssh-capture-evidence/v2', capture_mode='production',
+    evidence = dict(schema='orgavela-ssh-capture-evidence/v3', capture_mode='production',database_tls_verified=True,database_server_certificate_verified=True,
         filesystem_consistency='quiesced', database_consistency='single-transaction',
         scope=dict.fromkeys(('database', 'wordpress_filesystem', 'uploads', 'wp_config'), True),
         quiescence=dict.fromkeys(('wordpress_maintenance', 'all_table_read_locks', 'stable_file_hashes','archive_matches_inventory',

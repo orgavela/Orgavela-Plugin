@@ -56,8 +56,14 @@ def run():
                 preflight=transport.abort_preflight(binding,password='fixture',maintenance_approved=True)
                 exception=transport.controlled_abort(binding,password='fixture',maintenance_approved=True)
                 hard=transport.hard_disconnect_abort(binding,password='fixture',maintenance_approved=True)
+                phases=[]
+                try:transport.resource_probe(binding,'database',password='fixture',maintenance_approved=True,phase_callback=phases.append)
+                except ValueError:pass
+                else:raise RuntimeError('plaintext database must fail strict TLS probe')
+                if 'database_tls_probe_started' not in phases:raise RuntimeError('TLS negative fixture did not reach negotiation')
+
             if (wp/'.maintenance').exists() or list(state.glob('.orgavela-*')):raise RuntimeError('protocol artifacts remain')
-            return {'synthetic_remote_protocol':True,'capabilities':preflight,'exception':exception,
+            return {'synthetic_remote_protocol':True,'plaintext_database_tls_refused':True,'capabilities':preflight,'exception':exception,
                     'hard_channel_observer':hard,'channel':'docker-exec-not-SSH','origin':'simulated',
                     'production_source_accessed':False}
         finally:
