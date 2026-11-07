@@ -63,6 +63,15 @@ try {
     check(str_contains(orgavela_client_value("quote\"newline\n"),'\\n'));
     check(strlen(orgavela_tar_header('database.sql.gz',3))===512);
     refused(fn()=>orgavela_tar_header('../escape',3));
+    foreach([
+        'SSL is required, but the server does not support it'=>'dump_tls_unavailable',
+        'TLS/SSL error: SSL is disabled'=>'dump_tls_unavailable',
+        'certificate verify failed: Hostname mismatch'=>'dump_tls_hostname_mismatch',
+        'certificate has expired'=>'dump_tls_certificate_dates',
+        'Certificate verification failure: unable to get local issuer certificate'=>'dump_tls_certificate_untrusted',
+        'Certificate verification failure: The certificate is NOT trusted'=>'dump_tls_certificate_untrusted',
+        'TLS negotiation failed with private host/user fixture-secret'=>'dump_tls_error'
+    ]as$message=>$category)check(orgavela_tls_failure_phase($message)===$category);
     $help='--defaults-file --protocol --ssl --ssl-verify-server-cert --max-statement-time';
     $dump=orgavela_dump_client_args($help,false);
     check(in_array('--ssl',$dump,true)&&in_array('--ssl-verify-server-cert',$dump,true)&&in_array('--protocol=tcp',$dump,true));
