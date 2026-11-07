@@ -95,10 +95,23 @@ function orgavela_lock_capture_tables(mysqli $db, array $tables): bool {
     return (bool)$db->query('LOCK TABLES '.implode(',',array_map(static fn($t)=>'`'.$t.'` READ',$tables)).' WAIT 2');
 }
 
-/** Use only the root-owned operating-system trust store; no per-run trust override. */
+/** Verify immutable OS paths independent of numeric provider system UIDs. */
+final class OrgaVelaTrustRejection extends RuntimeException {}
 function orgavela_database_tls_args(): array {
-    $ca='/etc/ssl/certs/ca-certificates.crt';
-    if(!is_file($ca) || !is_readable($ca) || fileowner($ca)!==0 || (fileperms($ca)&0022)!==0)throw new RuntimeException('system CA store unavailable');
+    $ca='/etc/ssl/certs/ca-certificates.crt';$binary=realpath(PHP_BINARY);$uid=posix_geteuid();
+    $owner=$binary?@fileowner($binary):false;$binaryMode=$binary?@fileperms($binary):false;
+    if(!$binary || !is_file($binary) || !is_int($owner) || !is_int($binaryMode) || $owner===$uid || ($binaryMode&0022)!==0 || is_writable($binary))throw new OrgaVelaTrustRejection('system_trust_runtime_unverified');
+    if(!is_file($ca) || !is_readable($ca))throw new OrgaVelaTrustRejection('system_trust_store_unavailable');
+    if(!is_int(fileowner($ca)) || fileowner($ca)===$uid)throw new OrgaVelaTrustRejection('system_trust_store_owner_mismatch');
+    $caMode=@fileperms($ca);if(!is_int($caMode) || ($caMode&0022)!==0 || is_writable($ca))throw new OrgaVelaTrustRejection('system_trust_store_writable');
+    foreach([$ca,$binary]as$file){
+        $resolved=realpath($file);if(!$resolved)throw new OrgaVelaTrustRejection('system_trust_ancestor_unsafe');
+        for($parent=dirname($resolved);;$parent=dirname($parent)){
+            $parentOwner=@fileowner($parent);$parentMode=@fileperms($parent);
+            if(!is_dir($parent) || !is_int($parentOwner) || !is_int($parentMode) || $parentOwner===$uid || ($parentMode&0022)!==0 || is_writable($parent))throw new OrgaVelaTrustRejection('system_trust_ancestor_unsafe');
+            if($parent==='/')break;
+        }
+    }
     return ['--protocol=tcp','--ssl','--ssl-verify-server-cert','--ssl-ca='.$ca];
 }
 

@@ -190,7 +190,7 @@
       "next": "separate O03 real encrypted snapshot/release readback/isolated restore acceptance"
     },
     "o03_backup_acceptance_20261107": {
-      "status": "blocked_database_tls_certificate_trust",
+      "status": "blocked_tls_os_owner_verification",
       "engine_sha": "191df34788cb8cf318cb854f981520fa5ae87a64",
       "controller_sha": "22f07152bdecbe33519a875182ef44e95cb9bd50",
       "public_prs_integrated": [
@@ -247,7 +247,7 @@
       "filesystem_resource_probe_completed": false,
       "formal_o03_accepted": false,
       "automatic_schedule_authorized": false,
-      "next": "Integrate explicit root-owned OS CA trust for both TLS probe and dump; repeat exact CI and fresh same-controller prerequisites before live TLS/resource/capture acceptance.",
+      "next": "Integrate protected OS truststore/runtime validation independent of provider numeric UIDs, with immutable ancestor paths; fresh same-controller recovery/preflight and real TLS/resource probes before any actual snapshot.",
       "tls_diagnostic_engine": {
         "sha": "dc9e3cadb9b9bf1e5496aed9129e31b7baa2390a",
         "public_pr_integrated": 70,
@@ -278,6 +278,48 @@
         "wrong_hostname_rejected": true,
         "production_source_accessed": false,
         "ionos_fix_proven": false
+      },
+      "system_ca_engine": {
+        "sha": "ec251733e94355b5a396ac9d59cfd2daf0da4f21",
+        "foundation_ci": 42365135796,
+        "o03_ci": 42365135815,
+        "truth_ci": 42365135759,
+        "circleci": "success",
+        "public_pr_integrated": 71
+      },
+      "trust_inventory": {
+        "controller_sha": "a79dd085f7c92d62c8a90ad7e88786d0c88c5489",
+        "controller_main_ci": 42366532777,
+        "private_prs_integrated": [
+          6,
+          7
+        ],
+        "fresh_recovery_run": 42366606695,
+        "preflight_run": 42366729353,
+        "result": "success",
+        "maintenance_created": false,
+        "standard_ca_file_present": true,
+        "standard_ca_file_readable": true,
+        "standard_ca_file_uid_zero": false,
+        "standard_ca_file_source_owned": false,
+        "standard_ca_file_source_writable": false,
+        "standard_ca_parent_source_writable": false,
+        "raw_certificate_or_private_paths_logged": false
+      },
+      "system_ca_precondition_probe": {
+        "run_id": 42365625862,
+        "controller_sha": "340a3faa36cfd379acf658ff40ff09b9a92ee471",
+        "result": "failure",
+        "tls_negotiation_reached": false,
+        "maintenance_created": false,
+        "snapshot_saved": false
+      },
+      "system_owner_fixture": {
+        "nonzero_system_owner_passed": true,
+        "source_owned_or_writable_or_replaceable_trust_refused": true,
+        "untrusted_ca_refused": true,
+        "wrong_hostname_refused": true,
+        "ionos_positive_unproven": true
       }
     }
   },

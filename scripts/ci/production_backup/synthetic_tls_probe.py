@@ -46,7 +46,22 @@ def run():
         lib=Path(__file__).with_name('lib')
         helper=(lib/'backup_process_safety.php').read_bytes()+b'\n'+(lib/'backup_capture_safety.php').read_bytes().removeprefix(b'<?php')
         php=helper+b'\necho json_encode(["tls"=>orgavela_database_tls_args(),"dump"=>orgavela_dump_client_args(shell_exec("mariadb-dump --no-defaults --help"),false)],JSON_THROW_ON_ERROR);'
-        args=json.loads(docker('exec','-i',name,'php',data=php))
+        # Emulate provider system UID mapping; Source remains a different unprivileged UID.
+        binary=docker('exec',name,'php','-r','echo realpath(PHP_BINARY);').decode()
+        if not binary.startswith('/usr/') or not re.fullmatch(r'/[A-Za-z0-9_./-]+',binary):raise RuntimeError('fixture binary path')
+        ca='/etc/ssl/certs/ca-certificates.crt'
+        docker('exec',name,'chown','12345:12345',binary)
+        docker('exec',name,'chown','23456:23456',ca)
+        def arguments():return json.loads(docker('exec','-i','--user','33:33',name,'php',data=php))
+        args=arguments()
+        for target,operation,restore in ((ca,['chown','33:33',ca],['chown','23456:23456',ca]),(ca,['chmod','666',ca],['chmod','644',ca]),('/etc/ssl/certs',['chmod','777','/etc/ssl/certs'],['chmod','755','/etc/ssl/certs'])):
+            docker('exec',name,*operation)
+            try:
+                try:arguments()
+                except RuntimeError:pass
+                else:raise RuntimeError('unsafe fixture trust location accepted')
+            finally:docker('exec',name,*restore)
+        args=arguments()
         def client(command,*,target=host):
             config=('[client]\nuser=fixture\npassword='+password+'\nhost='+target+'\n').encode()
             return docker('exec','-i',name,'sh','-c','exec 3<&0; exec "$@"','fixture-client',*command,data=config)
@@ -64,7 +79,7 @@ def run():
         client(['mariadb','--defaults-file=/proc/self/fd/3',*args['tls'],'--execute',"CREATE TABLE fixture_only(id INT PRIMARY KEY, marker VARCHAR(20)); INSERT INTO fixture_only VALUES(1,'synthetic-only');",'--','fixture'])
         dump=client([*args['dump'],'--','fixture'])
         if b'CREATE TABLE `fixture_only`' not in dump or b'synthetic-only' not in dump:raise RuntimeError('verified TLS dump incomplete')
-        return {'synthetic_tls_and_dump':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
+        return {'synthetic_tls_and_dump':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
     finally:
         for kind,resource in reversed(made):
             if kind=='container':docker('rm','-f',resource)

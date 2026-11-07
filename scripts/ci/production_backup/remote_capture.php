@@ -168,7 +168,7 @@ try {
     if(!$abortOnly) {
     // Query only local client capabilities; no defaults, connection or secrets.
     $help=$run(['mariadb-dump','--no-defaults','--help'],null,false,3);
-    $dumpArgs=orgavela_dump_client_args($help,$dry);
+    try{$dumpArgs=orgavela_dump_client_args($help,$dry);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}
     $statementLimitSupported=str_contains($help,'--max-statement-time');unset($help);
     $phase('dump_client_validated');
     }
