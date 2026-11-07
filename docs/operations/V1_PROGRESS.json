@@ -144,12 +144,50 @@
       "parent_stack_merged_through_pr": 29,
       "parent_stack_sha": "c991fde47da41f23e003172e89f40d0f9544a86e",
       "archival_pr28_merge": "blocked: GitHub405 locked branch; frozen target unchanged",
-      "main_integration": "separate regular PR candidate; pending checks",
-      "private_controller": "draft PR1; no hosting execution",
-      "recovery_access_verified": false,
-      "ionos_abort_verified": false,
+      "main_integration": {
+        "pr": 66,
+        "sha": "57fd2e6ef17611b8c04c6873a4f067c66eb4456b",
+        "full_parent_ancestry": true,
+        "protected_test_refs_changed": false
+      },
+      "private_controller": {
+        "pr": 1,
+        "sha": "ddc7c631f4b9714f3090095d76898ba4313ba93e",
+        "source_steps_only_hosting_credentials": true,
+        "release_write_permission": false,
+        "writer_role_used": false
+      },
+      "recovery_access_verified": true,
+      "ionos_abort_verified": true,
       "snapshot_created": false,
-      "formal_gates_changed": false
+      "formal_gates_changed": false,
+      "checked_at": "2026-11-07T00:48:51Z",
+      "main_ci": {
+        "foundation": 42319085653,
+        "o03": 42319085654,
+        "truth": 42319085659,
+        "circleci_source_integrity": "success",
+        "all_same_engine_sha": true
+      },
+      "recovery_run": 42319787014,
+      "recovery_scope": "two independent Linux jobs/SSH sessions; own root canary/hardlink removed; no maintenance; no provider-console test",
+      "ionos_preflight_verified": true,
+      "ionos_preflight_run": 42319993924,
+      "php_cli_version": "8.3.36",
+      "controlled_exception_run": 42320128895,
+      "hard_ssh_abort_run": 42320380871,
+      "separate_confirmations": {
+        "watchdog_completed": true,
+        "own_processes_ended": true,
+        "fresh_connection_write_locks": true,
+        "own_maintenance_removed": true,
+        "origin_recovered": true
+      },
+      "live_test_process": "synthetic sleep group on real IONOS; real TAR/dump source capture not executed",
+      "release_published": false,
+      "release_readback_completed": false,
+      "real_restore_completed": false,
+      "next": "separate O03 real encrypted snapshot/release readback/isolated restore acceptance"
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
