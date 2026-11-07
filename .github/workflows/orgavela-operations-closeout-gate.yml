@@ -1,8 +1,10 @@
 name: OrgaVela - O01-O12 evidence and release truth gate
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
+      - scripts/ci/production_backup/**
       - docs/operations/O01_O12_EXIT_GATES.json
       - docs/operations/V1_PROGRESS.json
       - scripts/ci/orgavela-operations-closeout-check.py
@@ -10,6 +12,7 @@ on:
   push:
     branches: [main]
     paths:
+      - scripts/ci/production_backup/**
       - docs/operations/O01_O12_EXIT_GATES.json
       - docs/operations/V1_PROGRESS.json
       - scripts/ci/orgavela-operations-closeout-check.py
