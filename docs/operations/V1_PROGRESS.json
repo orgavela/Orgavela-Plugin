@@ -463,6 +463,23 @@
         "tls_dump_proven": false,
         "snapshot_created": false
       }
+    },
+    "o03_compatible_tls_client_20261107": {
+      "inventory_run": 42421684930,
+      "inventory_controller_sha": "7dd9b67df39eb791d8fa81b0d1cc7dedf4173f9e",
+      "client_version": "10.11.19",
+      "ssl_fp_option": false,
+      "ssl_mode_option": false,
+      "backend": "private_unix_to_required_peer_bound_tls",
+      "status": "implemented_local_tests_pass_integration_and_exact_source_negative_pending",
+      "python_regressions": 48,
+      "container_exact_version_tls_dump": true,
+      "container_both_clients_started_no_tls_refused_before_auth_and_output": true,
+      "source_exact_hash_negative_proven": false,
+      "source_snapshot_created": false,
+      "formal_o03_accepted": false,
+      "server_certificate_verified": false,
+      "report": "docs/operations/O03_TLS_BRIDGE_2026-11-07.md"
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",

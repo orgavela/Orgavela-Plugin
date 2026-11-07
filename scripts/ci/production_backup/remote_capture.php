@@ -30,22 +30,24 @@ $cleanup = static function() use (&$db,&$work,&$maintenance,&$maintenanceHash,&$
     if(!$maintenanceClean)return;
     if ($work && is_dir($work) && !is_link($work)) {
         foreach(array_merge(glob($work.'/child-*.stat'),glob($work.'/child-*.stat.tmp')) as $file)@unlink($file);
-        foreach (['database.sql.gz','wordpress-files.tar.gz','capture-evidence.json','watchdog.php','maintenance-template','ready'] as $file) @unlink($work.'/'.$file);
+        foreach (['database.sql.gz','wordpress-files.tar.gz','capture-evidence.json','watchdog.php','maintenance-template','ready','bridge.php','s'] as $file) @unlink($work.'/'.$file);
         @rmdir($work);
     }
 };
 register_shutdown_function($cleanup);
 $checkTime = static function() use ($started): void { if (microtime(true)-$started > 100) throw new RuntimeException('deadline'); };
-$run = static function(array $args, ?string $config, bool $compress, int $limit=60) use (&$active,$checkTime,$phase,$filesystemOnly,&$entryCount,$cleanup,&$work): string {
+$run = static function(array $args, ?string $config, bool $compress, int $limit=60) use (&$active,$checkTime,$phase,$filesystemOnly,&$entryCount,$cleanup,&$work,&$unverifiedTls,&$host,&$port,&$peerFingerprint): string {
     $runAt=microtime(true);
-    $kind=in_array('/usr/bin/openssl',$args,true)?'database_tls_peer':($args[0]==='mariadb'?'database_tls_probe':($args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump')));
+    $kind=in_array('/usr/bin/openssl',$args,true)?'database_tls_peer':(basename($args[0])==='mariadb'?'database_tls_probe':($args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump')));
     if($kind!=='client_help')$phase($kind.'_started');
+    $bridge=$unverifiedTls && $config!==null;
+    if($bridge){if(!$work)throw new RuntimeException('bridge work absent');$args=[PHP_BINARY,$work.'/bridge.php',base64_encode(json_encode([$host,$port,$peerFingerprint,$work.'/s',$args],JSON_THROW_ON_ERROR))];}
     $spec = [0=>['file','/dev/null','r'], 1=>['pipe','w'], 2=>['pipe','w']];
-    if ($config !== null) $spec[3]=['pipe','r'];
+    if ($config !== null) $spec[$bridge?0:3]=['pipe','r'];
     $pipes=[];
     $p=$work ? orgavela_process_open($args,$spec,$pipes,$work) : proc_open($args,$spec,$pipes); if (!is_resource($p)) throw new RuntimeException('process');
     $active[]=$p;
-    if ($config !== null) { fwrite($pipes[3],$config); fclose($pipes[3]); }
+    if ($config !== null) { $fd=$bridge?0:3;fwrite($pipes[$fd],$config); fclose($pipes[$fd]); }
     $gz = $compress ? deflate_init(ZLIB_ENCODING_GZIP,['level'=>6]) : null;
     if ($compress && !$gz) throw new RuntimeException('gzip');
     stream_set_blocking($pipes[1],false);
@@ -86,6 +88,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
     proc_close($p); if ($state['exitcode']!==0) {
         $kind='dump_process_failed';
         if (preg_match('/(?:Got error: |ERROR )(1045|1049|1142|1205|1213|1227|1969|2002|2003|2013|2026)\b/',$errors,$m)) $kind=match($m[1]){'1045'=>'dump_auth_failed','1049'=>'dump_database_missing','1205','1213'=>'dump_lock_timeout','1969'=>'dump_statement_timeout','2002','2003'=>'dump_connection_failed','2013'=>'dump_connection_lost','2026'=>orgavela_tls_failure_phase($errors),default=>'dump_permission_denied'};
+        elseif (str_contains($errors,'ORGAVELA_TLS_BRIDGE_REFUSED')){$kind='database_tls_bridge_refused';if(preg_match('/ORGAVELA_TLS_BRIDGE_REFUSED=(input|listen|client|accept|connect|greeting|capabilities|tls_required|auth|tls|peer|cipher|auth_deadline|deadline|relay|read|write|internal)\b/',$errors,$m))$kind='database_tls_bridge_'.$m[1];}
         elseif (str_contains($errors,'unknown option')||str_contains($errors,'unknown variable'))$kind='dump_option_unsupported';
         $phase($kind);unset($errors);throw new RuntimeException('process failed');
     }
@@ -170,7 +173,8 @@ try {
     }
     if(!$abortOnly) {
     // Query only local client capabilities; no defaults, connection or secrets.
-    $help=$run(['mariadb-dump','--no-defaults','--help'],null,false,3);
+    if($unverifiedTls){[$clientBinary,$dumpBinary]=orgavela_bridge_profile();$phase('database_client_profile_verified');}
+    $help=$run([$unverifiedTls?$dumpBinary:'mariadb-dump','--no-defaults','--help'],null,false,3);
     $dumpHelp=$help;
     if(!$unverifiedTls){try{$dumpArgs=orgavela_dump_client_args($help,$dry);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}}
     $statementLimitSupported=str_contains($help,'--max-statement-time');unset($help);
@@ -187,7 +191,7 @@ try {
         if(!preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s',$peer,$match)){$phase('database_tls_peer_certificate_missing');throw new RuntimeException('TLS peer missing');}
         $peerFingerprint=strtoupper((string)openssl_x509_fingerprint($match[0],'sha1'));
         unset($peer,$match);$phase('database_tls_peer_fingerprint_read');
-        try{$dumpArgs=orgavela_dump_client_args($dumpHelp,$dry,$peerFingerprint);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}catch(Throwable $e){$phase('dump_option_unsupported');throw $e;}unset($dumpHelp);$phase('dump_client_validated');
+        try{orgavela_database_tls_args($peerFingerprint);$dumpArgs=[$dumpBinary,'--defaults-file=/proc/self/fd/3','--single-transaction','--skip-lock-tables','--max-statement-time='.($dry?'2':'15')];if(!$dry)$dumpArgs=array_merge($dumpArgs,['--quick','--hex-blob','--default-character-set=utf8mb4','--skip-comments']);else $dumpArgs=array_merge($dumpArgs,['--skip-triggers','--no-data']);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}catch(Throwable $e){$phase('dump_option_unsupported');throw $e;}unset($dumpHelp);$phase('dump_client_validated');
         $db=mysqli_init();$db->options(MYSQLI_OPT_CONNECT_TIMEOUT,10);$db->options(MYSQLI_OPT_READ_TIMEOUT,10);$db->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,false);
         $db->ssl_set(null,null,null,null,null);
         if(!@$db->real_connect($host,$config['DB_USER'],$config['DB_PASSWORD'],$config['DB_NAME'],$port,null,MYSQLI_CLIENT_SSL|MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT))throw new RuntimeException('encrypted control session required');
@@ -214,23 +218,47 @@ try {
         if (!$r || (int)$r->fetch_row()[0]!==0) throw new RuntimeException('unsupported database objects');
     }
     $phase('database_validated');
+    $startWork=static function()use(&$work,&$maintenance,&$maintenanceHash,&$content,&$watchSeconds,$home,$root,$abortToken,$dry,$phase):void {if($work)return;
+    $work=$home.'/.orgavela-capture-'.($abortToken??bin2hex(random_bytes(12))); if (!mkdir($work,0700)) throw new RuntimeException('work');
+    $maintenance=$root.'/.maintenance';
+    $content='<?php $upgrading = '.time().'; /* OrgaVela backup '.bin2hex(random_bytes(12)).' */ ?>';
+    $maintenanceHash=hash('sha256',$content);
+    // Independent watchdog uses process start identity to avoid killing a reused PID.
+    $pid=getmypid(); $stat=trim(file_get_contents('/proc/'.$pid.'/stat'));
+    $identity=explode(' ',substr($stat,strrpos($stat,')')+2))[19];
+    if (!ctype_digit($identity)) throw new RuntimeException('process identity');
+    $watchdog=orgavela_capture_watchdog($work,$maintenance,$maintenanceHash,$pid,$identity,$dry?3:($abortToken?15:115),!$dry,$abortToken?$home.'/.orgavela-abort-'.$abortToken.'.watchdog.json':null);
+    file_put_contents($work.'/watchdog.php',$watchdog);
+    $phase('watchdog_starting');$launchAt=microtime(true);
+    exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
+    $watchReady=microtime(true)+2;
+    while (!is_file($work.'/ready') && microtime(true)<$watchReady) usleep(10000);
+    if (!is_file($work.'/ready')) throw new RuntimeException('watchdog unavailable');
+    $phase('watchdog_ready');
+    $watchSeconds=round(microtime(true)-$launchAt,3);
+    };
+    if($unverifiedTls){
+        $startWork();
+        file_put_contents($work.'/bridge.php',orgavela_tls_bridge_source());
+        $dumpArgs=array_merge($dumpArgs,orgavela_bridge_flags($work));
+    }
     $databaseTls=false;
     if(!$abortOnly) {
-        $help=$run(['mariadb','--no-defaults','--help'],null,false,3);
-        if(!str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,$unverifiedTls?'--ssl-fp':'--ssl-ca'))throw new RuntimeException('TLS verification unavailable');
+        $help=$run([$unverifiedTls?$clientBinary:'mariadb','--no-defaults','--help'],null,false,3);
+        if(!$unverifiedTls && (!str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,'--ssl-ca')))throw new RuntimeException('TLS verification unavailable');
         $client="[client]\n";
         foreach(['user'=>$config['DB_USER'],'password'=>$config['DB_PASSWORD'],'host'=>$host,'port'=>(string)$port]as$k=>$v)$client.=$k.'='.orgavela_client_value($v)."\n";
-        $tls=$run(array_merge(['mariadb','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args($peerFingerprint),['--connect-timeout=10','--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--',$config['DB_NAME']]),$client,false,12);
+        $tls=$run(array_merge([$unverifiedTls?$clientBinary:'mariadb','--defaults-file=/proc/self/fd/3'],$unverifiedTls?orgavela_bridge_flags($work):orgavela_database_tls_args($peerFingerprint),['--connect-timeout=10','--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--',$config['DB_NAME']]),$client,false,12);
         if(!preg_match('/^Ssl_cipher\t[A-Za-z0-9_-]+$/D',trim($tls)))throw new RuntimeException('TLS not negotiated');
         unset($tls,$client,$help);$databaseTls=true;$phase('database_tls_verified');
     }
     if($filesystemOnly || $databaseOnly) {
-        $work=$home.'/.orgavela-capture-'.bin2hex(random_bytes(12));if(!mkdir($work,0700))throw new RuntimeException('probe work');
+        if(!$work){$work=$home.'/.orgavela-capture-'.bin2hex(random_bytes(12));if(!mkdir($work,0700))throw new RuntimeException('probe work');
         $self=orgavela_process_current(getmypid());
         file_put_contents($work.'/watchdog.php',orgavela_capture_watchdog($work,$work.'/unused-marker',hash('sha256','probe-no-marker'),getmypid(),$self['start'],90,true));
         exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
         $end=microtime(true)+2;while(!is_file($work.'/ready')&&microtime(true)<$end)usleep(10000);
-        if(!is_file($work.'/ready'))throw new RuntimeException('probe watchdog');
+        if(!is_file($work.'/ready'))throw new RuntimeException('probe watchdog');}
     }
     if($filesystemOnly){
         $db->close();$db=null;$probeAt=microtime(true);
@@ -291,23 +319,7 @@ try {
         $cleanup();unlink($receipt);unlink($completion);
         echo json_encode(['schema'=>'orgavela-hard-disconnect/v1','watchdog_completed'=>true,'ssh_channel_killed'=>true,'own_processes_ended'=>true,'fresh_connection_write_locks'=>true,'maintenance_removed'=>true,'origin_recovered'=>true,'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
     }
-    $work=$home.'/.orgavela-capture-'.($abortToken??bin2hex(random_bytes(12))); if (!mkdir($work,0700)) throw new RuntimeException('work');
-    $maintenance=$root.'/.maintenance';
-    $content='<?php $upgrading = '.time().'; /* OrgaVela backup '.bin2hex(random_bytes(12)).' */ ?>';
-    $maintenanceHash=hash('sha256',$content);
-    // Independent watchdog uses process start identity to avoid killing a reused PID.
-    $pid=getmypid(); $stat=trim(file_get_contents('/proc/'.$pid.'/stat'));
-    $identity=explode(' ',substr($stat,strrpos($stat,')')+2))[19];
-    if (!ctype_digit($identity)) throw new RuntimeException('process identity');
-    $watchdog=orgavela_capture_watchdog($work,$maintenance,$maintenanceHash,$pid,$identity,$dry?3:($abortToken?15:115),!$dry,$abortToken?$home.'/.orgavela-abort-'.$abortToken.'.watchdog.json':null);
-    file_put_contents($work.'/watchdog.php',$watchdog);
-    $phase('watchdog_starting');$launchAt=microtime(true);
-    exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
-    $watchReady=microtime(true)+2;
-    while (!is_file($work.'/ready') && microtime(true)<$watchReady) usleep(10000);
-    if (!is_file($work.'/ready')) throw new RuntimeException('watchdog unavailable');
-    $phase('watchdog_ready');
-    $watchSeconds=round(microtime(true)-$launchAt,3);
+    $startWork();
     if ($dry) {
         if (!orgavela_lock_capture_tables($db,$tables)) throw new RuntimeException('bounded table probe');
         $phase('tables_locked');

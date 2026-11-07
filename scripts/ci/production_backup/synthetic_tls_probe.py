@@ -101,9 +101,14 @@ def run():
                "file_put_contents('/tmp/o03-tls-source/wp/wp-config.php',"+"base64_decode('"+base64.b64encode(("<?php define('DB_NAME','fixture');define('DB_USER','fixture');define('DB_PASSWORD',"+repr(password)+");define('DB_HOST',"+repr(host)+");$table_prefix='fixture_';").encode()).decode()+"')"+");"
                "foreach(['index.php','wp-load.php']as$f)file_put_contents('/tmp/o03-tls-source/wp/'.$f,'<?php // inert');")
         docker('exec','-i','--user','33:33',name,'php',data=setup.encode())
-        program=build_remote_candidate('/tmp/o03-tls-source/wp','fixture').replace(b'ENTRYPOINT_ENABLED = false;',b'ENTRYPOINT_ENABLED = true;',1)
+        profile_hashes=docker('exec',name,'sha256sum','/usr/bin/mariadb','/usr/bin/mariadb-dump').decode().splitlines()
+        program=build_remote_candidate('/tmp/o03-tls-source/wp','fixture')
+        for source,line in zip(('e375617e0bad12f0880e85a4f1125a68480bd7b9b4160d86e48d0ef4210c5a76','a61d09007f25c5df6bcbdf02ff34fe13bcd86426cff4bb40efc5d216cbd74dea'),profile_hashes):program=program.replace(source.encode(),line.split()[0].encode())
+        program=program.replace(b'ENTRYPOINT_ENABLED = false;',b'ENTRYPOINT_ENABLED = true;',1)
         program=program.replace(b'<?php',b"<?php\nconst ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL = '"+APPROVAL.encode()+b"';",1)
         class Binding:
+            root='/tmp/o03-tls-source/wp'
+            user='fixture'
             def argv(self):return [shutil.which('docker'),'--host=unix:///var/run/docker.sock','exec','-i','--user','33:33',name,'php']
         with patch.object(transport,'live_program',return_value=program),patch.dict('os.environ',{'ORGAVELA_DATABASE_TLS_MODE':MODE}):
             phases=[]
@@ -132,7 +137,49 @@ def run():
         client(['mariadb','--defaults-file=/proc/self/fd/3',*args['tls'],'--execute',"INSERT INTO fixture_only VALUES(1,'marker','synthetic-only');",'--','fixture'])
         dump=client([*args['dump'],'--','fixture'])
         if b'CREATE TABLE `fixture_only`' not in dump or b'synthetic-only' not in dump:raise RuntimeError('verified TLS dump incomplete')
-        return {'synthetic_tls_and_dump':True,'approved_unverified_tls_and_actual_dump':True,'assembled_unverified_evidence_false':True,'unverified_plaintext_client_and_dump_refused':True,'unverified_wrong_peer_refused':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
+        dependencies=docker('run','--rm','--network','none','--entrypoint','sh',DB_IMAGE,'-c','ldd /usr/bin/mariadb; ldd /usr/bin/mariadb-dump').decode()
+        shared=sorted(set(re.findall(r'/(?:lib|usr/lib|lib64)/[A-Za-z0-9_./+-]+',dependencies)))
+        if not shared or '/lib64/ld-linux-x86-64.so.2' not in shared:raise RuntimeError('legacy loader profile')
+        legacy=docker('run','--rm','--network','none','--entrypoint','tar',DB_IMAGE,'-chf','-','/usr/bin/mariadb','/usr/bin/mariadb-dump',*shared)
+        docker('exec',name,'mkdir','-m','755','/tmp/legacy-client')
+        docker('exec','-i',name,'tar','-xf','-','-C','/tmp/legacy-client',data=legacy)
+        # Fixture image uses musl. Run the exact-version glibc binaries with their
+        # pinned loader/dependencies in an isolated prefix; never install on Source.
+        for binary in ('mariadb','mariadb-dump'):
+            script=('#!/bin/sh\nexec /tmp/legacy-client/lib64/ld-linux-x86-64.so.2 --library-path /tmp/legacy-client/lib/x86_64-linux-gnu:/tmp/legacy-client/usr/lib/x86_64-linux-gnu /tmp/legacy-client/usr/bin/'+binary+' "$@"\n').encode()
+            docker('exec','-i',name,'sh','-c','cat > /usr/bin/'+binary,data=script)
+            docker('exec',name,'chmod','755','/usr/bin/'+binary)
+        legacy_version=docker('exec',name,'mariadb-dump','--no-defaults','--version').decode()
+        if '10.11.19-MariaDB' not in legacy_version:raise RuntimeError('exact legacy version mismatch')
+        legacy_hashes=docker('exec',name,'sha256sum','/usr/bin/mariadb','/usr/bin/mariadb-dump').decode().splitlines()
+        legacy_program=program
+        for before,after in zip(profile_hashes,legacy_hashes):legacy_program=legacy_program.replace(before.split()[0].encode(),after.split()[0].encode())
+        with patch.object(transport,'live_program',return_value=legacy_program),patch.dict('os.environ',{'ORGAVELA_DATABASE_TLS_MODE':MODE}):
+            phases=[]
+            try:legacy_receipt=transport.resource_probe(Binding(),'database',password='fixture',maintenance_approved=True,phase_callback=phases.append)
+            except ValueError:raise RuntimeError('legacy bridge resource refused: '+str(phases)) from None
+        if legacy_receipt['server_certificate_verified'] is not False:raise RuntimeError('legacy bridge certificate claim')
+        import tempfile
+        negative=transport.client_tls_negative_program(Binding())
+        for source,line in zip(('e375617e0bad12f0880e85a4f1125a68480bd7b9b4160d86e48d0ef4210c5a76','a61d09007f25c5df6bcbdf02ff34fe13bcd86426cff4bb40efc5d216cbd74dea'),legacy_hashes):negative=negative.replace(source.encode(),line.split()[0].encode())
+        with tempfile.TemporaryDirectory() as directory:
+            result=Path(directory)/'negative.json'
+            transport.receive(Binding().argv(),negative,result,env={'PATH':'/usr/bin:/bin','LC_ALL':'C','SSHPASS':'fixture'},timeout=55,max_bytes=4096)
+            proof=json.loads(result.read_bytes())
+        if proof['own_processes_cleaned'] is not True or proof['source_database_accessed'] is not False:raise RuntimeError('negative cleanup')
+        for row,line in zip(proof['results'],legacy_hashes):
+            if row['sha256']!=line.split()[0] or row['client_started'] is not True or row['remote_authentication_bytes']!=0 or row['forwarded_output_bytes']!=0 or row['plaintext_refused'] is not True:raise RuntimeError('legacy plaintext data leak')
+        bridge_library=(lib/'backup_tls_bridge.php').read_bytes()
+        docker('exec','-i','--user','33:33',name,'php',data=bridge_library+b"\nfile_put_contents('/tmp/o03-tls-source/bridge-peer.php',orgavela_tls_bridge_source());")
+        for binary in ('mariadb','mariadb-dump'):
+            command=['/usr/bin/'+binary,'--defaults-file=/proc/self/fd/3','--host=localhost','--protocol=socket','--socket=/tmp/o03-tls-source/ps','--skip-ssl']
+            command+=['--batch','--execute','SELECT 1'] if binary=='mariadb' else ['--single-transaction','--skip-lock-tables']
+            command+=['--','fixture']
+            encoded=base64.b64encode(json.dumps([host,3306,'0'*40,'/tmp/o03-tls-source/ps',command]).encode()).decode()
+            cfg=('[client]\nuser=fixture\npassword='+password+'\nhost='+host+'\n').encode()
+            rejected=json.loads(docker('exec','-i','--user','33:33',name,'sh','-c','exec 4>&1; php "$@"; status=$?; test "$status" -ne 0','fixture','/tmp/o03-tls-source/bridge-peer.php',encoded,'audit-plaintext-refusal',data=cfg))
+            if rejected['client_started'] is not True or rejected['authentication_forwarded'] is not False or rejected['tls_established'] is not False or rejected['failure'] not in ('tls','peer'):raise RuntimeError('bridge peer mismatch accepted')
+        return {'legacy_10_11_19_both_clients_started_plaintext_refused_before_auth_or_output':True,'legacy_bridge_wrong_peer_before_auth_refused':True,'legacy_10_11_19_bridge_actual_dump':True,'synthetic_tls_and_dump':True,'approved_unverified_tls_and_actual_dump':True,'assembled_unverified_evidence_false':True,'unverified_plaintext_client_and_dump_refused':True,'unverified_wrong_peer_refused':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
     finally:
         for kind,resource in reversed(made):
             if kind=='container':docker('rm','-f',resource)

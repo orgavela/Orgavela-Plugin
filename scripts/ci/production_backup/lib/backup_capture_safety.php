@@ -265,5 +265,5 @@ function orgavela_capture_watchdog(string $work,string $maintenance,string $hash
     }
     foreach(glob($w."/child-*.stat.tmp") as $f)unlink($f);
     foreach(glob($w."/child-*.stat") as $f)unlink($f);
-    foreach(["database.sql.gz","wordpress-files.tar.gz","capture-evidence.json","watchdog.php","maintenance-template","ready"] as $f)@unlink($w."/".$f); @rmdir($w);';
+    foreach(["database.sql.gz","wordpress-files.tar.gz","capture-evidence.json","watchdog.php","maintenance-template","ready","bridge.php","s"] as $f)@unlink($w."/".$f); @rmdir($w);';
 }

@@ -137,6 +137,7 @@ def build_remote_candidate(root,user):
     return b'\n'.join([(folder/'lib/backup_wp_config.php').read_bytes().replace(b'<?php',b'<?php\n'+prefix.encode(),1),
         process_helpers.removeprefix(b'<?php'),
         (folder/'lib/backup_capture_safety.php').read_bytes().removeprefix(b'<?php'),
+        (folder/'lib/backup_tls_bridge.php').read_bytes().removeprefix(b'<?php'),
         (folder/'remote_capture.php').read_bytes().removeprefix(b'<?php')])
 
 def main():
