@@ -45,7 +45,7 @@ class CollectorTests(unittest.TestCase):
             lambda e:e['components']['database'].update(sha256='0'*64),
             lambda e:e['scope'].update(database=1),lambda e:e.update(private='untrusted'),
             lambda e:e['quiescence'].update(maintenance_seconds=float('nan'))]
-        for flag in ('wordpress_maintenance','all_table_read_locks','stable_file_hashes',
+        for flag in ('wordpress_maintenance','all_table_read_locks','stable_file_hashes','archive_matches_inventory',
                      'maintenance_removed','maintenance_origin_verified','source_origin_recovered'):
             mutations.append(lambda e,flag=flag:e['quiescence'].update({flag:False}))
         for mutate in mutations:

@@ -2,8 +2,12 @@
 # Does not request secrets, contexts, artifacts, caches, deployment or real site access.
 name: PGP05 offline-only regression
 on:
+  workflow_dispatch:
   push:
     branches:
+      - main
+      - fix/o03-registration-abort
+      - feat/o03-bounded-capture-restore-20261106
       - fix/pgp05-backup-repo-pin-20261104
       - feat/pgp05-dreamloud-collector-port-20261023
     paths:
@@ -11,15 +15,19 @@ on:
       - '.github/workflows/pgp05-offline-regression.yml'
   pull_request:
     branches:
+      - feat/o03-bounded-capture-restore-20261106
       - feat/pgp05-dreamloud-collector-port-20261023
+      - fix/pgp05-backup-repo-pin-20261104
     paths:
       - 'scripts/ci/production_backup/**'
       - '.github/workflows/pgp05-offline-regression.yml'
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
 permissions:
   contents: read
 jobs:
   isolated-fixtures:
-    if: github.repository == 'orgavela/Orgavela-Plugin' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'orgavela/Orgavela-Plugin')
+    if: github.repository == 'orgavela/Orgavela-Plugin' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'orgavela/Orgavela-Plugin')
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
@@ -58,6 +66,10 @@ jobs:
           set -euo pipefail
           find scripts/ci/production_backup -name '*.php' -print0 | xargs -0 -n1 php -l
           php scripts/ci/production_backup/test_capture_helpers.php
-          python3 -m unittest discover -s scripts/ci/production_backup -p test_collector_port.py -v
+          /tmp/orgavela-pgp05-fixtures/bin/python -m unittest discover -s scripts/ci/production_backup -p "test_*.py" -v
           python3 scripts/ci/production_backup/offline_integration.py --synthetic-only
           /tmp/orgavela-pgp05-fixtures/bin/python scripts/ci/production_backup/temporary_key_roundtrip.py
+      - name: Synthetic abort groups, registrations, database locks and HTTP recovery
+        run: python3 scripts/ci/production_backup/synthetic_abort_rehearsal.py
+      - name: Assembled abort-only PHP protocol with disposable tables and simulated origin
+        run: python3 scripts/ci/production_backup/synthetic_abort_protocol.py
