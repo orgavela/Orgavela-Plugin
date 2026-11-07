@@ -2,8 +2,8 @@
 
 # W0/O03 / GH-03 – Entscheidung zur produktiven Backup-Verschlüsselung und Recovery
 
-**Status:** GH-03-Architekturentscheidung getroffen; **Owner-Key und Recovery-Abnahme ausstehend**  
-**Datum:** 17.10.2026 · **Entscheidung:** `age` für **neue produktive** OrgaVela-Offsite-Backups  
+**Status:** GH-03-Architekturentscheidung getroffen; **Owner-Key und Recovery-Abnahme ausstehend**
+**Datum:** 17.10.2026 · **Entscheidung:** `age` für **neue produktive** OrgaVela-Offsite-Backups
 **Bezug:** [einziger V1-Masterplan](V1_ACCEPTANCE_PLAN.md) · [fortgeschriebener GH-03-Operator-Guide](W0_O03_GH03_OWNER_OFFLINE_KEY_RUNBOOK.md) · [GH-04-GitHub-Runbook](W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md)
 
 ## 1. Kontext und entschiedene Architektur

@@ -2,8 +2,8 @@
 
 # GH-03 – age-Schlüssel ausschließlich beim OrgaVela-Betreiber erzeugen und Recovery aus zweiter Offline-Kopie prüfen
 
-**Datum:** 17.10.2026 · **Status:** Anleitung vorbereitet, **auf Betreibergerät nicht ausgeführt**, GH-03 nicht abgenommen.  
-**Verbindliches Format:** [GH-03 Verschlüsselungs-ADR](W0_O03_GH03_ENCRYPTION_RECOVERY_ADR.md): **age** für künftige echte Backups, künstliches GH-04-OpenPGP bleibt nur Testnachweis.  
+**Datum:** 17.10.2026 · **Status:** Anleitung vorbereitet, **auf Betreibergerät nicht ausgeführt**, GH-03 nicht abgenommen.
+**Verbindliches Format:** [GH-03 Verschlüsselungs-ADR](W0_O03_GH03_ENCRYPTION_RECOVERY_ADR.md): **age** für künftige echte Backups, künstliches GH-04-OpenPGP bleibt nur Testnachweis.
 **Sicherheitsgrenze:** Der **PRIVATE** Schlüssel wird **nie** von ChatGPT, GitHub, CircleCI, IONOS, E-Mail, Cloud-Sync oder einem Backup-Producer gesehen. **Keinen privaten Schlüssel, keinen Screenshot und keine Schlüsseldatei in den Chat schicken.**
 
 ## 1. Vorbedingungen und Medien

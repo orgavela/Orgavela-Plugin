@@ -362,6 +362,3 @@ try {
             'snapshot_created'=>false],JSON_THROW_ON_ERROR)."\n";exit(0);
     } catch(Throwable $failure) { fwrite(STDERR,"Controlled abort recovery unverified\n");exit(1); }
 } catch (Throwable $e) { $cleanup(); fwrite(STDERR,"Quiesced capture failed; details suppressed\n"); exit(1); }
-
-
-

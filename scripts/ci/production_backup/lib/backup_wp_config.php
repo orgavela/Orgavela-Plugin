@@ -51,4 +51,3 @@ function orgavela_parse_config(string $code): array {
     $values['table_prefix'] = $prefix;
     return $values;
 }
-
