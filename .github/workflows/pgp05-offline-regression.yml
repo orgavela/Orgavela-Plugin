@@ -15,6 +15,7 @@ on:
       - '.github/workflows/pgp05-offline-regression.yml'
   pull_request:
     branches:
+      - main
       - feat/o03-bounded-capture-restore-20261106
       - feat/pgp05-dreamloud-collector-port-20261023
       - fix/pgp05-backup-repo-pin-20261104
