@@ -1,5 +1,8 @@
 # UOP Core / OrgaVela – aktueller V1-Fortschrittsbericht
 
+**Aktueller O03-Betriebsbeleg 07.11.2026:** Engine57fd2e6 regulär über PR66 in main, eigene Main-CI vollständig grün. Privater Source-only-Controllerddc7c63; echter unabhängiger Recoveryzugriff, IONOS-Preflight ohne Wartung sowie getrennte Exception- und harte SSH-Abbruchprobe erfolgreich. Eigene Prozesse beendet, frische WRITE-Locks, eigener Marker entfernt und Origin wieder erreichbar jeweils separat geprüft. Details/Runlinks im [Arbeitslog](../operations/ASSISTANT_WORK_LOG.md), maschinenlesbar [V1_PROGRESS.json](../operations/V1_PROGRESS.json). Kein echter Snapshot/Release-Rückdownload/Restore; O03 bleibt partial, V1 bleibt offen.62/71 historisch implementiert,M0–M7 0/8,P4 0/4,R0/18; alpha.2 letzter Plugin-Liveversionsbeleg. PR62 bleibt Draft, PR64/65 regulär integriert. Nächster Block: separate echte Backup-/Restoreabnahme.
+
+
 **Stand:** 12.10.2026, initiale V1-Baseline nach Liveprüfung. **V1-Status: NICHT ABGENOMMEN.**  
 **Normativer Masterplan:** [V1_ACCEPTANCE_PLAN.md](../operations/V1_ACCEPTANCE_PLAN.md) · **Verbindliche Fortschrittsdaten:** [V1_PROGRESS.json](../operations/V1_PROGRESS.json) · **Zentrales Abnahme-Issue:** [#15](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/15) · **Ergänzende Roadmap:** [V1_MASTER_PLAN.md](V1_MASTER_PLAN.md) · **Abnahmematrix:** [V1_ACCEPTANCE_MATRIX.md](V1_ACCEPTANCE_MATRIX.md) · **Arbeitsjournal:** [ASSISTANT_WORK_LOG.md](../operations/ASSISTANT_WORK_LOG.md).
 

@@ -179,3 +179,19 @@ Die private Backup-Repo-Inventur ergab nur drei historische synthetische GitHub-
 ### O03-Integration 07.11.2026 – nach Work7041789
 
 PR65/64/36/33/31/30/29 regulär zusammengeführt bis c991fde, kein Hostingzugriff. Historischer PR28-Zielref ist eingefroren (GitHub405); bleibt unverändert. Eigener regulärer Main-Integrations-PR enthält die vollständige Parent-Historie und bewahrt die aktuelle App-CI sowie aktuelle Status-/Ops-Belege. Der neue Main-Stand benötigt eigene Pflicht-CI; erst danach darf der private Source-only-Controller an ihn gebunden werden. Recoveryjob ist vorbereitet, sein praktischer Zugriff und die getrennten IONOS-Preflight-/Exception-/Hard-Disconnect-Proben bleiben vorerst offen. Details im append-only Arbeitslog. Kein Snapshot, Release oder Restore; V1 unverändert offen,62/71 historisch,M0–M7 0/8,P4 0/4,R0/18,alpha.2 letzter Livebeleg. PR62 unberührt.
+
+
+### W0/O03-ABORT-IONOS-20261107 – isolierter technischer Livebeleg
+
+Engine57fd2e6 / Controllerddc7c63,07.11.2026UTC. Keine formale R-/V1-Gateabnahme.
+
+| Teilprüfung | Tatsächlicher Beleg | Ergebnis/Prüfgrenze |
+| --- | --- | --- |
+| Reguläre Integration und exakte CI | PR66; Main-Runs42319085653/42319085654/42319085659 + echter CircleCI | PASS, vollständige Parent-Ancestry, eingefrorene Testrefs unverändert |
+| Unabhängiger Recoveryzugriff | privater Run42319787014, separate Linuxjobs/SSH-Sitzungen | PASS,eigene Canary/Hardlinks entfernt; keine Provider-Konsole behauptet |
+| IONOS-Preflight ohne Wartung | Run42319993924 | PASS,CLI8.3.36,POSIX/setsid/proc/nohup/Hardlink,Schema/Locks; kein .maintenance/Snapshot |
+| Kontrollierte Exception | Run42320128895,job128242551763 | PASS,eigene Prozesse/WRITE-Locks/Marker/Origin einzeln bestätigt |
+| Harter SSH-Kanalabbruch | Run42320380871,job128243378650 | PASS,Remote-ARM,eigene sleep-Gruppe,Abbruch,neue Beobachtersitzung,Watchdogquittung/Prozessscan/Locks/Marker/Origin |
+| Echter Snapshot/Release/Rückdownload/Restore | nicht Teil dieser isolierten Probe | OFFEN,separater O03-Abnahmeblock |
+
+Alle drei Wartungs-/Preflightquittungen snapshot_created=false; keine Dump-/Archiv-/Verschlüsselungs-/Publisherfortsetzung. Fremdprozess-/Fremdmarkergrenze und tatsächliche TAR/Dump-Nachkommen wurden in13 synthetischen Fällen geprüft, nicht als zusätzliche Fremdmarker auf der Website injiziert. Aktuelle Pluginversion nicht neu abgefragt; alpha.2 bleibt letzter entsprechender Livebeleg. V1-Zähler62/71 historisch,M0–M7 0/8,P4 0/4,R0/18 unverändert. Detaillierte sanitiserte Protokolle/Verantwortung im append-only Arbeitslog, operative Rohdaten verbleiben privat.
