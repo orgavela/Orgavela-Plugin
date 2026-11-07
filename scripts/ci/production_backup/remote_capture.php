@@ -83,7 +83,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
     if ($compress) $output.=deflate_add($gz,'',ZLIB_FINISH);
     proc_close($p); if ($state['exitcode']!==0) {
         $kind='dump_process_failed';
-        if (preg_match('/(?:Got error: |ERROR )(1045|1049|1142|1205|1213|1227|1969|2002|2003|2013|2026)\b/',$errors,$m)) $kind=match($m[1]){'1045'=>'dump_auth_failed','1049'=>'dump_database_missing','1205','1213'=>'dump_lock_timeout','1969'=>'dump_statement_timeout','2002','2003'=>'dump_connection_failed','2013'=>'dump_connection_lost','2026'=>'dump_tls_error',default=>'dump_permission_denied'};
+        if (preg_match('/(?:Got error: |ERROR )(1045|1049|1142|1205|1213|1227|1969|2002|2003|2013|2026)\b/',$errors,$m)) $kind=match($m[1]){'1045'=>'dump_auth_failed','1049'=>'dump_database_missing','1205','1213'=>'dump_lock_timeout','1969'=>'dump_statement_timeout','2002','2003'=>'dump_connection_failed','2013'=>'dump_connection_lost','2026'=>orgavela_tls_failure_phase($errors),default=>'dump_permission_denied'};
         elseif (str_contains($errors,'unknown option')||str_contains($errors,'unknown variable'))$kind='dump_option_unsupported';
         $phase($kind);unset($errors);throw new RuntimeException('process failed');
     }

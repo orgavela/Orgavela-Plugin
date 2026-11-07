@@ -9,6 +9,16 @@ final class OrgaVelaInventoryRejection extends RuntimeException {
     }
     public function privateRelativeFile(): ?string { return $this->privateRelativeFile; }
 }
+/** Fixed categories only: never expose client stderr, hosts, users or credentials. */
+function orgavela_tls_failure_phase(string $privateError): string {
+    $message=strtolower(substr($privateError,0,16384));
+    if(str_contains($message,'server does not support') || str_contains($message,'ssl is disabled') || str_contains($message,'tls is disabled'))return 'dump_tls_unavailable';
+    if(str_contains($message,'hostname') || str_contains($message,'host name') || str_contains($message,'name mismatch'))return 'dump_tls_hostname_mismatch';
+    if(str_contains($message,'expired') || str_contains($message,'not yet valid'))return 'dump_tls_certificate_dates';
+    if(str_contains($message,'certificate') && (str_contains($message,'verification') || str_contains($message,'verify') || str_contains($message,'not trusted') || str_contains($message,'issuer') || str_contains($message,'self-signed')))return 'dump_tls_certificate_untrusted';
+    return 'dump_tls_error';
+}
+
 /** One source of truth: the same exact omission for probe and production TAR. */
 function orgavela_capture_tar_args(string $root): array {
     return ['tar','--create','--format=ustar','--gzip','--file','-',
