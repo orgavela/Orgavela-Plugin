@@ -252,7 +252,7 @@ def abort_preflight(binding, *, password, maintenance_approved=False):
     return evidence
 
 
-SAFE_PHASES={'database_tls_peer_fingerprint_invalid','dump_tls_peer_option_unsupported','database_tls_peer_reader_unavailable','database_tls_peer_extension_unavailable','database_tls_peer_read_failed','database_tls_peer_read_complete','database_tls_peer_certificate_missing','database_tls_peer_fingerprint_read','database_tls_exception_refused','database_tls_peer_unbound','database_tls_peer_started','database_control_tls_verified','source_validating','source_root_rejected','source_core_files_rejected','source_uploads_rejected','source_disk_space_rejected','source_maintenance_rejected','source_inventory_rejected','inventory_invalid_name','inventory_entry_limit','inventory_symlink','inventory_total_size','inventory_unreadable_file','inventory_unsupported_entry','inventory_ustar_path','scope_validated','dump_client_validated','database_validated','database_tls_probe_started','database_tls_verified','database_dump_started','filesystem_tar_started','database_dump_deadline','database_dump_stream_deadline','database_dump_no_output_deadline','filesystem_tar_deadline','dump_process_failed','dump_auth_failed','dump_database_missing','dump_lock_timeout','dump_statement_timeout','dump_connection_failed','dump_connection_lost','system_trust_runtime_unverified','system_trust_store_unavailable','system_trust_store_owner_mismatch','system_trust_store_writable','system_trust_ancestor_unsafe','dump_tls_error','dump_tls_unavailable','dump_tls_hostname_mismatch','dump_tls_certificate_dates','dump_tls_certificate_untrusted','dump_permission_denied','dump_option_unsupported','watchdog_starting','watchdog_ready','maintenance_active','maintenance_origin_verified','tables_locked','dump_complete','files_complete','archive_inventory_verified','files_verified','maintenance_removed','origin_recovered','stream_complete'}
+SAFE_PHASES={'database_tls_bridge_input','database_tls_bridge_listen','database_tls_bridge_client','database_tls_bridge_accept','database_tls_bridge_connect','database_tls_bridge_greeting','database_tls_bridge_capabilities','database_tls_bridge_tls_required','database_tls_bridge_auth','database_tls_bridge_tls','database_tls_bridge_peer','database_tls_bridge_cipher','database_tls_bridge_auth_deadline','database_tls_bridge_deadline','database_tls_bridge_relay','database_tls_bridge_read','database_tls_bridge_write','database_tls_bridge_internal','database_client_profile_verified','database_tls_bridge_refused','database_tls_peer_fingerprint_invalid','dump_tls_peer_option_unsupported','database_tls_peer_reader_unavailable','database_tls_peer_extension_unavailable','database_tls_peer_read_failed','database_tls_peer_read_complete','database_tls_peer_certificate_missing','database_tls_peer_fingerprint_read','database_tls_exception_refused','database_tls_peer_unbound','database_tls_peer_started','database_control_tls_verified','source_validating','source_root_rejected','source_core_files_rejected','source_uploads_rejected','source_disk_space_rejected','source_maintenance_rejected','source_inventory_rejected','inventory_invalid_name','inventory_entry_limit','inventory_symlink','inventory_total_size','inventory_unreadable_file','inventory_unsupported_entry','inventory_ustar_path','scope_validated','dump_client_validated','database_validated','database_tls_probe_started','database_tls_verified','database_dump_started','filesystem_tar_started','database_dump_deadline','database_dump_stream_deadline','database_dump_no_output_deadline','filesystem_tar_deadline','dump_process_failed','dump_auth_failed','dump_database_missing','dump_lock_timeout','dump_statement_timeout','dump_connection_failed','dump_connection_lost','system_trust_runtime_unverified','system_trust_store_unavailable','system_trust_store_owner_mismatch','system_trust_store_writable','system_trust_ancestor_unsafe','dump_tls_error','dump_tls_unavailable','dump_tls_hostname_mismatch','dump_tls_certificate_dates','dump_tls_certificate_untrusted','dump_permission_denied','dump_option_unsupported','watchdog_starting','watchdog_ready','maintenance_active','maintenance_origin_verified','tables_locked','dump_complete','files_complete','archive_inventory_verified','files_verified','maintenance_removed','origin_recovered','stream_complete'}
 
 
 def resource_probe(binding, kind, *, password, maintenance_approved=False,phase_callback=None):
@@ -275,3 +275,29 @@ def resource_probe(binding, kind, *, password, maintenance_approved=False,phase_
     if type(evidence['compressed_bytes']) is not int or not 0<evidence['compressed_bytes']<=100663296 or type(evidence['seconds']) not in (int,float) or not 0<evidence['seconds']<=(25 if kind=='database' else 60):raise ProbeError('resource limits exceeded')
     if kind=='filesystem' and (type(evidence['filesystem_entries']) is not int or not 0<evidence['filesystem_entries']<=50000):raise ProbeError('filesystem scope')
     return evidence
+
+
+def client_tls_negative_program(binding):
+    """Separate disabled-by-default entrypoint; never append the capture entrypoint."""
+    folder=Path(__file__).parent
+    candidate=build_remote_candidate(binding.root,binding.user)
+    tail=(folder/'remote_capture.php').read_bytes().removeprefix(b'<?php')
+    if not candidate.endswith(tail):raise ProbeError('negative entrypoint assembly')
+    program=candidate[:-len(tail)]+(folder/'remote_tls_negative.php').read_bytes().removeprefix(b'<?php')
+    program=program.replace(b'<?php',b'<?php\nconst ORGAVELA_TLS_NEGATIVE_ONLY = true;',1)
+    return program
+
+
+def client_tls_negative(binding, *, password):
+    import json
+    program=client_tls_negative_program(binding)
+    with tempfile.TemporaryDirectory(prefix='orgavela-tls-negative-') as directory:
+        output=Path(directory)/'receipt.json'
+        receive(binding.argv(),program,output,env={'PATH':'/usr/bin:/bin','LC_ALL':'C','SSHPASS':password},timeout=55,max_bytes=4096)
+        receipt=json.loads(output.read_bytes())
+    expected={'schema':'orgavela-exact-client-tls-negative/v1','database_login':False,'maintenance_created':False,'source_database_accessed':False,'snapshot_created':False,'own_processes_cleaned':True,'synthetic_loopback_only':True}
+    if set(receipt)!=set(expected)|{'results'} or any(receipt.get(k)!=v or type(receipt[k]) is not type(v) for k,v in expected.items()) or len(receipt['results'])!=2:raise ProbeError('negative receipt')
+    for row,path,sha in zip(receipt['results'],('/usr/bin/mariadb','/usr/bin/mariadb-dump'),('e375617e0bad12f0880e85a4f1125a68480bd7b9b4160d86e48d0ef4210c5a76','a61d09007f25c5df6bcbdf02ff34fe13bcd86426cff4bb40efc5d216cbd74dea')):
+        if any(type(row.get(k)) is not bool for k in ('client_started','plaintext_refused')) or any(type(row.get(k)) is not int for k in ('remote_authentication_bytes','forwarded_output_bytes')):raise ProbeError('negative receipt types')
+        if row!={'kind':'dump' if path.endswith('-dump') else 'client','path':path,'sha256':sha,'version':'10.11.19','client_started':True,'plaintext_refused':True,'remote_authentication_bytes':0,'forwarded_output_bytes':0}:raise ProbeError('exact client negative identity')
+    return receipt
