@@ -1,0 +1,6 @@
+# Disposable synthetic recovery test only; never install into WordPress.
+PGPy==0.6.0
+cryptography==50.0.2
+cffi==2.1.1
+pyasn1==0.6.4
+pycparser==3.12
