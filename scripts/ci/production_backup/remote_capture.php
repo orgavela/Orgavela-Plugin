@@ -187,7 +187,7 @@ try {
         if(!preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s',$peer,$match)){$phase('database_tls_peer_certificate_missing');throw new RuntimeException('TLS peer missing');}
         $peerFingerprint=strtoupper((string)openssl_x509_fingerprint($match[0],'sha1'));
         unset($peer,$match);$phase('database_tls_peer_fingerprint_read');
-        $dumpArgs=orgavela_dump_client_args($dumpHelp,$dry,$peerFingerprint);unset($dumpHelp);$phase('dump_client_validated');
+        try{$dumpArgs=orgavela_dump_client_args($dumpHelp,$dry,$peerFingerprint);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}catch(Throwable $e){$phase('dump_option_unsupported');throw $e;}unset($dumpHelp);$phase('dump_client_validated');
         $db=mysqli_init();$db->options(MYSQLI_OPT_CONNECT_TIMEOUT,10);$db->options(MYSQLI_OPT_READ_TIMEOUT,10);$db->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,false);
         $db->ssl_set(null,null,null,null,null);
         if(!@$db->real_connect($host,$config['DB_USER'],$config['DB_PASSWORD'],$config['DB_NAME'],$port,null,MYSQLI_CLIENT_SSL|MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT))throw new RuntimeException('encrypted control session required');
