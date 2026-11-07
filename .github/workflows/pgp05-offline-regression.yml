@@ -2,8 +2,10 @@
 # Does not request secrets, contexts, artifacts, caches, deployment or real site access.
 name: PGP05 offline-only regression
 on:
+  workflow_dispatch:
   push:
     branches:
+      - main
       - fix/o03-registration-abort
       - feat/o03-bounded-capture-restore-20261106
       - fix/pgp05-backup-repo-pin-20261104
@@ -25,7 +27,7 @@ permissions:
   contents: read
 jobs:
   isolated-fixtures:
-    if: github.repository == 'orgavela/Orgavela-Plugin' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'orgavela/Orgavela-Plugin')
+    if: github.repository == 'orgavela/Orgavela-Plugin' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'orgavela/Orgavela-Plugin')
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
