@@ -1,0 +1,75 @@
+# W0/O03 PGP-05: strictly synthetic-only validation; public standard runner.
+# Does not request secrets, contexts, artifacts, caches, deployment or real site access.
+name: PGP05 offline-only regression
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - fix/o03-registration-abort
+      - feat/o03-bounded-capture-restore-20261106
+      - fix/pgp05-backup-repo-pin-20261104
+      - feat/pgp05-dreamloud-collector-port-20261023
+    paths:
+      - 'scripts/ci/production_backup/**'
+      - '.github/workflows/pgp05-offline-regression.yml'
+  pull_request:
+    branches:
+      - feat/o03-bounded-capture-restore-20261106
+      - feat/pgp05-dreamloud-collector-port-20261023
+      - fix/pgp05-backup-repo-pin-20261104
+    paths:
+      - 'scripts/ci/production_backup/**'
+      - '.github/workflows/pgp05-offline-regression.yml'
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+permissions:
+  contents: read
+jobs:
+  isolated-fixtures:
+    if: github.repository == 'orgavela/Orgavela-Plugin' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'orgavela/Orgavela-Plugin')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout with no stored GitHub credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install isolated fixture-only test tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends php-cli gnupg
+          python3 -m venv /tmp/orgavela-pgp05-fixtures
+          /tmp/orgavela-pgp05-fixtures/bin/python -m pip install --disable-pip-version-check -r scripts/ci/production_backup/requirements-test.txt
+      - name: Fail closed if repository target or entrypoints drift
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import sys
+          sys.path.insert(0, 'scripts/ci/production_backup')
+          import github_api
+          import writer
+          import collector
+          assert github_api.REPOSITORY == 'orgavela/orgavela-backups'
+          assert writer.REPOSITORY == github_api.REPOSITORY
+          assert writer.main() == 78
+          assert collector.main() == 78
+          github_api.reject_mixed_credentials(os.environ, 'source')
+          github_api.reject_mixed_credentials(os.environ, 'writer')
+          print('PGP05_SAFE_TARGET_AND_DISABLED_PRODUCTION=PASS')
+          PY
+      - name: Run exact offline regression and crypto roundtrip
+        run: |
+          set -euo pipefail
+          find scripts/ci/production_backup -name '*.php' -print0 | xargs -0 -n1 php -l
+          php scripts/ci/production_backup/test_capture_helpers.php
+          /tmp/orgavela-pgp05-fixtures/bin/python -m unittest discover -s scripts/ci/production_backup -p "test_*.py" -v
+          python3 scripts/ci/production_backup/offline_integration.py --synthetic-only
+          /tmp/orgavela-pgp05-fixtures/bin/python scripts/ci/production_backup/temporary_key_roundtrip.py
+      - name: Synthetic abort groups, registrations, database locks and HTTP recovery
+        run: python3 scripts/ci/production_backup/synthetic_abort_rehearsal.py
+      - name: Assembled abort-only PHP protocol with disposable tables and simulated origin
+        run: python3 scripts/ci/production_backup/synthetic_abort_protocol.py
