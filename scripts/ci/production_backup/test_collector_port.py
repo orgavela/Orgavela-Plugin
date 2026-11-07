@@ -45,7 +45,7 @@ class CollectorTests(unittest.TestCase):
             lambda e:e['components']['database'].update(sha256='0'*64),
             lambda e:e['scope'].update(database=1),lambda e:e.update(private='untrusted'),
             lambda e:e['quiescence'].update(maintenance_seconds=float('nan'))]
-        for flag in ('wordpress_maintenance','all_table_read_locks','stable_file_hashes',
+        for flag in ('wordpress_maintenance','all_table_read_locks','stable_file_hashes','archive_matches_inventory',
                      'maintenance_removed','maintenance_origin_verified','source_origin_recovered'):
             mutations.append(lambda e,flag=flag:e['quiescence'].update({flag:False}))
         for mutate in mutations:
@@ -123,6 +123,17 @@ class BoundaryTests(unittest.TestCase):
             for field in ('DB_PASSWORD','MYSQL_PWD','WP_DB_PASSWORD','SSHPASS'):
                 with self.assertRaises(ValueError):github_api.reject_mixed_credentials({field:'synthetic'},role)
         with self.assertRaises(ValueError):github_api.installation_token({'GH_TOKEN':'synthetic'})
+
+    def test_backup_target_is_migrated_private_repo_only(self):
+        # Failing closed is mandatory: the original project path must never be used.
+        self.assertEqual(github_api.REPOSITORY,'orgavela/orgavela-backups')
+        self.assertEqual(writer.REPOSITORY,github_api.REPOSITORY)
+        for forbidden in ('/repos/janjrre/orgavela-backups',
+                          '/repos/janjrre/orgavela-backups/releases',
+                          '/repos/orgavela/Orgavela-Plugin/releases'):
+            with patch('urllib.request.build_opener') as network,self.assertRaises(github_api.WriterError):
+                github_api.request_json(forbidden,'synthetic')
+            network.assert_not_called()
 
     def test_api_path_cannot_escape_fixed_repository(self):
         for suffix in ('/../../other/repo','/%2e%2e/escape','/./releases','//releases','/releases?target=foreign','/releases#fragment'):

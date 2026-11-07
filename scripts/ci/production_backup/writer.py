@@ -17,7 +17,7 @@ from collector import unique_pairs
 
 
 def opener():
-    return urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    return urllib.request.build_opener(NoRedirect())
 
 
 def assets(work, *, synthetic=False):

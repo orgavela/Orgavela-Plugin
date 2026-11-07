@@ -4,7 +4,7 @@ import urllib.request
 import urllib.error
 import re
 
-REPOSITORY='janjrre/orgavela-backups'
+REPOSITORY='orgavela/orgavela-backups'
 
 class WriterError(ValueError):
     def __init__(self,message,status=None): super().__init__(message);self.status=status
@@ -23,7 +23,7 @@ def request_json(path,token,*,method='GET',data=None):
             'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json',
             'Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'orgavela-backup-writer'})
     try:
-        with urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect()).open(request,timeout=60) as response:
+        with urllib.request.build_opener(NoRedirect()).open(request,timeout=60) as response:
             data=response.read(1024*1024+1)
             if len(data)>1024*1024: raise WriterError('oversized API response')
             return json.loads(data)
@@ -46,6 +46,9 @@ def reject_mixed_credentials(env,role):
     if role not in ('source','writer'): raise WriterError('credential role refused')
     for name,value in env.items():
         if not value: continue
+        # Runtime network-policy flag, not private recovery/key material. Keep it
+        # inherited; removing it would change the execution environment's egress policy.
+        if name == 'CODEX_EXEC_SERVER_PROXY_PRIVATE_IPS_VIA_UPSTREAM': continue
         private=re.search(r'(PRIVATE|RECOVERY|PASSPHRASE|AGE_SECRET)',name)
         source=name.startswith(('PGP05_SSH_','BACKUP_SSH_','IONOS_','SFTP_')) or name=='PGP05_WP_ROOT'
         writer=name in ('GH_TOKEN','GITHUB_TOKEN','BACKUP_GITHUB_TOKEN') or name.startswith('BACKUP_GITHUB_')

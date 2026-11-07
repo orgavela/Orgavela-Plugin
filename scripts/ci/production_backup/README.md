@@ -57,3 +57,14 @@ protected least-privilege source and writer contexts; explicit first-capture and
 publish decisions; consistent real files+DB capture and encrypted immutable
 readback; isolated actual WordPress/MariaDB restore and owner recovery; only then
 schedule, freshness alerting and retention. PR32 stays frozen and unmerged.
+
+## Bounded transport/recovery follow-up (2026-11-06)
+
+`transport.py`, `capture_cli.py`, `publish_cli.py`, `recovery.py`,
+`isolated_restore.py`, and `restore_cli.py` add executable bounded transport and
+operator-side isolated recovery. Legacy CLIs remain disabled; no live runner is
+activated by importing these libraries. See
+`docs/operations/O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md` for exact tests,
+private-key/source/writer boundaries, integration dependencies and remaining
+real-source evidence. Synthetic WP recovery is distinct from a real snapshot
+restore. No Dreamloud source or service is accessed by the tests.

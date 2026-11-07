@@ -1,7 +1,7 @@
 {
   "schema": "uop-v1-progress-v1",
   "project": "UOP Core / OrgaVela",
-  "snapshot_date": "2026-10-23",
+  "snapshot_date": "2026-11-06",
   "snapshot_basis": "CP5 accepted 10/10; independently approved offline Dreamloud collector/encryption/writer candidate, local synthetic tests passed; new provider CI pending. No production capture or restoration.",
   "plan_path": "docs/operations/V1_ACCEPTANCE_PLAN.md",
   "source_refs": [
@@ -782,5 +782,30 @@
       ]
     }
   },
-  "audit_evidence_path": "docs/operations/W0_ORGAVELA_READ_ONLY_AUDIT_2026-10-12.md"
+  "audit_evidence_path": "docs/operations/W0_ORGAVELA_READ_ONLY_AUDIT_2026-10-12.md",
+  "latest_verified_operational_evidence": {
+    "o03_bounded_transport_2026_11_06": {
+      "scope": "implementation and synthetic local recovery only",
+      "parent_pr": 36,
+      "python_tests_passed": 27,
+      "synthetic_encrypted_wp_db_restore": true,
+      "synthetic_restore_tables": 52,
+      "production_capture_executed": false,
+      "real_snapshot_restore_verified": false,
+      "live_runner_activated": false,
+      "next_owner": "Codex after security review",
+      "report": "docs/operations/O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md"
+    }
+  },
+  "o03_review_followup": {
+    "status": "draft-security-recheck-pending",
+    "pull_request": 64,
+    "local_python_regressions": 34,
+    "snapshot_php_execution": false,
+    "archive_inventory_check": "required-v2",
+    "production_abort_verified": false,
+    "real_snapshot_restored": false,
+    "next_owner": "Work",
+    "next_action": "independent security recheck; then regular parent integration and gated real abort/capture/readback/restore"
+  }
 }

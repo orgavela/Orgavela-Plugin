@@ -524,3 +524,15 @@ Transport/Runtimepins und konkrete getrennte Source-/Writer-Gates fertigstellen.
 Kein echtes Backup/Restore/Livezugriff/Deploy/Merge/Schedule. Vollständige produktive
 Collectorportierung bleibt offen; production_capture_allowed=false. V1-Zähler
 unverändert 62/71, M0–M7 0/8, P4 0/4, R0/18; alpha.2 zuletzt belegt.
+
+
+### O03 – Registrierungsabbruch, lokaler Kandidat 06.11.2026
+
+Work-Befund 44554bd auf Basis 7c170f3 rot reproduziert und korrigiert. Erweiterte synthetische Containerprobe 13/13, 34 Python-Regressionen und ergänzte PHP-Hilfstests grün: eigene registrierte Gruppen einschließlich temporärer vollständiger Registrierung beendet, WRITE-Locks freigegeben, HTTP erholt, fremde Prozesse/Marker erhalten. Unvollständige Identitäten bleiben ohne Signalautorität und liefern Fehlerstatus; der eigene Marker wird trotzdem hashgebunden entfernt. Details/Prüfgrenzen im Arbeitslog docs/operations/ASSISTANT_WORK_LOG.md. Work-Nachprüfung, Provider-CI und Parentintegration offen; PR62/64 Draft und ungemergt. Kein IONOS-Abbruch, Snapshot, Rückdownload oder Restore. Zähler unverändert: 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18; alpha.2 letzter Livebeleg.
+
+
+### O03 – Erstprobe isolieren, PR65 (06.11.2026)
+
+Work-Prüfliste ec83e31 umgesetzt als abhängiger Draft [PR65](https://github.com/orgavela/Orgavela-Plugin/pull/65): Cleanup complete/unknown/survivors, Wartung und Eskalation bei ungeklärtem Ende; eigener Abort-CLI mit Capability-, Exception- und hartem Kanalmodus samt unabhängiger Prozess-/Lock-/Marker-/Originprüfung und Watchdog-Abschlussquittung. Kein automatischer Capture-/Package-Fallthrough. Details: docs/operations/O03_ABORT_ONLY_2026-11-06.md und append-only Arbeitslog. Lokale/Providerprüfungen sind synthetisch; Main-Ancestry, Work-Nachprüfung, private Source-only-Runneranbindung und praktisch belegter unabhängiger Recoveryweg bleiben vor IONOS erforderlich. PR62/64 bleiben Draft und ungemergt; kein Live-Abbruch, Snapshot oder Restore. V1 unverändert offen: 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18, alpha.2 letzter Livebeleg.
+
+Provider-Nachtrag PR65: Engine `5c395148bd395a5688e9d5ef240433d63c48a351`, [Run42311225902](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42311225902) samt Joblog vollständig grün:37 Regressionen,13 Abbruchfälle und neue vollständige synthetische Abortprotokollprobe. Kein echter SSH-/IONOS-Beleg, kein Merge oder Signoff; Work-Nachprüfung/Mainintegration/privater Sourcejob/Recoveryroute bleiben vor Live offen.
