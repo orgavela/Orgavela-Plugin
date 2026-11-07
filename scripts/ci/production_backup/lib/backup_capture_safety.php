@@ -95,10 +95,22 @@ function orgavela_lock_capture_tables(mysqli $db, array $tables): bool {
     return (bool)$db->query('LOCK TABLES '.implode(',',array_map(static fn($t)=>'`'.$t.'` READ',$tables)).' WAIT 2');
 }
 
-/** Use only the root-owned operating-system trust store; no per-run trust override. */
+/** Trust the OS account owning the immutable runtime, including provider UID mapping. */
+final class OrgaVelaTrustRejection extends RuntimeException {}
 function orgavela_database_tls_args(): array {
-    $ca='/etc/ssl/certs/ca-certificates.crt';
-    if(!is_file($ca) || !is_readable($ca) || fileowner($ca)!==0 || (fileperms($ca)&0022)!==0)throw new RuntimeException('system CA store unavailable');
+    $ca='/etc/ssl/certs/ca-certificates.crt';$binary=realpath(PHP_BINARY);$uid=posix_geteuid();
+    $owner=$binary?@fileowner($binary):false;
+    if(!$binary || !is_file($binary) || !is_int($owner) || $owner===$uid || (fileperms($binary)&0022)!==0 || is_writable($binary))throw new OrgaVelaTrustRejection('system_trust_runtime_unverified');
+    if(!is_file($ca) || !is_readable($ca))throw new OrgaVelaTrustRejection('system_trust_store_unavailable');
+    if(fileowner($ca)!==$owner)throw new OrgaVelaTrustRejection('system_trust_store_owner_mismatch');
+    if((fileperms($ca)&0022)!==0 || is_writable($ca))throw new OrgaVelaTrustRejection('system_trust_store_writable');
+    foreach([$ca,$binary]as$file){
+        $resolved=realpath($file);if(!$resolved)throw new OrgaVelaTrustRejection('system_trust_ancestor_unsafe');
+        for($parent=dirname($resolved);;$parent=dirname($parent)){
+            if(!is_dir($parent) || fileowner($parent)===$uid || (fileperms($parent)&0022)!==0 || is_writable($parent))throw new OrgaVelaTrustRejection('system_trust_ancestor_unsafe');
+            if($parent==='/')break;
+        }
+    }
     return ['--protocol=tcp','--ssl','--ssl-verify-server-cert','--ssl-ca='.$ca];
 }
 

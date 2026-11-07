@@ -41,7 +41,7 @@
       "status": "partial",
       "accepted": false,
       "owner": "Betreiber / Backup-Verantwortliche",
-      "observation": "Engine und private Dreirollenpipeline regulär integriert und CI-grün. Synthetischer exakter Release-Restore sowie neue IONOS-Recovery/Preflight erfolgreich. TLS-Wiederholung42364472006 bestätigt fehlendes Zertifikatsvertrauen vor Wartung/Snapshot. Expliziter System-CA-Speicher besteht positive und negative Containerproben; Livekorrektur noch unbewiesen. Kein echter Snapshot/Restore.",
+      "observation": "Private Pipeline und exakter synthetischer Release-Restore bestätigt; reale TLS-Probe verweigert Zertifikatsvertrauen. Explizite CA-Variante stoppt noch vor TLS. Neue Inventur42366729353 zeigt lesbaren System-CA-Speicher, nicht UID0 und nicht unter Sourcekontrolle. Validierung über geschützten Laufzeiteigentümer synthetisch geprüft, noch kein IONOS-Positivbeleg. Kein echter Snapshot/Restore.",
       "technical_evidence": [
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042772320",
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42038116880",
@@ -50,7 +50,8 @@
         "https://github.com/orgavela/orgavela-backups/actions/runs/42363188793",
         "https://github.com/orgavela/orgavela-backups/actions/runs/42363309280",
         "https://github.com/orgavela/orgavela-backups/actions/runs/42363410543",
-        "https://github.com/orgavela/orgavela-backups/actions/runs/42364472006"
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42364472006",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42366729353"
       ],
       "missing_exit_evidence": [
         "IONOS-TLS-Fehler2026 mit geprüfter Diagnose auflösen; TLS/Serverzertifikatsprüfung verpflichtend",
