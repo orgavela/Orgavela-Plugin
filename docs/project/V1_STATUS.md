@@ -1,5 +1,8 @@
 # UOP Core / OrgaVela – aktueller V1-Fortschrittsbericht
 
+**Aktueller O03-Abnahmestand 07.11.2026:** Engine `0f0676d` und Controller `3655abf` regulär integriert, exakte CI grün. Finale IONOS-Recovery `42368230230` und Preflight `42368333459` erfolgreich. Die Probe `42368432293` besteht den Systemtrust-/Runtime-/Pfadschutz und scheitert danach an der TLS-Zertifikatsprüfung mit Fehler 2026. Es fehlt eine unabhängig bestätigte Provider-CA/Kette beziehungsweise ein prüfbarer TLS-Endpunkt. Kein Wartungsmarker oder Snapshot aus dieser Probe; Website danach unabhängig HTTP 200. **Echter Dump, Archivgrenzen, Produktionsrelease und dessen exakter Restore bleiben offen.** Der vollständige Release-Rückdownload/Restore ist bisher nur synthetisch bestanden. [Befund und nächster Schritt](../operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md). V1 offen; unverändert 62/71 historisch, M0–M7 0/8, P4 0/4, R 0/18; PR #62 Draft, #64/#65 integriert; Alpha.2 letzter Livebeleg.
+
+
 **Neuer O03-Plattformbefund 07.11.2026:** Die Inventur `42366729353` auf Controller `a79dd08` bestätigt einen vorhandenen, lesbaren System-CA-Speicher. Er gehört weder UID 0 noch dem Sourceprozess und ist für Source nicht beschreibbar oder unmittelbar ersetzbar. Die frühere UID-0-Annahme ist damit für diesen Hostingstand ungeeignet. Die enge Anpassung prüft CA-Speicher und PHP-Laufzeit jeweils unabhängig vom numerischen Systemkonto einschließlich sämtlicher Vorfahren auf Source-Schreib- und Ersatzrechte; unbekannte CA und falscher Hostname bleiben ausgeschlossen. Synthetische Prüfung erfolgreich, echte TLS-Wiederholung noch offen. Kein echter Snapshot oder Produktionsrestore; V1-Zähler unverändert.
 
 

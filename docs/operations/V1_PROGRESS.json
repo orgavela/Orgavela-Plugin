@@ -190,7 +190,7 @@
       "next": "separate O03 real encrypted snapshot/release readback/isolated restore acceptance"
     },
     "o03_backup_acceptance_20261107": {
-      "status": "blocked_tls_os_owner_verification",
+      "status": "blocked_database_tls_certificate_trust",
       "engine_sha": "191df34788cb8cf318cb854f981520fa5ae87a64",
       "controller_sha": "22f07152bdecbe33519a875182ef44e95cb9bd50",
       "public_prs_integrated": [
@@ -247,7 +247,7 @@
       "filesystem_resource_probe_completed": false,
       "formal_o03_accepted": false,
       "automatic_schedule_authorized": false,
-      "next": "Integrate protected OS truststore/runtime validation independent of provider numeric UIDs, with immutable ancestor paths; fresh same-controller recovery/preflight and real TLS/resource probes before any actual snapshot.",
+      "next": "Obtain independently authenticated IONOS database CA/chain or verified TLS endpoint. Keep certificate/hostname verification enabled. Then regular integration/exact CI, fresh same-controller recovery/preflight, TLS and filesystem resource gates, real capture/publication/full download/isolated exact-snapshot restore.",
       "tls_diagnostic_engine": {
         "sha": "dc9e3cadb9b9bf1e5496aed9129e31b7baa2390a",
         "public_pr_integrated": 70,
@@ -320,7 +320,54 @@
         "untrusted_ca_refused": true,
         "wrong_hostname_refused": true,
         "ionos_positive_unproven": true
-      }
+      },
+      "current_verified_engine_sha": "0f0676d53e23fac7169667a14d1bed0197cce22d",
+      "current_executed_controller_sha": "3655abf9f4dd0a437a3bea135b713971246f2a1b",
+      "current_exact_engine_ci": {
+        "foundation": 42367959744,
+        "o03": 42367959597,
+        "truth": 42367959617,
+        "circleci": "success",
+        "python_regressions": 44,
+        "synthetic_abort_cases": 13,
+        "actual_synthetic_tls_dump_and_negative_ca_hostname_trust_path_cases": "pass"
+      },
+      "current_controller_ci": {
+        "run_id": 42368110168,
+        "gate_recovery_php_receipt_tests": 10,
+        "exact_cipher_role_tests": 3
+      },
+      "current_ionos_recovery": {
+        "run_id": 42368230230,
+        "result": "success",
+        "independent_session_removed_owned_canary": true,
+        "maintenance_created": false
+      },
+      "current_ionos_preflight": {
+        "run_id": 42368333459,
+        "result": "success",
+        "maintenance_created": false,
+        "snapshot_created": false
+      },
+      "current_ionos_database_tls_probe": {
+        "run_id": 42368432293,
+        "result": "failure",
+        "client_error_code": 2026,
+        "last_phase": "dump_tls_certificate_untrusted",
+        "system_ca_runtime_and_ancestor_integrity_guards_passed": true,
+        "dump_client_validated": true,
+        "database_validated": true,
+        "tls_negotiation_reached": true,
+        "rejected_before_dump_and_maintenance": true,
+        "snapshot_created": false,
+        "verification_bypassed": false
+      },
+      "independent_public_http_after_failure": 200,
+      "provider_ca_or_verified_alternate_endpoint_available": false,
+      "operator_currently_knows_provider_ca_information": false,
+      "provider_question_prepared_privately": true,
+      "provider_message_sent": false,
+      "report": "docs/operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md"
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",

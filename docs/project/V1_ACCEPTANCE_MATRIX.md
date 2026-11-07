@@ -216,3 +216,16 @@ Diagnose-Nachtrag: Engine `dc9e3ca` / Controller `d34d2aa`, exakte CI vollständ
 **O03-Systemtrust-Nachtrag 07.11.2026:** Engine `ec25173` vollständig auf Main CI-geprüft. Private Inventur-PRs #6/#7 integriert; Main-CI `42366532777`, neue Recovery `42366606695` und Preflight `42366729353` erfolgreich. Die erste Inventur `42366212019` war an einem eigenen Quittungsvariablenfehler korrekt gescheitert; tatsächliche PHP-Ausgabe wird jetzt zusätzlich im Container gegen den Validator geprüft. Aktuelle Metadaten zeigen lesbaren Standard-CA-Speicher unter einem anderen Systemkonto als UID 0, ohne Source-Eigentum/Schreib- oder unmittelbares Ersatzrecht. Die bisherige UID-0-Prüfung wird gezielt durch Bindung an den geschützten Laufzeiteigentümer und sichere Pfadvorfahren ersetzt. Synthetische Tests bestätigen positiven TLS-Dump mit abweichendem Systemkonto und Ablehnung eigener/beschreibbarer/ersetzbarer Truststores, unbekannter CA und falschen Hostnamens. Kein neuer IONOS-TLS-Positivbeleg, kein echter Snapshot/Restore und keine formale Abnahme.
 
 **Finale Eigentümerregel dieser Anpassung:** Für CA-Speicher und PHP-Laufzeit wird jeweils separat nachgewiesen, dass sie einem vom Sourcekonto verschiedenen Systemkonto gehören und samt kanonischen Vorfahren nicht unter Sourcekontrolle stehen. Unterschiedliche geschützte Systemkonten sind zulässig; eine zusätzliche Gleichheitsannahme zwischen CA- und Runtime-UID ist für den unveränderbaren festen Betriebssystem-Trustpfad nicht erforderlich. Die Fixture prüft deshalb ausdrücklich zwei unterschiedliche System-UIDs. Keine Zertifikatsprüfung, Pfadschutz- oder Source-Schreibsperre wird dadurch abgeschaltet.
+
+
+### O03-TLS-FINAL-20261107 – echter verbleibender Blocker
+
+| Kriterium | Exakter Beleg | Stand |
+| --- | --- | --- |
+| Integration und CI | Engine `0f0676d`: Foundation `42367959744`, O03 `42367959597`, Truth `42367959617`, CircleCI; Controller `3655abf`, CI `42368110168` | PASS technisch |
+| Finale unabhängige Recovery und Preflight | IONOS `42368230230` / `42368333459` auf derselben Controller-SHA | PASS, kein Marker/Snapshot |
+| System-CA-/Runtime-/Vorfahrenintegrität | Tatsächliche Probe `42368432293` erreicht `dump_client_validated` und anschließend TLS | PASS, feste OS-Pfade; Source-Schreib-/Ersatzrechte ausgeschlossen |
+| Tatsächliches DB-Zertifikatsvertrauen | Dieselbe IONOS-Probe endet `dump_tls_certificate_untrusted`, Fehler 2026 | GESPERRT, verifizierbare Provider-CA/Kette oder gültiger TLS-Endpunkt fehlt |
+| Echter Dump, Archiv-/Zeitgrenzen, Produktionsrelease und dessen kompletter Rückdownload/Restore | Kein positiver Produktionsbeleg | OFFEN, vor Wartung/Snapshot gestoppt |
+
+Eine unabhängige öffentliche HTTP-Prüfung nach dem Fehler lieferte 200. Das ist kein Ersatz für Zertifikats-, Prozess- oder Restorebelege. Kein Providerkontakt versendet; konkreter privater Supportentwurf vorbereitet. Synthetischer Exact-Release-Restore `42362945948` bleibt ausdrücklich synthetisch. V1/O03/B04/R formal offen, Zähler unverändert. [Gesamtbefund](../operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md).

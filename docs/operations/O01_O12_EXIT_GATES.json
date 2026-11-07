@@ -41,7 +41,7 @@
       "status": "partial",
       "accepted": false,
       "owner": "Betreiber / Backup-Verantwortliche",
-      "observation": "Private Pipeline und exakter synthetischer Release-Restore bestätigt; reale TLS-Probe verweigert Zertifikatsvertrauen. Explizite CA-Variante stoppt noch vor TLS. Neue Inventur42366729353 zeigt lesbaren System-CA-Speicher, nicht UID0 und nicht unter Sourcekontrolle. Validierung über geschützten Laufzeiteigentümer synthetisch geprüft, noch kein IONOS-Positivbeleg. Kein echter Snapshot/Restore.",
+      "observation": "Engine0f0676d/Controller3655abf regulär integriert und exakte CI grün. Synthetischer exakter Release-Restore bestanden; finale IONOS-Recovery/Preflight erfolgreich. Probe42368432293 besteht Systemtrust-/Runtime-/Vorfahrenprüfung und scheitert danach an Zertifikatsvertrauen(ERROR2026), vor Wartung/Dump/Snapshot. Offizielle CA-/prüfbare Endpunktangabe fehlt; kein echter Snapshot/Restore.",
       "technical_evidence": [
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042772320",
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42038116880",
@@ -51,10 +51,13 @@
         "https://github.com/orgavela/orgavela-backups/actions/runs/42363309280",
         "https://github.com/orgavela/orgavela-backups/actions/runs/42363410543",
         "https://github.com/orgavela/orgavela-backups/actions/runs/42364472006",
-        "https://github.com/orgavela/orgavela-backups/actions/runs/42366729353"
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42366729353",
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42367959597",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42368432293",
+        "https://github.com/orgavela/Orgavela-Plugin/blob/main/docs/operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md"
       ],
       "missing_exit_evidence": [
-        "IONOS-TLS-Fehler2026 mit geprüfter Diagnose auflösen; TLS/Serverzertifikatsprüfung verpflichtend",
+        "Unabhängig bestätigte IONOS-CA/Kette oder prüfbarer TLS-Endpunkt für bestehende Datenbank; echte TLS-Zertifikatsprüfung erfolgreich wiederholen",
         "Echtes vollständiges, konsistentes DB+Dateien-Backup verschlüsselt privat und mit Readback verifizieren",
         "Abgeschotteten Restore echter Backupdaten sowie Recovery-Time und Retention unabhängig bestätigen",
         "IONOS-Provider-Backupinventar mit Rücksicherungsstand prüfen"
