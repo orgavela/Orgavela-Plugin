@@ -195,3 +195,19 @@ Engine57fd2e6 / Controllerddc7c63,07.11.2026UTC. Keine formale R-/V1-Gateabnahme
 | Echter Snapshot/Release/Rückdownload/Restore | nicht Teil dieser isolierten Probe | OFFEN,separater O03-Abnahmeblock |
 
 Alle drei Wartungs-/Preflightquittungen snapshot_created=false; keine Dump-/Archiv-/Verschlüsselungs-/Publisherfortsetzung. Fremdprozess-/Fremdmarkergrenze und tatsächliche TAR/Dump-Nachkommen wurden in13 synthetischen Fällen geprüft, nicht als zusätzliche Fremdmarker auf der Website injiziert. Aktuelle Pluginversion nicht neu abgefragt; alpha.2 bleibt letzter entsprechender Livebeleg. V1-Zähler62/71 historisch,M0–M7 0/8,P4 0/4,R0/18 unverändert. Detaillierte sanitiserte Protokolle/Verantwortung im append-only Arbeitslog, operative Rohdaten verbleiben privat.
+
+
+### W0/O03-BACKUP-20261107 – integrierte Pipeline, synthetischer Release-Restore, echte TLS-Sperre
+
+| Prüffall | Tatsächlicher Beleg | Ergebnis und Prüfgrenze |
+| --- | --- | --- |
+| Exakter integrierter Engine-Commit und CI | `191df34`; Foundation `42362634089`, O03 `42362646410`, Truth `42362634121`, echter CircleCI | PASS: 44 Regressionen, 13 Abbruchfälle, Protokollprobe; keine Gesamtabnahme |
+| Rechte von Capture, Publisher und Receiver | Privater PR #3 / `22f0715`; Main-CI `42362765358`; 8+3 Offlineprüfungen | PASS: Hosting nur im Source-Schritt, Release-Schreibrecht nur beim Publisher, privater Schlüssel nur im Receiver-RAM |
+| Gemeinsamer Ciphertext, Veröffentlichung, vollständiger Rückdownload und Restore | Synthetischer Run `42362945948`; unveränderliches Release `437494217`, drei Assets | PASS ausschließlich synthetisch: 52 Tabellen, 3.354 Dateien, Snapshot-PHP inert, Ziel entfernt |
+| Neue unabhängige Recovery und Preflight | IONOS `42363188793` / `42363309280` auf derselben SHA `22f0715` | PASS; keine Wartungsmarker oder Snapshots |
+| Tatsächlicher Dump mit TLS und Zertifikatsprüfung | IONOS `42363410543` | FEHLER 2026 vor Wartung und Snapshot; TLS-Ursache noch zu prüfen |
+| Archiv-/Laufzeitgrenzen, echter Snapshot, tatsächlicher Release-Restore | Kein neuer Produktionsbeleg | OFFEN; erst nach geprüfter TLS-Lösung |
+
+O03/B04/R-Gates bleiben formal offen. Der zusätzliche temporäre Empfänger ist nur für diese Abnahme ausdrücklich autorisiert; der Owner-Schlüssel bleibt unverändert. Kein Owner-Privatschlüssel und keine Source-Rohdaten im öffentlichen Beleg. Kein Pluginversionswechsel, keine Migration oder Fachabnahme. Stand: 62/71 historisch, M0–M7 0/8, P4 0/4, R 0/18; Alpha.2 bleibt letzter Livebeleg, PR #62 bleibt Draft.
+
+Diagnose-Nachtrag: Engine `dc9e3ca` / Controller `d34d2aa`, exakte CI vollständig grün. Neue Recovery `42364266996` und Preflight `42364398492` PASS; TLS-Wiederholung `42364472006` endet vor Wartung/Snapshot mit `dump_tls_certificate_untrusted`. Neue synthetische TLS-Fixture: expliziter System-CA-Speicher ermöglicht tatsächlichen Dump; unbekannte CA und falscher Hostname werden abgewiesen. Kein IONOS-Positivbeleg dieser Korrektur, keine formale Abnahme.

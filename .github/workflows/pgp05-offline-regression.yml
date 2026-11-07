@@ -74,3 +74,5 @@ jobs:
         run: python3 scripts/ci/production_backup/synthetic_abort_rehearsal.py
       - name: Assembled abort-only PHP protocol with disposable tables and simulated origin
         run: python3 scripts/ci/production_backup/synthetic_abort_protocol.py
+      - name: Strict TLS probe and dump with synthetic CA and hostname rejection
+        run: /tmp/orgavela-pgp05-fixtures/bin/python scripts/ci/production_backup/synthetic_tls_probe.py
