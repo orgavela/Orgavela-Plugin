@@ -137,6 +137,7 @@ def run():
         client(['mariadb','--defaults-file=/proc/self/fd/3',*args['tls'],'--execute',"INSERT INTO fixture_only VALUES(1,'marker','synthetic-only');",'--','fixture'])
         dump=client([*args['dump'],'--','fixture'])
         if b'CREATE TABLE `fixture_only`' not in dump or b'synthetic-only' not in dump:raise RuntimeError('verified TLS dump incomplete')
+        client(['mariadb','--defaults-file=/proc/self/fd/3',*args['tls'],'--execute',"INSERT INTO fixture_only SELECT seq,'stream',REPEAT('x',100) FROM seq_1_to_20000 WHERE seq>1",'--','fixture'])
         dependencies=docker('run','--rm','--network','none','--entrypoint','sh',DB_IMAGE,'-c','ldd /usr/bin/mariadb; ldd /usr/bin/mariadb-dump').decode()
         shared=sorted(set(re.findall(r'/(?:lib|usr/lib|lib64)/[A-Za-z0-9_./+-]+',dependencies)))
         if not shared or '/lib64/ld-linux-x86-64.so.2' not in shared:raise RuntimeError('legacy loader profile')
@@ -154,6 +155,7 @@ def run():
         legacy_hashes=docker('exec',name,'sha256sum','/usr/bin/mariadb','/usr/bin/mariadb-dump').decode().splitlines()
         legacy_program=program
         for before,after in zip(profile_hashes,legacy_hashes):legacy_program=legacy_program.replace(before.split()[0].encode(),after.split()[0].encode())
+        legacy_program=legacy_program.replace(b'$bytes=strlen($sql);unset($sql,$client,$name);',b'$streamText=gzdecode($sql);if(strlen($streamText)<2000000||!str_contains($streamText,"(20000,\'stream\',"))throw new RuntimeException("large stream incomplete");unset($streamText);$bytes=strlen($sql);unset($sql,$client,$name);')
         with patch.object(transport,'live_program',return_value=legacy_program),patch.dict('os.environ',{'ORGAVELA_DATABASE_TLS_MODE':MODE}):
             phases=[]
             try:legacy_receipt=transport.resource_probe(Binding(),'database',password='fixture',maintenance_approved=True,phase_callback=phases.append)
@@ -179,7 +181,7 @@ def run():
             cfg=('[client]\nuser=fixture\npassword='+password+'\nhost='+host+'\n').encode()
             rejected=json.loads(docker('exec','-i','--user','33:33',name,'sh','-c','exec 4>&1; php "$@"; status=$?; test "$status" -ne 0','fixture','/tmp/o03-tls-source/bridge-peer.php',encoded,'audit-plaintext-refusal',data=cfg))
             if rejected['client_started'] is not True or rejected['authentication_forwarded'] is not False or rejected['tls_established'] is not False or rejected['failure'] not in ('tls','peer'):raise RuntimeError('bridge peer mismatch accepted')
-        return {'legacy_10_11_19_both_clients_started_plaintext_refused_before_auth_or_output':True,'legacy_bridge_wrong_peer_before_auth_refused':True,'legacy_10_11_19_bridge_actual_dump':True,'synthetic_tls_and_dump':True,'approved_unverified_tls_and_actual_dump':True,'assembled_unverified_evidence_false':True,'unverified_plaintext_client_and_dump_refused':True,'unverified_wrong_peer_refused':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
+        return {'legacy_10_11_19_both_clients_started_plaintext_refused_before_auth_or_output':True,'legacy_bridge_wrong_peer_before_auth_refused':True,'legacy_large_stream_over_pipe_capacity_complete':True,'legacy_10_11_19_bridge_actual_dump':True,'synthetic_tls_and_dump':True,'approved_unverified_tls_and_actual_dump':True,'assembled_unverified_evidence_false':True,'unverified_plaintext_client_and_dump_refused':True,'unverified_wrong_peer_refused':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
     finally:
         for kind,resource in reversed(made):
             if kind=='container':docker('rm','-f',resource)
