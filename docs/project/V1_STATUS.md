@@ -1,5 +1,8 @@
 # UOP Core / OrgaVela – aktueller V1-Fortschrittsbericht
 
+**O03-Freigabe und Umsetzung 07.11.2026:** Der Betreiber erlaubt ausschließlich für den OrgaVela-Datenbank-Backupzugriff TLS ohne authentisierte Serverzertifikatsprüfung. Die gezielte Implementierung verlangt weiterhin tatsächliches TLS, verweigert Klartextfallback und markiert Capture, privates Release und Restore ausdrücklich mit `server_certificate_verified=false`. SSH/HTTPS bleiben geprüft. Lokal46 Regressionen und echte TLS-/Dump-Negativproben erfolgreich; Integration/exakte CI und neuer IONOS-Versuch stehen noch aus. Die frühere CA-Voraussetzung ist für diesen eng begrenzten Modus durch die ausdrückliche Risikoentscheidung ersetzt. [Vertrag und Grenzen](../operations/O03_DATABASE_TLS_EXCEPTION_2026-11-07.md). V1/Backup-Abnahme bleiben offen; formale Zähler unverändert.
+
+
 **Aktueller O03-Abnahmestand 07.11.2026:** Engine `0f0676d` und Controller `3655abf` regulär integriert, exakte CI grün. Finale IONOS-Recovery `42368230230` und Preflight `42368333459` erfolgreich. Die Probe `42368432293` besteht den Systemtrust-/Runtime-/Pfadschutz und scheitert danach an der TLS-Zertifikatsprüfung mit Fehler 2026. Es fehlt eine unabhängig bestätigte Provider-CA/Kette beziehungsweise ein prüfbarer TLS-Endpunkt. Kein Wartungsmarker oder Snapshot aus dieser Probe; Website danach unabhängig HTTP 200. **Echter Dump, Archivgrenzen, Produktionsrelease und dessen exakter Restore bleiben offen.** Der vollständige Release-Rückdownload/Restore ist bisher nur synthetisch bestanden. [Befund und nächster Schritt](../operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md). V1 offen; unverändert 62/71 historisch, M0–M7 0/8, P4 0/4, R 0/18; PR #62 Draft, #64/#65 integriert; Alpha.2 letzter Livebeleg.
 
 

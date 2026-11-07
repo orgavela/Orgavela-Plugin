@@ -11,14 +11,17 @@ class ProbeError(ValueError): pass
 NAMES={'database.sql.gz','wordpress-files.tar.gz','capture-evidence.json'}
 
 def validate_evidence(data, work):
-    if (not isinstance(data, dict) or data.get('schema') != 'orgavela-ssh-capture-evidence/v3' or
+    if (not isinstance(data, dict) or data.get('schema') not in ('orgavela-ssh-capture-evidence/v3','orgavela-ssh-capture-evidence/v4') or
             data.get('capture_mode') != 'production' or data.get('filesystem_consistency') != 'quiesced' or
             data.get('database_consistency') != 'single-transaction' or
             data.get('scope') != dict.fromkeys(('database','wordpress_filesystem','uploads','wp_config'), True)):
         raise ProbeError('capture scope or consistency failed')
-    if set(data)!={'schema','capture_mode','filesystem_consistency','database_consistency','scope','quiescence','table_count','filesystem_entries','components','database_tls_verified','database_server_certificate_verified'}:
+    from database_tls_policy import EXTRA
+    unverified=data['schema']=='orgavela-ssh-capture-evidence/v4'
+    if unverified and any(data.get(k)!=v or type(data.get(k)) is not type(v) for k,v in EXTRA.items()):raise ProbeError('documented TLS exception required')
+    if set(data)- (set(EXTRA) if unverified else set())!={'schema','capture_mode','filesystem_consistency','database_consistency','scope','quiescence','table_count','filesystem_entries','components','database_tls_verified','database_server_certificate_verified'}:
         raise ProbeError('unexpected evidence fields')
-    if data.get('database_tls_verified') is not True or data.get('database_server_certificate_verified') is not True:raise ProbeError('verified database TLS required')
+    if data.get('database_tls_verified') is not True or data.get('database_server_certificate_verified') is not (False if unverified else True):raise ProbeError('verified database TLS required')
     if any(type(v) is not bool for v in data['scope'].values()): raise ProbeError('scope types')
     if type(data.get('filesystem_entries')) is not int or not 0<data['filesystem_entries']<=50000: raise ProbeError('entry count')
     q = data.get('quiescence', {})

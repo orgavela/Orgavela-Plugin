@@ -6,6 +6,7 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $dry=defined('ORGAVELA_CAPTURE_SAFETY_ONLY') && ORGAVELA_CAPTURE_SAFETY_ONLY===true;
 $databaseOnly=defined('ORGAVELA_CAPTURE_DATABASE_ONLY') && ORGAVELA_CAPTURE_DATABASE_ONLY===true;
 $filesystemOnly=defined('ORGAVELA_CAPTURE_FILESYSTEM_ONLY') && ORGAVELA_CAPTURE_FILESYSTEM_ONLY===true;
+$unverifiedTls=orgavela_database_tls_unverified();$peerFingerprint=null;
 $abortOnly=defined('ORGAVELA_CAPTURE_ABORT_AFTER_LOCK') && ORGAVELA_CAPTURE_ABORT_AFTER_LOCK===true;
 $abortToken=defined('ORGAVELA_ABORT_TOKEN')?ORGAVELA_ABORT_TOKEN:null;
 $abortVerify=defined('ORGAVELA_ABORT_VERIFY') && ORGAVELA_ABORT_VERIFY===true;
@@ -37,7 +38,7 @@ register_shutdown_function($cleanup);
 $checkTime = static function() use ($started): void { if (microtime(true)-$started > 100) throw new RuntimeException('deadline'); };
 $run = static function(array $args, ?string $config, bool $compress, int $limit=60) use (&$active,$checkTime,$phase,$filesystemOnly,&$entryCount,$cleanup,&$work): string {
     $runAt=microtime(true);
-    $kind=$args[0]==='mariadb'?'database_tls_probe':($args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump'));
+    $kind=in_array('/usr/bin/openssl',$args,true)?'database_tls_peer':($args[0]==='mariadb'?'database_tls_probe':($args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump')));
     if($kind!=='client_help')$phase($kind.'_started');
     $spec = [0=>['file','/dev/null','r'], 1=>['pipe','w'], 2=>['pipe','w']];
     if ($config !== null) $spec[3]=['pipe','r'];
@@ -60,6 +61,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
                     'filesystem_entries'=>$entryCount,'compressed_bytes'=>strlen($output),
                     'seconds'=>round(microtime(true)-$runAt,3),'maintenance_created'=>false,
                     'table_locks_used'=>false,'file_data_logged'=>false,'data_discarded'=>true,'backup_saved'=>false];
+                if(orgavela_database_tls_unverified()){$result['schema']='orgavela-filesystem-memory-probe/v3';$result=array_merge($result,['tls_verified'=>true,'server_certificate_verified'=>false,'database_tls_policy'=>'orgavela-backup-encrypted-unverified-20261107','database_tls_exception_authorization'=>'bd622f9fa9e926d7af866676af1a0224cb9d92c0','database_control_connection_tls_verified'=>true,'database_peer_continuity_enforced'=>true]);}
                 unset($output,$chunk);$cleanup();echo json_encode($result,JSON_THROW_ON_ERROR)."\n";exit(0);
             }
             if($kind==='database_dump')$phase($bytes>0?'database_dump_stream_deadline':'database_dump_no_output_deadline');
@@ -67,7 +69,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
         }
         $err=stream_get_contents($pipes[2],65536);if(strlen($errors)<16384)$errors.=substr($err,0,16384-strlen($errors));
         $chunk=stream_get_contents($pipes[1],1048576);if($chunk===false)throw new RuntimeException('stream read'); $bytes+=strlen($chunk);
-        if ($bytes>1073741824) throw new RuntimeException('stream');
+        if ($bytes>1073741824 || ($kind==='database_tls_peer' && $bytes>65536)) throw new RuntimeException('stream');
         if ($chunk!=='') $output.=$compress ? deflate_add($gz,$chunk,ZLIB_NO_FLUSH) : $chunk;
         if (strlen($output)>100663296) throw new RuntimeException('compressed memory limit');
         $state=proc_get_status($p); if ($state['running'] && $chunk==='') usleep(10000);
@@ -75,7 +77,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
     while (!feof($pipes[1])) {
         $checkTime();
         $chunk=fread($pipes[1],65536); $bytes+=strlen($chunk);
-        if ($bytes>1073741824) throw new RuntimeException('stream');
+        if ($bytes>1073741824 || ($kind==='database_tls_peer' && $bytes>65536)) throw new RuntimeException('stream');
         if ($chunk!=='') $output.=$compress ? deflate_add($gz,$chunk,ZLIB_NO_FLUSH) : $chunk;
         if (strlen($output)>100663296) throw new RuntimeException('compressed memory limit');
     }
@@ -90,6 +92,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
     return $output;
 };
 try {
+    if($unverifiedTls && ($abortOnly||$sourceOnly))throw new RuntimeException('database exception outside backup path');
     if($abortOnly && ($dry||$sourceOnly||$databaseOnly||$filesystemOnly))throw new RuntimeException('conflicting abort mode');
     $phase('source_validating');
     if(!is_executable('/usr/bin/setsid')||!function_exists('posix_kill')||!function_exists('posix_getsid'))throw new RuntimeException('process isolation unavailable');
@@ -168,14 +171,29 @@ try {
     if(!$abortOnly) {
     // Query only local client capabilities; no defaults, connection or secrets.
     $help=$run(['mariadb-dump','--no-defaults','--help'],null,false,3);
-    try{$dumpArgs=orgavela_dump_client_args($help,$dry);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}
+    $dumpHelp=$help;
+    if(!$unverifiedTls){try{$dumpArgs=orgavela_dump_client_args($help,$dry);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}}
     $statementLimitSupported=str_contains($help,'--max-statement-time');unset($help);
-    $phase('dump_client_validated');
+    if(!$unverifiedTls)$phase('dump_client_validated');
     }
     $config=orgavela_parse_config(file_get_contents($root.'/wp-config.php'));
     $host=$config['DB_HOST']; $port=3306;
     if (preg_match('/^([^:]+):([0-9]{1,5})$/D',$host,$m)) { $host=$m[1];$port=(int)$m[2]; }
-    $db=@new mysqli($host,$config['DB_USER'],$config['DB_PASSWORD'],$config['DB_NAME'],$port);
+    if($unverifiedTls && !$abortOnly){
+        if(!is_executable('/usr/bin/openssl') || !is_executable('/usr/bin/timeout'))throw new RuntimeException('TLS peer reader unavailable');
+        $peer=$run(['/usr/bin/timeout','-k','2','10','/usr/bin/openssl','s_client','-starttls','mysql','-connect',$host.':'.$port,'-showcerts','-no_ign_eof'],null,false,10);
+        if(!preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s',$peer,$match))throw new RuntimeException('TLS peer missing');
+        $peerFingerprint=strtoupper((string)openssl_x509_fingerprint($match[0],'sha1'));
+        unset($peer,$match);
+        $dumpArgs=orgavela_dump_client_args($dumpHelp,$dry,$peerFingerprint);unset($dumpHelp);$phase('dump_client_validated');
+        $db=mysqli_init();$db->options(MYSQLI_OPT_CONNECT_TIMEOUT,10);$db->options(MYSQLI_OPT_READ_TIMEOUT,10);$db->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,false);
+        $db->ssl_set(null,null,null,null,null);
+        if(!@$db->real_connect($host,$config['DB_USER'],$config['DB_PASSWORD'],$config['DB_NAME'],$port,null,MYSQLI_CLIENT_SSL|MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT))throw new RuntimeException('encrypted control session required');
+        $controlTls=$db->query("SHOW SESSION STATUS LIKE 'Ssl_cipher'");$controlRow=$controlTls?$controlTls->fetch_row():null;
+        if(!$controlRow || !is_string($controlRow[1]) || $controlRow[1]==='')throw new RuntimeException('encrypted control session required');
+        unset($controlTls,$controlRow);
+        $phase('database_control_tls_verified');
+    }else{$db=@new mysqli($host,$config['DB_USER'],$config['DB_PASSWORD'],$config['DB_NAME'],$port);}
     if ($db->connect_errno) throw new RuntimeException('database');
     $db->set_charset('utf8mb4'); $table=$config['table_prefix'].'options';
     foreach (['siteurl','home'] as $option) {
@@ -197,10 +215,10 @@ try {
     $databaseTls=false;
     if(!$abortOnly) {
         $help=$run(['mariadb','--no-defaults','--help'],null,false,3);
-        if(!str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,'--ssl-ca'))throw new RuntimeException('TLS verification unavailable');
+        if(!str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,$unverifiedTls?'--ssl-fp':'--ssl-ca'))throw new RuntimeException('TLS verification unavailable');
         $client="[client]\n";
         foreach(['user'=>$config['DB_USER'],'password'=>$config['DB_PASSWORD'],'host'=>$host,'port'=>(string)$port]as$k=>$v)$client.=$k.'='.orgavela_client_value($v)."\n";
-        $tls=$run(array_merge(['mariadb','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args(),['--connect-timeout=10','--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--',$config['DB_NAME']]),$client,false,12);
+        $tls=$run(array_merge(['mariadb','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args($peerFingerprint),['--connect-timeout=10','--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--',$config['DB_NAME']]),$client,false,12);
         if(!preg_match('/^Ssl_cipher\t[A-Za-z0-9_-]+$/D',trim($tls)))throw new RuntimeException('TLS not negotiated');
         unset($tls,$client,$help);$databaseTls=true;$phase('database_tls_verified');
     }
@@ -220,6 +238,7 @@ try {
         $result=['schema'=>'orgavela-filesystem-memory-probe/v2','ustar_paths_verified'=>true,'completed'=>true,'filesystem_entries'=>$entryCount,
             'compressed_bytes'=>$bytes,'seconds'=>round(microtime(true)-$probeAt,3),
             'maintenance_created'=>false,'table_locks_used'=>false,'file_data_logged'=>false,'data_discarded'=>true,'backup_saved'=>false];
+        if($unverifiedTls){$result['schema']=str_replace('/v2','/v3',$result['schema']);$result=array_merge($result,['tls_verified'=>true,'server_certificate_verified'=>false,'database_tls_policy'=>'orgavela-backup-encrypted-unverified-20261107','database_tls_exception_authorization'=>'bd622f9fa9e926d7af866676af1a0224cb9d92c0','database_control_connection_tls_verified'=>true,'database_peer_continuity_enforced'=>true]);}
         $cleanup();echo json_encode($result,JSON_THROW_ON_ERROR)."\n";exit(0);
     }
     if($databaseOnly){
@@ -228,9 +247,10 @@ try {
         $name=$config['DB_NAME'];unset($config);$db->close();$db=null;
         $probeAt=microtime(true);$sql=$run(array_merge($dumpArgs,['--',$name]),$client,true,25);
         $bytes=strlen($sql);unset($sql,$client,$name);
-        $result=['schema'=>'orgavela-database-dump-probe/v2','tls_verified'=>$databaseTls,'server_certificate_verified'=>true,'completed'=>true,'table_count'=>count($tables),
+        $result=['schema'=>'orgavela-database-dump-probe/v2','tls_verified'=>$databaseTls,'server_certificate_verified'=>!$unverifiedTls,'completed'=>true,'table_count'=>count($tables),
             'compressed_bytes'=>$bytes,'seconds'=>round(microtime(true)-$probeAt,3),
             'maintenance_created'=>false,'table_locks_used'=>false,'row_data_logged'=>false,'data_discarded'=>true,'backup_saved'=>false];
+        if($unverifiedTls){$result['schema']=str_replace('/v2','/v3',$result['schema']);$result=array_merge($result,['tls_verified'=>true,'server_certificate_verified'=>false,'database_tls_policy'=>'orgavela-backup-encrypted-unverified-20261107','database_tls_exception_authorization'=>'bd622f9fa9e926d7af866676af1a0224cb9d92c0','database_control_connection_tls_verified'=>true,'database_peer_continuity_enforced'=>true]);}
         $cleanup();echo json_encode($result,JSON_THROW_ON_ERROR)."\n";exit(0);
     }
     if(defined('ORGAVELA_ABORT_PREFLIGHT') && ORGAVELA_ABORT_PREFLIGHT===true) {
@@ -349,7 +369,7 @@ try {
     if(orgavela_capture_origin_status()!==200)throw new RuntimeException('origin recovery unverified');
     $phase('origin_recovered');
     $evidence=['schema'=>'orgavela-ssh-capture-evidence/v3','capture_mode'=>'production',
-        'database_tls_verified'=>$databaseTls,'database_server_certificate_verified'=>true,
+        'database_tls_verified'=>$databaseTls,'database_server_certificate_verified'=>!$unverifiedTls,
         'filesystem_consistency'=>'quiesced','database_consistency'=>'single-transaction',
         'quiescence'=>['wordpress_maintenance'=>true,'all_table_read_locks'=>true,'stable_file_hashes'=>true,'archive_matches_inventory'=>true,
             'maintenance_seconds'=>round(microtime(true)-$maintenanceAt,3),'maintenance_removed'=>true,
@@ -358,6 +378,7 @@ try {
         'table_count'=>count($tables),'filesystem_entries'=>count($after),
         'components'=>['database'=>['sha256'=>hash('sha256',$buffers['database.sql.gz'])],
             'wordpress'=>['sha256'=>hash('sha256',$buffers['wordpress-files.tar.gz'])]]];
+    if($unverifiedTls){$evidence['schema']='orgavela-ssh-capture-evidence/v4';$evidence=array_merge($evidence,['database_tls_policy'=>'orgavela-backup-encrypted-unverified-20261107','database_tls_exception_authorization'=>'bd622f9fa9e926d7af866676af1a0224cb9d92c0','database_control_connection_tls_verified'=>true,'database_peer_continuity_enforced'=>true]);}
     $buffers['capture-evidence.json']=json_encode($evidence,JSON_THROW_ON_ERROR);
     // Capture is already complete and maintenance is off before any network transfer.
     $write=static function(string $data): void { $offset=0;while($offset<strlen($data)){$n=fwrite(STDOUT,substr($data,$offset,65536));if(!$n)throw new RuntimeException('transfer');$offset+=$n;} };

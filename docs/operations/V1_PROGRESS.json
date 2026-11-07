@@ -368,6 +368,22 @@
       "provider_question_prepared_privately": true,
       "provider_message_sent": false,
       "report": "docs/operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md"
+    },
+    "o03_database_tls_exception_20261107": {
+      "approval_sha": "bd622f9fa9e926d7af866676af1a0224cb9d92c0",
+      "scope": "OrgaVela database backup/probes only",
+      "status": "implemented_pending_integration_and_live_attempt",
+      "tls_required": true,
+      "server_certificate_verified": false,
+      "ssh_host_key_verification_enabled": true,
+      "https_certificate_verification_enabled": true,
+      "plaintext_fallback_refused_in_synthetic_client_dump_and_control": true,
+      "untrusted_peer_continuity_is_not_server_authentication": true,
+      "capture_schema": "orgavela-ssh-capture-evidence/v4",
+      "release_manifest_schema": "orgavela-github-release-backup-public-manifest/v3",
+      "new_hosting_attempt_on_this_code": false,
+      "formal_o03_accepted": false,
+      "report": "docs/operations/O03_DATABASE_TLS_EXCEPTION_2026-11-07.md"
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",

@@ -229,3 +229,8 @@ Diagnose-Nachtrag: Engine `dc9e3ca` / Controller `d34d2aa`, exakte CI vollständ
 | Echter Dump, Archiv-/Zeitgrenzen, Produktionsrelease und dessen kompletter Rückdownload/Restore | Kein positiver Produktionsbeleg | OFFEN, vor Wartung/Snapshot gestoppt |
 
 Eine unabhängige öffentliche HTTP-Prüfung nach dem Fehler lieferte 200. Das ist kein Ersatz für Zertifikats-, Prozess- oder Restorebelege. Kein Providerkontakt versendet; konkreter privater Supportentwurf vorbereitet. Synthetischer Exact-Release-Restore `42362945948` bleibt ausdrücklich synthetisch. V1/O03/B04/R formal offen, Zähler unverändert. [Gesamtbefund](../operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md).
+
+
+### O03 – freigegebene Datenbank-TLS-Ausnahme (07.11.2026)
+
+Betreiberfreigabe `bd622f9fa9e926d7af866676af1a0224cb9d92c0` ersetzt für den OrgaVela-Datenbank-Backup-/Probezugriff die bisherige CA-/Hostnamen-Abnahmevoraussetzung. TLS bleibt zwingend, SSH-/HTTPS-Prüfungen bleiben aktiv. Source-Konfiguration ausdrücklich pro Datenbank-Backup-/Probeweg; kein Klartextfallback, keine anderen Projekte oder Zeitpläne. Capture-v4, Ressourcen-v3 und Paket-/Release-v3 müssen Zertifikatsprüfung False samt exaktem Ausnahmemodus/Freigabe ausweisen. Beobachteter Peer-Fingerabdruck ist nur Kontinuitäts-/TLS-Zwang und keine authentisierte Serveridentität. Standardmodus und alte geprüfte Nachweise behalten ihren Vertrag. Lokal46 Regressionen und tatsächliche TLS-/Dump-Positiv-/Negativproben PASS; neuer IONOS-Beleg fehlt noch. Zuerst reguläre Integration/exakte CI, frische Recovery/Preflight, Dump-/Archivgrenzen, dann eigentlicher Capture/Release-Rückdownload/isolierter Restore. Formale V1-/O03-Abnahme und Zähler unverändert. [Details](../operations/O03_DATABASE_TLS_EXCEPTION_2026-11-07.md).

@@ -56,6 +56,8 @@ def live_program(binding, *, maintenance_approved=False):
     if maintenance_approved is not True:
         raise ProbeError('explicit maintenance approval required')
     program = build_remote_candidate(binding.root, binding.user)
+    from database_tls_policy import unverified_enabled, APPROVAL
+    if unverified_enabled():program=program.replace(b'<?php',b'<?php\nconst ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL = '+repr(APPROVAL).encode()+b';',1)
     marker = b'const ORGAVELA_CAPTURE_ENTRYPOINT_ENABLED = false;'
     if program.count(marker) != 1:
         raise ProbeError('unexpected capture entrypoint')
@@ -250,7 +252,7 @@ def abort_preflight(binding, *, password, maintenance_approved=False):
     return evidence
 
 
-SAFE_PHASES={'source_validating','source_root_rejected','source_core_files_rejected','source_uploads_rejected','source_disk_space_rejected','source_maintenance_rejected','source_inventory_rejected','inventory_invalid_name','inventory_entry_limit','inventory_symlink','inventory_total_size','inventory_unreadable_file','inventory_unsupported_entry','inventory_ustar_path','scope_validated','dump_client_validated','database_validated','database_tls_probe_started','database_tls_verified','database_dump_started','filesystem_tar_started','database_dump_deadline','database_dump_stream_deadline','database_dump_no_output_deadline','filesystem_tar_deadline','dump_process_failed','dump_auth_failed','dump_database_missing','dump_lock_timeout','dump_statement_timeout','dump_connection_failed','dump_connection_lost','system_trust_runtime_unverified','system_trust_store_unavailable','system_trust_store_owner_mismatch','system_trust_store_writable','system_trust_ancestor_unsafe','dump_tls_error','dump_tls_unavailable','dump_tls_hostname_mismatch','dump_tls_certificate_dates','dump_tls_certificate_untrusted','dump_permission_denied','dump_option_unsupported','watchdog_starting','watchdog_ready','maintenance_active','maintenance_origin_verified','tables_locked','dump_complete','files_complete','archive_inventory_verified','files_verified','maintenance_removed','origin_recovered','stream_complete'}
+SAFE_PHASES={'database_tls_exception_refused','database_tls_peer_unbound','database_tls_peer_started','database_control_tls_verified','source_validating','source_root_rejected','source_core_files_rejected','source_uploads_rejected','source_disk_space_rejected','source_maintenance_rejected','source_inventory_rejected','inventory_invalid_name','inventory_entry_limit','inventory_symlink','inventory_total_size','inventory_unreadable_file','inventory_unsupported_entry','inventory_ustar_path','scope_validated','dump_client_validated','database_validated','database_tls_probe_started','database_tls_verified','database_dump_started','filesystem_tar_started','database_dump_deadline','database_dump_stream_deadline','database_dump_no_output_deadline','filesystem_tar_deadline','dump_process_failed','dump_auth_failed','dump_database_missing','dump_lock_timeout','dump_statement_timeout','dump_connection_failed','dump_connection_lost','system_trust_runtime_unverified','system_trust_store_unavailable','system_trust_store_owner_mismatch','system_trust_store_writable','system_trust_ancestor_unsafe','dump_tls_error','dump_tls_unavailable','dump_tls_hostname_mismatch','dump_tls_certificate_dates','dump_tls_certificate_untrusted','dump_permission_denied','dump_option_unsupported','watchdog_starting','watchdog_ready','maintenance_active','maintenance_origin_verified','tables_locked','dump_complete','files_complete','archive_inventory_verified','files_verified','maintenance_removed','origin_recovered','stream_complete'}
 
 
 def resource_probe(binding, kind, *, password, maintenance_approved=False,phase_callback=None):
@@ -264,6 +266,9 @@ def resource_probe(binding, kind, *, password, maintenance_approved=False,phase_
         evidence=json.loads(output.read_bytes())
     common={'completed':True,'maintenance_created':False,'table_locks_used':False,'data_discarded':True,'backup_saved':False}
     expected={'schema':'orgavela-database-dump-probe/v2','tls_verified':True,'server_certificate_verified':True,'table_count':52,'row_data_logged':False} if kind=='database' else {'schema':'orgavela-filesystem-memory-probe/v2','ustar_paths_verified':True,'file_data_logged':False}
+    from database_tls_policy import unverified_enabled, EXTRA
+    if unverified_enabled():
+        expected={**expected,**EXTRA,'schema':expected['schema'].replace('/v2','/v3'),'tls_verified':True,'server_certificate_verified':False}
     if set(evidence)!=set(common)|set(expected)|{'compressed_bytes','seconds'}|({'filesystem_entries'} if kind=='filesystem' else set()):raise ProbeError('resource evidence shape')
     for k,v in {**common,**expected}.items():
         if evidence[k]!=v or type(evidence[k]) is not type(v):raise ProbeError('resource probe incomplete')

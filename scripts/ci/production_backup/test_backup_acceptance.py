@@ -63,6 +63,49 @@ class BackupAcceptance(unittest.TestCase):
             self.assertEqual(len(writer.assets(out,synthetic=True,restore_record=record)[1]),3)
             with self.assertRaises(ValueError):writer.assets(out,synthetic=True)
 
+    def test_approved_unverified_manifest_and_restored_evidence_remain_explicit(self):
+        import pgpy
+        from database_tls_policy import EXTRA,TRANSPORT
+        with tempfile.TemporaryDirectory() as folder,patch.dict(os.environ,{'GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1','GITHUB_SHA':'a'*40}):
+            root=Path(folder);public,record=self.prepare(root);source=root/'source.tar'
+            fixtures.snapshot(source,mutate=lambda e:e.update(schema='orgavela-ssh-capture-evidence/v4',database_server_certificate_verified=False,**EXTRA))
+            components=root/'components';components.mkdir(mode=0o700);collector.accept_snapshot(source,components)
+            out=root/'cipher';out.mkdir(mode=0o700)
+            manifest=crypto.package(components,out,'orgavela-synthetic-unverified',restore_public=public,restore_record=record)
+            self.assertEqual(manifest['schema'],'orgavela-github-release-backup-public-manifest/v3')
+            self.assertEqual(manifest['database_transport'],TRANSPORT)
+            self.assertFalse(manifest['database_transport']['server_certificate_verified'])
+            writer.assets(out,synthetic=True,restore_record=record)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore');clear=bytes(self.key.decrypt(pgpy.PGPMessage.from_blob((out/'orgavela-synthetic-unverified.tar.gpg').read_bytes())).message)
+            plain=root/'clear.tar';plain.write_bytes(clear);restored=root/'restored';restored.mkdir(mode=0o700)
+            recovery.validate_package(plain,restored,restore_record=record)
+            self.assertFalse(json.loads((restored/'capture-evidence.json').read_text())['database_server_certificate_verified'])
+            bad=copy.deepcopy(manifest);bad['database_transport']['server_certificate_verified']=True
+            (out/'manifest.json').write_text(json.dumps(bad))
+            with self.assertRaises(ValueError):writer.assets(out,synthetic=True,restore_record=record)
+
+    def test_unverified_requires_exact_approval_encryption_and_honest_certificate_flag(self):
+        from database_tls_policy import EXTRA,unverified_enabled,MODE
+        self.assertFalse(unverified_enabled({}));self.assertTrue(unverified_enabled({'ORGAVELA_DATABASE_TLS_MODE':MODE}))
+        with self.assertRaises(ValueError):unverified_enabled({'ORGAVELA_DATABASE_TLS_MODE':'anything'})
+        for problem in (None,'legacy','missing-approval','wrong-approval','plaintext','claimed-verified','control-plaintext','peer-unbound'):
+            with self.subTest(problem=problem),tempfile.TemporaryDirectory() as folder:
+                root=Path(folder);source=root/'source.tar';target=root/'parts';target.mkdir(mode=0o700)
+                def mutate(e):
+                    e.update(schema='orgavela-ssh-capture-evidence/v4',database_server_certificate_verified=False,**EXTRA)
+                    if problem=='legacy':e['schema']='orgavela-ssh-capture-evidence/v3'
+                    if problem=='missing-approval':e.pop('database_tls_exception_authorization')
+                    if problem=='wrong-approval':e['database_tls_exception_authorization']='0'*40
+                    if problem=='plaintext':e['database_tls_verified']=False
+                    if problem=='claimed-verified':e['database_server_certificate_verified']=True
+                    if problem=='control-plaintext':e['database_control_connection_tls_verified']=False
+                    if problem=='peer-unbound':e['database_peer_continuity_enforced']=False
+                fixtures.snapshot(source,mutate=mutate)
+                if problem:
+                    with self.assertRaises(ValueError):collector.accept_snapshot(source,target)
+                else:collector.accept_snapshot(source,target)
+
     def test_foreign_expired_mixed_private_or_tampered_public_recipient_refused(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);public,record=self.prepare(root)

@@ -44,9 +44,10 @@ def validate_package(decrypted, destination, *, primary=PRIMARY_FPR, subkey=SUBK
             if len(suffix) < 1024 or any(suffix) or decrypted.stat().st_size % 512:
                 raise ProbeError('unexpected recovery suffix')
         manifest = json.loads((destination / 'manifest.json').read_text(), object_pairs_hook=unique_pairs)
-        if not isinstance(manifest, dict) or set(manifest) != {'schema', 'backup_id', 'mode', 'scope', 'components', 'encryption'}:
+        unverified=isinstance(manifest,dict) and manifest.get('schema')=='orgavela-backup-package/v3'
+        if not isinstance(manifest, dict) or set(manifest) != {'schema', 'backup_id', 'mode', 'scope', 'components', 'encryption'} | ({'database_transport'} if unverified else set()):
             raise ProbeError('invalid recovery manifest')
-        if manifest['schema'] != ('orgavela-backup-package/v2' if restore_record is not None else 'orgavela-backup-package/v1') or manifest['mode'] not in ('synthetic', 'production') or set(manifest['components']) != NAMES:
+        if manifest['schema'] != ('orgavela-backup-package/v3' if unverified else 'orgavela-backup-package/v2' if restore_record is not None else 'orgavela-backup-package/v1') or manifest['mode'] not in ('synthetic', 'production') or set(manifest['components']) != NAMES:
             raise ProbeError('invalid recovery identity')
         prefix = 'orgavela-synthetic-' if manifest['mode'] == 'synthetic' else 'orgavela-wordpress-'
         if not isinstance(manifest['backup_id'], str) or not re.fullmatch(re.escape(prefix) + r'[A-Za-z0-9_-]{3,100}', manifest['backup_id']):
@@ -71,6 +72,11 @@ def validate_package(decrypted, destination, *, primary=PRIMARY_FPR, subkey=SUBK
             if data.stat().st_size != expected['bytes'] or digest.hexdigest() != expected['sha256']:
                 raise ProbeError('recovery component mismatch')
         evidence = validate_components(destination)
+        from database_tls_policy import transport_summary,validate_transport
+        transport=transport_summary(evidence)
+        if unverified:
+            if validate_transport(manifest.get('database_transport'))!=transport:raise ProbeError('database transport mismatch')
+        elif transport is not None:raise ProbeError('database transport declaration missing')
         if manifest['scope'] != evidence['scope']:
             raise ProbeError('recovery scope mismatch')
         return {'backup_id':manifest['backup_id'],'component_hashes_verified': 3, 'mode': manifest['mode'], 'database_imported': False,

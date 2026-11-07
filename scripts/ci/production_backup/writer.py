@@ -54,6 +54,9 @@ def assets(work, *, synthetic=False,restore_record=None):
         validate(restore_record)
         expected['schema']='orgavela-github-release-backup-public-manifest/v2'
         expected['restore_recipient']=restore_record
+    if manifest.get('schema')=='orgavela-github-release-backup-public-manifest/v3':
+        from database_tls_policy import validate_transport
+        expected.update(schema=manifest['schema'],database_transport=validate_transport(manifest.get('database_transport')))
     if manifest!=expected or any(type(manifest.get(k)) is not type(v) for k,v in expected.items()): raise WriterError('public manifest policy mismatch')
     if (work/sidecar).read_text()!=result[archive]['sha256']+'  '+archive+'\n': raise WriterError('sidecar mismatch')
     try: inspect_cipher(work/archive,SUBKEY_FPR,restore_subkey=restore_record['subkey'] if restore_record else None)
@@ -128,6 +131,14 @@ def verify_release(token, rid, bid, expected, *, draft):
 def publish(token,bid,entries,*,synthetic=False,target_sha=None):
     if type(synthetic) is not bool or not bid.startswith('orgavela-synthetic-' if synthetic else 'orgavela-wordpress-'):raise WriterError('publication mode refused')
     if target_sha is not None and not re.fullmatch(r'[a-f0-9]{40}',target_sha):raise WriterError('publication commit refused')
+    transport=None
+    if 'manifest.json' in entries:
+        manifest=json.loads(regular(entries['manifest.json']['path'],16384).read_bytes(),object_pairs_hook=unique_pairs)
+        if 'database_transport' in manifest:
+            from database_tls_policy import validate_transport
+            transport=validate_transport(manifest['database_transport'])
+    body=('Synthetic-only' if synthetic else 'Production')+' OpenPGP encrypted backup. All assets fully read back before and after publication.'
+    if transport is not None:body+=' Database TLS encrypted; server_certificate_verified=false; authorized exception '+transport['exception_authorization']+'. Peer continuity does not authenticate server identity.'
     path='/repos/'+REPOSITORY+'/releases'
     try: request_json(path+'/tags/'+bid,token)
     except WriterError as e:
@@ -138,7 +149,7 @@ def publish(token,bid,entries,*,synthetic=False,target_sha=None):
         if error.status!=404: raise
     else: raise WriterError('backup tag already exists; refusing overwrite')
     created=request_json(path,token,method='POST',data={'tag_name':bid,'name':bid,'target_commitish':target_sha or 'main',
-        'body':('Synthetic-only' if synthetic else 'Production')+' OpenPGP encrypted backup. All assets fully read back before and after publication.',
+        'body':body,
         'draft':True,'prerelease':synthetic,'make_latest':'false'})
     rid=created.get('id')
     if type(rid) is not int or rid<1 or created.get('draft') is not True or created.get('tag_name')!=bid:
@@ -150,9 +161,11 @@ def publish(token,bid,entries,*,synthetic=False,target_sha=None):
     verify_release(token,rid,bid,entries,draft=True)
     request_json(path+'/'+str(rid),token,method='PATCH',data={'draft':False,'make_latest':'false'})
     verify_release(token,rid,bid,entries,draft=False)
-    return {'schema':'orgavela-synthetic-release-evidence/v1' if synthetic else 'orgavela-production-release-evidence/v1','backup_id':bid,'release_id':rid,
+    evidence={'schema':'orgavela-synthetic-release-evidence/v1' if synthetic else 'orgavela-production-release-evidence/v1','backup_id':bid,'release_id':rid,
         'repository':REPOSITORY,'immutable_verified':True,'draft_full_readback':True,
         'published_full_readback':True,'asset_count':len(entries),'restore_tested':False}
+    if transport is not None:evidence['database_transport']=transport
+    return evidence
 
 
 def main():
