@@ -47,13 +47,26 @@ try {
     while(true){if(microtime(true)>$deadline)throw new RuntimeException('auth deadline');$read=[$local,$remote];$w=null;$e=null;if(!stream_select($read,$w,$e,1))continue;
         foreach($read as$s){$p=bridge_packet($s);if($s===$remote){$end=ord($p[4])===0||ord($p[4])===255;bridge_write($local,bridge_seq($p,-1));if($end)break 2;}else bridge_write($remote,bridge_seq($p,1));}}
     foreach($pipes as$s)stream_set_blocking($s,false);stream_set_blocking($local,false);stream_set_blocking($remote,false);
-    $deadline=microtime(true)+80;$exit=null;
-    while(true){if(microtime(true)>$deadline)throw new RuntimeException('deadline');$state=proc_get_status($child);if(!$state['running']&&$exit===null)$exit=$state['exitcode'];
-        $read=[];foreach([$local,$remote,$pipes[1],$pipes[2]]as$s)if(is_resource($s)&&!feof($s))$read[]=$s;
-        if($exit!==null&&feof($pipes[1])&&feof($pipes[2]))break;
-        if(!$read){usleep(10000);continue;}$w=null;$e=null;if(!stream_select($read,$w,$e,0,100000))continue;
-        foreach($read as$s){$data=fread($s,65536);if($data===false)throw new RuntimeException('relay');if($data===''){if(($s===$local||$s===$remote)&&feof($s))@stream_socket_shutdown($s===$local?$remote:$local,STREAM_SHUT_WR);continue;}
-            if($s===$pipes[1])bridge_write(STDOUT,$data);elseif($s===$pipes[2])bridge_write(STDERR,$data);else { $to=$s===$local?$remote:$local;stream_set_blocking($to,true);bridge_write($to,$data);stream_set_blocking($to,false);}}
+    $deadline=microtime(true)+80;$exit=null;$toLocal='';$toRemote='';$localEnd=false;$remoteEnd=false;$localShutdown=false;$remoteShutdown=false;
+    while(true){
+        if(microtime(true)>$deadline)throw new RuntimeException('deadline');$state=proc_get_status($child);if(!$state['running']&&$exit===null)$exit=$state['exitcode'];
+        if($exit!==null&&feof($pipes[1])&&feof($pipes[2])){if($toLocal!=='')throw new RuntimeException('relay');break;}
+        // Drain client output even while its network input is backpressured.
+        // Each direction has a fixed 128KiB cap; never block in a socket write.
+        $read=[];foreach([$pipes[1],$pipes[2]]as$s)if(!feof($s))$read[]=$s;
+        if(!$localEnd&&strlen($toRemote)<131072)$read[]=$local;
+        if(!$remoteEnd&&strlen($toLocal)<131072)$read[]=$remote;
+        $write=[];if($toLocal!=='')$write[]=$local;if($toRemote!=='')$write[]=$remote;
+        if(!$read&&!$write){usleep(10000);continue;}$e=null;if(!stream_select($read,$write,$e,0,100000))continue;
+        foreach($read as$s){$limit=$s===$local?131072-strlen($toRemote):($s===$remote?131072-strlen($toLocal):65536);$data=fread($s,min(65536,$limit));if($data===false)throw new RuntimeException('relay');
+            if($data===''){if(feof($s)){if($s===$local)$localEnd=true;elseif($s===$remote)$remoteEnd=true;}continue;}
+            if($s===$pipes[1])bridge_write(STDOUT,$data);elseif($s===$pipes[2])bridge_write(STDERR,$data);elseif($s===$local)$toRemote.=$data;else $toLocal.=$data;
+        }
+        foreach($write as$s){$buffer=$s===$local?$toLocal:$toRemote;$n=fwrite($s,substr($buffer,0,65536));if($n===false||($n===0&&(feof($s)||stream_get_meta_data($s)['timed_out'])))throw new RuntimeException('write');
+            if($s===$local)$toLocal=substr($toLocal,$n);else $toRemote=substr($toRemote,$n);
+        }
+        if($localEnd&&$toRemote===''&&!$remoteShutdown){@stream_socket_shutdown($remote,STREAM_SHUT_WR);$remoteShutdown=true;}
+        if($remoteEnd&&$toLocal===''&&!$localShutdown){@stream_socket_shutdown($local,STREAM_SHUT_WR);$localShutdown=true;}
     }
     $ok=$exit===0;
 }catch(Throwable $e){if(is_resource($child)&&isset($pipes[2])){stream_set_blocking($pipes[2],false);fwrite(STDERR,stream_get_contents($pipes[2],16384));}$reason=$e->getMessage();$allowed=['input','listen','client','accept','connect','greeting','capabilities','TLS required','auth','TLS','peer','cipher','auth deadline','deadline','relay','read','write'];$reason=in_array($reason,$allowed,true)?str_replace(' ','_',strtolower($reason)):'internal';fwrite(STDERR,"ORGAVELA_TLS_BRIDGE_REFUSED=".$reason."\n");}
