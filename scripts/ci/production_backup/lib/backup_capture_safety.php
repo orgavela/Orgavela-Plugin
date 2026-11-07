@@ -95,9 +95,16 @@ function orgavela_lock_capture_tables(mysqli $db, array $tables): bool {
     return (bool)$db->query('LOCK TABLES '.implode(',',array_map(static fn($t)=>'`'.$t.'` READ',$tables)).' WAIT 2');
 }
 
+/** Use only the root-owned operating-system trust store; no per-run trust override. */
+function orgavela_database_tls_args(): array {
+    $ca='/etc/ssl/certs/ca-certificates.crt';
+    if(!is_file($ca) || !is_readable($ca) || fileowner($ca)!==0 || (fileperms($ca)&0022)!==0)throw new RuntimeException('system CA store unavailable');
+    return ['--protocol=tcp','--ssl','--ssl-verify-server-cert','--ssl-ca='.$ca];
+}
+
 function orgavela_dump_client_args(string $help, bool $schema): array {
-    if (!str_contains($help,'--defaults-file') || !str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol')) throw new RuntimeException('controlled defaults unsupported');
-    $args=['mariadb-dump','--defaults-file=/proc/self/fd/3','--protocol=tcp','--ssl','--ssl-verify-server-cert','--single-transaction','--skip-lock-tables'];
+    if (!str_contains($help,'--defaults-file') || !str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,'--ssl-ca')) throw new RuntimeException('controlled defaults unsupported');
+    $args=array_merge(['mariadb-dump','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args(),['--single-transaction','--skip-lock-tables']);
     if (str_contains($help,'--max-statement-time')) $args[]='--max-statement-time='.($schema?'2':'15');
     return array_merge($args,$schema ? ['--skip-triggers','--no-data'] : ['--quick','--hex-blob','--default-character-set=utf8mb4','--skip-comments']);
 }

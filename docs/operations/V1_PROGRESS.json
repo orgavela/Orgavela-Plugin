@@ -2,9 +2,9 @@
   "schema": "uop-v1-progress-v1",
   "project": "UOP Core / OrgaVela",
   "snapshot_date": "2026-10-12",
-  "last_evidence_update_date": "2026-11-05",
+  "last_evidence_update_date": "2026-11-07",
   "latest_verified_operational_evidence": {
-    "as_of_date": "2026-11-05",
+    "as_of_date": "2026-11-07",
     "scope": "OrgaVela only, GitHub main and read-only orgavela.com observation; historical baseline fields must not be mistaken for current facts",
     "github_main_sha_at_o03_rehearsal": "98a064fc6c874055e9676f5e60e9ac4cade964d1",
     "github_main_protected": true,
@@ -188,6 +188,97 @@
       "release_readback_completed": false,
       "real_restore_completed": false,
       "next": "separate O03 real encrypted snapshot/release readback/isolated restore acceptance"
+    },
+    "o03_backup_acceptance_20261107": {
+      "status": "blocked_database_tls_certificate_trust",
+      "engine_sha": "191df34788cb8cf318cb854f981520fa5ae87a64",
+      "controller_sha": "22f07152bdecbe33519a875182ef44e95cb9bd50",
+      "public_prs_integrated": [
+        68,
+        69
+      ],
+      "private_pr_integrated": 3,
+      "exact_engine_ci": {
+        "foundation": 42362634089,
+        "o03": 42362646410,
+        "truth": 42362634121,
+        "circleci": "success",
+        "python_regressions": 44
+      },
+      "controller_main_ci": 42362765358,
+      "temporary_additional_ram_restore_recipient_authorized": true,
+      "owner_private_key_used": false,
+      "synthetic_exact_published_release_restore": {
+        "run_id": 42362945948,
+        "release_id": 437494217,
+        "result": "success",
+        "assets_fully_downloaded": 3,
+        "component_hashes_verified": 3,
+        "restored_tables": 52,
+        "inert_files_restored": 3354,
+        "snapshot_php_executed": false,
+        "actual_source_data": false,
+        "source_accessed": false,
+        "temporary_target_removed": true
+      },
+      "fresh_recovery": {
+        "run_id": 42363188793,
+        "result": "success",
+        "independent_session_removed_only_own_canary": true,
+        "maintenance_created": false
+      },
+      "fresh_preflight": {
+        "run_id": 42363309280,
+        "result": "success",
+        "php_version": "8.3.36",
+        "maintenance_created": false
+      },
+      "database_tls_probe": {
+        "run_id": 42363410543,
+        "result": "failure",
+        "last_phase": "dump_tls_error",
+        "database_client_error": 2026,
+        "detailed_cause_verified": false,
+        "maintenance_created": false,
+        "snapshot_saved": false
+      },
+      "actual_snapshot_published": false,
+      "actual_release_downloaded_and_restored": false,
+      "filesystem_resource_probe_completed": false,
+      "formal_o03_accepted": false,
+      "automatic_schedule_authorized": false,
+      "next": "Integrate explicit root-owned OS CA trust for both TLS probe and dump; repeat exact CI and fresh same-controller prerequisites before live TLS/resource/capture acceptance.",
+      "tls_diagnostic_engine": {
+        "sha": "dc9e3cadb9b9bf1e5496aed9129e31b7baa2390a",
+        "public_pr_integrated": 70,
+        "foundation_ci": 42363996803,
+        "o03_ci": 42363996831,
+        "truth_ci": 42363996798,
+        "circleci": "success",
+        "local_python_regressions": 44,
+        "local_php_helpers": "pass",
+        "controller_sha": "d34d2aab32a66003f70cfe9c4a1daadb854826ad",
+        "private_pr_integrated": 4,
+        "controller_main_ci": 42364095667,
+        "raw_client_errors_exposed": false,
+        "tls_or_certificate_verification_bypassed": false,
+        "fresh_recovery_run": 42364266996,
+        "fresh_preflight_run": 42364398492,
+        "live_probe": {
+          "run_id": 42364472006,
+          "result": "failure",
+          "last_phase": "dump_tls_certificate_untrusted",
+          "maintenance_created": false,
+          "snapshot_saved": false
+        }
+      },
+      "system_ca_fix_synthetic_test": {
+        "tls_and_actual_dump_passed": true,
+        "untrusted_ca_rejected": true,
+        "wrong_hostname_rejected": true,
+        "production_source_accessed": false,
+        "ionos_fix_proven": false
+      }
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",

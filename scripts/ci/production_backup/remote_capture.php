@@ -197,10 +197,10 @@ try {
     $databaseTls=false;
     if(!$abortOnly) {
         $help=$run(['mariadb','--no-defaults','--help'],null,false,3);
-        if(!str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol'))throw new RuntimeException('TLS verification unavailable');
+        if(!str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,'--ssl-ca'))throw new RuntimeException('TLS verification unavailable');
         $client="[client]\n";
         foreach(['user'=>$config['DB_USER'],'password'=>$config['DB_PASSWORD'],'host'=>$host,'port'=>(string)$port]as$k=>$v)$client.=$k.'='.orgavela_client_value($v)."\n";
-        $tls=$run(['mariadb','--defaults-file=/proc/self/fd/3','--protocol=tcp','--ssl','--ssl-verify-server-cert','--connect-timeout=10','--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--',$config['DB_NAME']],$client,false,12);
+        $tls=$run(array_merge(['mariadb','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args(),['--connect-timeout=10','--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--',$config['DB_NAME']]),$client,false,12);
         if(!preg_match('/^Ssl_cipher\t[A-Za-z0-9_-]+$/D',trim($tls)))throw new RuntimeException('TLS not negotiated');
         unset($tls,$client,$help);$databaseTls=true;$phase('database_tls_verified');
     }

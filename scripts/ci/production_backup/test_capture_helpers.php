@@ -72,9 +72,11 @@ try {
         'Certificate verification failure: The certificate is NOT trusted'=>'dump_tls_certificate_untrusted',
         'TLS negotiation failed with private host/user fixture-secret'=>'dump_tls_error'
     ]as$message=>$category)check(orgavela_tls_failure_phase($message)===$category);
-    $help='--defaults-file --protocol --ssl --ssl-verify-server-cert --max-statement-time';
+    $help='--defaults-file --protocol --ssl --ssl-verify-server-cert --ssl-ca --max-statement-time';
     $dump=orgavela_dump_client_args($help,false);
     check(in_array('--ssl',$dump,true)&&in_array('--ssl-verify-server-cert',$dump,true)&&in_array('--protocol=tcp',$dump,true));
+    check(in_array('--ssl-ca=/etc/ssl/certs/ca-certificates.crt',$dump,true));
+    refused(fn()=>orgavela_dump_client_args(str_replace('--ssl-ca','',$help),false));
     refused(fn()=>orgavela_dump_client_args('--defaults-file --protocol',false));
     orgavela_validate_ustar_paths([str_repeat('a',128).'/',str_repeat('a',150).'/'.str_repeat('b',90)]);
     refused(fn()=>orgavela_validate_ustar_paths([str_repeat('a',101)]));
