@@ -45,6 +45,38 @@ def inspect_snapshot_files(path):
     return {'files': files, 'inventory_sha256': inventory.hexdigest()}
 
 
+def restore_snapshot_files(path, destination):
+    """Rebuild every snapshot file as inert private data, then reread/hash it."""
+    import os
+    from pathlib import PurePosixPath
+    destination=Path(destination)
+    if destination.is_symlink() or not destination.is_dir() or any(destination.iterdir()) or destination.stat().st_mode & 0o077:raise ValueError('private empty file-restore target required')
+    seen=set();total=0;files=0;inventory=hashlib.sha256()
+    with tarfile.open(path,'r:gz') as archive:
+        for member in archive:
+            name=PurePosixPath(member.name)
+            if str(name)=='.' and member.isdir():continue
+            if name.is_absolute() or '..' in name.parts or '\\' in member.name or any(c in member.name for c in ('\x00','\r','\n')) or str(name) in seen or not (member.isfile() or member.isdir()):raise ValueError('unsafe restore member')
+            seen.add(str(name))
+            if len(seen)>50000:raise ValueError('restore member limit')
+            target=destination.joinpath(*name.parts)
+            if member.isdir():target.mkdir(mode=0o700,parents=True,exist_ok=True);continue
+            total+=member.size
+            if total>1073741824:raise ValueError('restored file size limit')
+            target.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+            expected=hashlib.sha256()
+            with archive.extractfile(member) as source,os.fdopen(os.open(target,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600),'wb') as output:
+                size=0
+                while block:=source.read(1024*1024):size+=len(block);expected.update(block);output.write(block)
+            if size!=member.size:raise ValueError('restored length mismatch')
+            actual=hashlib.sha256()
+            with target.open('rb') as source:
+                while block:=source.read(1024*1024):actual.update(block)
+            if actual.digest()!=expected.digest():raise ValueError('restored content mismatch')
+            inventory.update(member.name.encode('utf-8')+b'\0'+actual.digest());files+=1
+    return {'files':files,'inventory_sha256':inventory.hexdigest()}
+
+
 def restore_components(components, *, expected_home):
     if expected_home not in ('https://orgavela.com', 'http://127.0.0.1:8762'):
         raise ValueError('unexpected source identity')
@@ -71,6 +103,9 @@ def restore_components(components, *, expected_home):
     prefix = 'orgavela-recovery-' + secrets.token_hex(6)
     created = []
     with tempfile.TemporaryDirectory(prefix='orgavela-isolated-recovery-') as folder:
+        data_target=Path(folder)/'inert-snapshot-files';data_target.mkdir(mode=0o700)
+        rebuilt=restore_snapshot_files(components/'wordpress-files.tar.gz',data_target)
+        if rebuilt!=inspected:raise ValueError('reconstructed snapshot tree mismatch')
         environment = Path(folder) / 'database.env'
         password = secrets.token_urlsafe(32)
         environment.write_text('MARIADB_DATABASE=restore_private\nMARIADB_USER=restore\nMARIADB_PASSWORD=' + password + '\nMARIADB_RANDOM_ROOT_PASSWORD=1\n')
@@ -135,5 +170,5 @@ def restore_components(components, *, expected_home):
                 raise RuntimeError('private recovery cleanup incomplete; inspect local Docker resources')
     return {'isolated_wordpress_bootstrap': True, 'restored_tables': 52, 'public_ports': 0,
             'source_accessed': False, 'clone_plugins_disabled': True, 'temporary_target_removed': True,
-            'snapshot_files_inspected': inspected['files'], 'snapshot_inventory_sha256': inspected['inventory_sha256'],
+            'snapshot_files_restored':rebuilt['files'],'snapshot_file_bytes_verified':True,'snapshot_files_inspected': inspected['files'], 'snapshot_inventory_sha256': inspected['inventory_sha256'],
             'snapshot_php_executed': False, 'trusted_core_version': core_version, 'trusted_core_sha256': CORES[core_version]}

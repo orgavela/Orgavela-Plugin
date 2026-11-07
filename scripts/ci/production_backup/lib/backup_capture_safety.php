@@ -43,6 +43,19 @@ function orgavela_capture_inventory(string $root): array {
     return $result;
 }
 
+/** USTAR uses byte-limited name/prefix fields; fail before maintenance. */
+function orgavela_validate_ustar_paths(array $paths): void {
+    foreach($paths as $relative) {
+        $path='./'.$relative;
+        if(strlen($path)<=100)continue;
+        $ok=false;
+        for($at=0;($at=strpos($path,'/',$at))!==false;$at++) {
+            if($at<=155 && strlen(substr($path,$at+1))<=100 && (strlen(substr($path,$at+1))>0 || str_ends_with($relative,'/'))){$ok=true;break;}
+        }
+        if(!$ok)throw new OrgaVelaInventoryRejection('inventory_ustar_path');
+    }
+}
+
 function orgavela_remove_owned_maintenance(string $path, string $hash): bool {
     if (!file_exists($path)) return true;
     if (is_link($path) || !hash_equals($hash, (string)hash_file('sha256', $path))) return false;
@@ -73,8 +86,8 @@ function orgavela_lock_capture_tables(mysqli $db, array $tables): bool {
 }
 
 function orgavela_dump_client_args(string $help, bool $schema): array {
-    if (!str_contains($help,'--defaults-file')) throw new RuntimeException('controlled defaults unsupported');
-    $args=['mariadb-dump','--defaults-file=/proc/self/fd/3','--single-transaction','--skip-lock-tables'];
+    if (!str_contains($help,'--defaults-file') || !str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol')) throw new RuntimeException('controlled defaults unsupported');
+    $args=['mariadb-dump','--defaults-file=/proc/self/fd/3','--protocol=tcp','--ssl','--ssl-verify-server-cert','--single-transaction','--skip-lock-tables'];
     if (str_contains($help,'--max-statement-time')) $args[]='--max-statement-time='.($schema?'2':'15');
     return array_merge($args,$schema ? ['--skip-triggers','--no-data'] : ['--quick','--hex-blob','--default-character-set=utf8mb4','--skip-comments']);
 }

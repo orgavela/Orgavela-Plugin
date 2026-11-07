@@ -27,7 +27,7 @@ def snapshot(path,mutate=None,extra_wordpress=()):
         ('wp-content/uploads',None),('wp-content/uploads/fixture.txt',MARKER),
         *extra_wordpress]))
     database=gzip.compress(SQL)
-    evidence={'schema':'orgavela-ssh-capture-evidence/v2','capture_mode':'production',
+    evidence={'schema':'orgavela-ssh-capture-evidence/v3','capture_mode':'production','database_tls_verified':True,'database_server_certificate_verified':True,
         'filesystem_consistency':'quiesced','database_consistency':'single-transaction',
         'scope':dict.fromkeys(('database','wordpress_filesystem','uploads','wp_config'),True),
         'quiescence':dict.fromkeys(('wordpress_maintenance','all_table_read_locks','stable_file_hashes','archive_matches_inventory',

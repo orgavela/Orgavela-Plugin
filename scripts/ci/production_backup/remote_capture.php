@@ -37,7 +37,7 @@ register_shutdown_function($cleanup);
 $checkTime = static function() use ($started): void { if (microtime(true)-$started > 100) throw new RuntimeException('deadline'); };
 $run = static function(array $args, ?string $config, bool $compress, int $limit=60) use (&$active,$checkTime,$phase,$filesystemOnly,&$entryCount,$cleanup,&$work): string {
     $runAt=microtime(true);
-    $kind=$args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump');
+    $kind=$args[0]==='mariadb'?'database_tls_probe':($args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump'));
     if($kind!=='client_help')$phase($kind.'_started');
     $spec = [0=>['file','/dev/null','r'], 1=>['pipe','w'], 2=>['pipe','w']];
     if ($config !== null) $spec[3]=['pipe','r'];
@@ -56,7 +56,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
             $phase($kind.'_deadline');
             if($filesystemOnly && $kind==='filesystem_tar'){
                 // Only aggregate progress crosses SSH. Partial source bytes are discarded.
-                $result=['schema'=>'orgavela-filesystem-memory-probe/v1','completed'=>false,
+                $result=['schema'=>'orgavela-filesystem-memory-probe/v2','ustar_paths_verified'=>true,'completed'=>false,
                     'filesystem_entries'=>$entryCount,'compressed_bytes'=>strlen($output),
                     'seconds'=>round(microtime(true)-$runAt,3),'maintenance_created'=>false,
                     'table_locks_used'=>false,'file_data_logged'=>false,'data_discarded'=>true,'backup_saved'=>false];
@@ -117,12 +117,12 @@ try {
     }
     // Validate scope before ever making the site unavailable. Suppress the
     // exception text: it can include private source paths or filenames.
-    try { $inventory=$abortOnly?[]:orgavela_capture_inventory($root); }
+    try { $inventory=$abortOnly?[]:orgavela_capture_inventory($root); if(!$abortOnly)orgavela_validate_ustar_paths(array_keys($inventory)); }
     catch (Throwable $e) {
         $phase('source_inventory_rejected');
         // No user-controlled exception messages, paths, filenames or PHP warnings leave the server.
         $safeCodes=['inventory_invalid_name','inventory_entry_limit','inventory_symlink',
-            'inventory_total_size','inventory_unreadable_file','inventory_unsupported_entry'];
+            'inventory_total_size','inventory_unreadable_file','inventory_unsupported_entry','inventory_ustar_path'];
         if ($e instanceof OrgaVelaInventoryRejection && in_array($e->getMessage(),$safeCodes,true)) {
             $phase($e->getMessage());
             // Only the explicitly read-only diagnostic may return a PRIVATE
@@ -194,12 +194,30 @@ try {
         if (!$r || (int)$r->fetch_row()[0]!==0) throw new RuntimeException('unsupported database objects');
     }
     $phase('database_validated');
+    $databaseTls=false;
+    if(!$abortOnly) {
+        $help=$run(['mariadb','--no-defaults','--help'],null,false,3);
+        if(!str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol'))throw new RuntimeException('TLS verification unavailable');
+        $client="[client]\n";
+        foreach(['user'=>$config['DB_USER'],'password'=>$config['DB_PASSWORD'],'host'=>$host,'port'=>(string)$port]as$k=>$v)$client.=$k.'='.orgavela_client_value($v)."\n";
+        $tls=$run(['mariadb','--defaults-file=/proc/self/fd/3','--protocol=tcp','--ssl','--ssl-verify-server-cert','--connect-timeout=10','--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--',$config['DB_NAME']],$client,false,12);
+        if(!preg_match('/^Ssl_cipher\t[A-Za-z0-9_-]+$/D',trim($tls)))throw new RuntimeException('TLS not negotiated');
+        unset($tls,$client,$help);$databaseTls=true;$phase('database_tls_verified');
+    }
+    if($filesystemOnly || $databaseOnly) {
+        $work=$home.'/.orgavela-capture-'.bin2hex(random_bytes(12));if(!mkdir($work,0700))throw new RuntimeException('probe work');
+        $self=orgavela_process_current(getmypid());
+        file_put_contents($work.'/watchdog.php',orgavela_capture_watchdog($work,$work.'/unused-marker',hash('sha256','probe-no-marker'),getmypid(),$self['start'],90,true));
+        exec('/usr/bin/nohup '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($work.'/watchdog.php').' > /dev/null 2>&1 < /dev/null &');
+        $end=microtime(true)+2;while(!is_file($work.'/ready')&&microtime(true)<$end)usleep(10000);
+        if(!is_file($work.'/ready'))throw new RuntimeException('probe watchdog');
+    }
     if($filesystemOnly){
         $db->close();$db=null;$probeAt=microtime(true);
         // A discard-only diagnostic path; never changes production deadlines.
         $archive=$run(orgavela_capture_tar_args($root),null,false,60);
         $bytes=strlen($archive);unset($archive,$config);
-        $result=['schema'=>'orgavela-filesystem-memory-probe/v1','completed'=>true,'filesystem_entries'=>$entryCount,
+        $result=['schema'=>'orgavela-filesystem-memory-probe/v2','ustar_paths_verified'=>true,'completed'=>true,'filesystem_entries'=>$entryCount,
             'compressed_bytes'=>$bytes,'seconds'=>round(microtime(true)-$probeAt,3),
             'maintenance_created'=>false,'table_locks_used'=>false,'file_data_logged'=>false,'data_discarded'=>true,'backup_saved'=>false];
         $cleanup();echo json_encode($result,JSON_THROW_ON_ERROR)."\n";exit(0);
@@ -210,7 +228,7 @@ try {
         $name=$config['DB_NAME'];unset($config);$db->close();$db=null;
         $probeAt=microtime(true);$sql=$run(array_merge($dumpArgs,['--',$name]),$client,true,25);
         $bytes=strlen($sql);unset($sql,$client,$name);
-        $result=['schema'=>'orgavela-database-dump-probe/v1','completed'=>true,'table_count'=>count($tables),
+        $result=['schema'=>'orgavela-database-dump-probe/v2','tls_verified'=>$databaseTls,'server_certificate_verified'=>true,'completed'=>true,'table_count'=>count($tables),
             'compressed_bytes'=>$bytes,'seconds'=>round(microtime(true)-$probeAt,3),
             'maintenance_created'=>false,'table_locks_used'=>false,'row_data_logged'=>false,'data_discarded'=>true,'backup_saved'=>false];
         $cleanup();echo json_encode($result,JSON_THROW_ON_ERROR)."\n";exit(0);
@@ -330,7 +348,8 @@ try {
     $phase('maintenance_removed');
     if(orgavela_capture_origin_status()!==200)throw new RuntimeException('origin recovery unverified');
     $phase('origin_recovered');
-    $evidence=['schema'=>'orgavela-ssh-capture-evidence/v2','capture_mode'=>'production',
+    $evidence=['schema'=>'orgavela-ssh-capture-evidence/v3','capture_mode'=>'production',
+        'database_tls_verified'=>$databaseTls,'database_server_certificate_verified'=>true,
         'filesystem_consistency'=>'quiesced','database_consistency'=>'single-transaction',
         'quiescence'=>['wordpress_maintenance'=>true,'all_table_read_locks'=>true,'stable_file_hashes'=>true,'archive_matches_inventory'=>true,
             'maintenance_seconds'=>round(microtime(true)-$maintenanceAt,3),'maintenance_removed'=>true,

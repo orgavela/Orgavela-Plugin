@@ -40,6 +40,17 @@ class IdentityTests(unittest.TestCase):
             with self.subTest(name=name),self.assertRaises(ProbeError):gate.controller_claims({**self.claims,name:'wrong'},'source')
         with self.assertRaises(ProbeError):gate.controller_claims(self.claims,'writer')
 
+    def test_restore_role_and_signed_runtime_counters_are_bound(self):
+        claims={**self.claims,'sub':gate.SUBJECT_PREFIX+':environment:orgavela-backup-restore','aud':'orgavela-o03-restore'}
+        self.assertEqual(gate.controller_claims(claims,'restore'),'a'*40)
+        for role in ('source','writer','abort'):
+            with self.assertRaises(ProbeError):gate.controller_claims(claims,role)
+        env={'ACTIONS_ID_TOKEN_REQUEST_URL':'https://token.actions.githubusercontent.com/oidc','ACTIONS_ID_TOKEN_REQUEST_TOKEN':'fixture','GITHUB_SHA':'a'*40,'GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1'}
+        for field in ('GITHUB_SHA','GITHUB_RUN_ID','GITHUB_RUN_ATTEMPT'):
+            with patch.object(gate,'fetch_json',side_effect=[{'value':'fixture'},{}]),patch.object(gate,'verify_jwt',return_value=self.claims),patch.object(gate,'checkout') as checkout,self.assertRaises(ProbeError):
+                gate.authorize({**env,field:'wrong'},'source')
+            checkout.assert_not_called()
+
     def test_engine_requires_approved_origin_clean_sha_and_main_ancestry(self):
         expected='b'*40
         for values in [[f'https://github.com/{gate.ENGINE_REPOSITORY}',expected,''],

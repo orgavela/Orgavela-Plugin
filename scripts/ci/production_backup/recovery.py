@@ -14,7 +14,7 @@ import tarfile
 from collector import NAMES, ProbeError, unique_pairs, validate_components
 
 
-def validate_package(decrypted, destination, *, primary=PRIMARY_FPR, subkey=SUBKEY_FPR):
+def validate_package(decrypted, destination, *, primary=PRIMARY_FPR, subkey=SUBKEY_FPR,restore_record=None):
     decrypted, destination = Path(decrypted), Path(destination)
     if decrypted.is_symlink() or not decrypted.is_file() or decrypted.stat().st_nlink != 1 or not 0 < decrypted.stat().st_size <= 140 * 1024 * 1024:
         raise ProbeError('invalid decrypted archive')
@@ -46,13 +46,17 @@ def validate_package(decrypted, destination, *, primary=PRIMARY_FPR, subkey=SUBK
         manifest = json.loads((destination / 'manifest.json').read_text(), object_pairs_hook=unique_pairs)
         if not isinstance(manifest, dict) or set(manifest) != {'schema', 'backup_id', 'mode', 'scope', 'components', 'encryption'}:
             raise ProbeError('invalid recovery manifest')
-        if manifest['schema'] != 'orgavela-backup-package/v1' or manifest['mode'] not in ('synthetic', 'production') or set(manifest['components']) != NAMES:
+        if manifest['schema'] != ('orgavela-backup-package/v2' if restore_record is not None else 'orgavela-backup-package/v1') or manifest['mode'] not in ('synthetic', 'production') or set(manifest['components']) != NAMES:
             raise ProbeError('invalid recovery identity')
         prefix = 'orgavela-synthetic-' if manifest['mode'] == 'synthetic' else 'orgavela-wordpress-'
         if not isinstance(manifest['backup_id'], str) or not re.fullmatch(re.escape(prefix) + r'[A-Za-z0-9_-]{3,100}', manifest['backup_id']):
             raise ProbeError('recovery mode/identity mismatch')
         encryption = {'type': 'OpenPGP-public-key', 'public_key_fingerprint': primary,
                       'encryption_subkey_fingerprint': subkey, 'private_key_in_producer': False}
+        if restore_record is not None:
+            from restore_recipient import validate
+            validate(restore_record)
+            encryption['restore_recipient']=restore_record
         if manifest['encryption'] != encryption or type(manifest['encryption'].get('private_key_in_producer')) is not bool:
             raise ProbeError('recovery recipient mismatch')
         for name in NAMES:
@@ -69,7 +73,7 @@ def validate_package(decrypted, destination, *, primary=PRIMARY_FPR, subkey=SUBK
         evidence = validate_components(destination)
         if manifest['scope'] != evidence['scope']:
             raise ProbeError('recovery scope mismatch')
-        return {'component_hashes_verified': 3, 'mode': manifest['mode'], 'database_imported': False,
+        return {'backup_id':manifest['backup_id'],'component_hashes_verified': 3, 'mode': manifest['mode'], 'database_imported': False,
                 'wordpress_bootstrapped': False, 'real_restore_proven': False}
     except Exception:
         for path in made:

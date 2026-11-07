@@ -38,18 +38,19 @@ def command(args,home,*,data=None,ok=True):
     if ok and result.returncode: raise PackageError('OpenPGP operation refused')
     return result
 
-def inspect_cipher(path, subkey=SUBKEY_FPR):
+def inspect_cipher(path, subkey=SUBKEY_FPR, *, restore_subkey=None):
     path=regular(path,MAX_CIPHER)
     with tempfile.TemporaryDirectory(prefix='orgavela-public-packets-') as tmp:
         result=command(['--list-packets',str(path)],Path(tmp),ok=False)
         text=result.stdout.decode('ascii','replace')
         ids=re.findall(r'^:pubkey enc packet:.*keyid ([A-F0-9]{16})\s*$',text,re.MULTILINE)
         tags=re.findall(r'^:([^:]+):',text,re.MULTILINE)
-        if ids!=[subkey[-16:]] or tags!=['pubkey enc packet','encrypted data packet']:
+        expected=[subkey[-16:]]+([restore_subkey[-16:]] if restore_subkey else [])
+        if len(ids)!=len(expected) or set(ids)!=set(expected) or len(set(expected))!=len(expected) or tags!=['pubkey enc packet']*len(expected)+['encrypted data packet']:
             raise PackageError('ciphertext recipient/packet policy refused')
     return True
 
-def package(components,output,backup_id,*,key_file=KEY_FILE,primary=PRIMARY_FPR,subkey=SUBKEY_FPR):
+def package(components,output,backup_id,*,key_file=KEY_FILE,primary=PRIMARY_FPR,subkey=SUBKEY_FPR,restore_public=None,restore_record=None):
     """Private supplied components -> exactly three local encrypted/public assets.
 
     Explicit key arguments are dependency injection for temporary-key offline tests;
@@ -73,6 +74,11 @@ def package(components,output,backup_id,*,key_file=KEY_FILE,primary=PRIMARY_FPR,
         raise PackageError('public-only key required')
     if not all(re.fullmatch(r'[A-F0-9]{40}',v) for v in (primary,subkey)):
         raise PackageError('key identities')
+    if (restore_public is None)!=(restore_record is None):raise PackageError('incomplete restore binding')
+    if restore_record is not None:
+        from restore_recipient import load
+        approved=load(restore_public,env=os.environ,require_live=True,minimum_remaining=300)
+        if approved!=restore_record or approved['subkey']==subkey:raise PackageError('restore binding mismatch')
     synthetic=backup_id.startswith('orgavela-synthetic-')
     made=[]
     try:
@@ -88,23 +94,37 @@ def package(components,output,backup_id,*,key_file=KEY_FILE,primary=PRIMARY_FPR,
             identities=[row[9] for row in rows if row[0]=='fpr']
             if identities!=[primary,subkey] or sum(row[0]=='pub' for row in rows)!=1 or sum(row[0]=='sub' for row in rows)!=1:
                 raise PackageError('public recipient identity mismatch')
+            restore_path=None
+            if restore_record is not None:
+                restore_path=stage/'restore-public.asc';restore_path.write_bytes((Path(restore_public)/'recipient.asc').read_bytes())
+                rows=[line.split(':') for line in command(['--with-colons','--fingerprint','--show-keys',str(restore_path)],home).stdout.decode('ascii').splitlines()]
+                if ([r[9] for r in rows if r[0]=='fpr']!=[restore_record['primary'],restore_record['subkey']] or
+                    sum(r[0]=='pub' for r in rows)!=1 or sum(r[0]=='sub' for r in rows)!=1 or
+                    any(r[0] in ('sec','ssb') or (r[0] in ('pub','sub') and r[1] in ('r','e','d')) for r in rows)):raise PackageError('restore recipient inventory refused')
             internal={'schema':'orgavela-backup-package/v1','backup_id':backup_id,
                 'mode':'synthetic' if synthetic else 'production','scope':evidence['scope'],
                 'components':{name:{'sha256':digest_file(components/name),'bytes':(components/name).stat().st_size}
                     for name in ('database.sql.gz','wordpress-files.tar.gz','capture-evidence.json')},
                 'encryption':{'type':'OpenPGP-public-key','public_key_fingerprint':primary,'encryption_subkey_fingerprint':subkey,'private_key_in_producer':False}}
+            if restore_record is not None:
+                internal['schema']='orgavela-backup-package/v2'
+                internal['encryption']['restore_recipient']=restore_record
             manifest=stage/'manifest.json';manifest.write_text(json.dumps(internal,sort_keys=True))
             plain=stage/'private.tar'
             with tarfile.open(plain,'x:') as tar:
                 tar.add(manifest,arcname='manifest.json',recursive=False)
                 for name in sorted(expected): tar.add(components/name,arcname=name,recursive=False)
             archive=backup_id+'.tar.gpg';cipher=stage/archive
-            command(['--trust-model','always','--recipient-file',str(key_path),'--output',str(cipher),'--encrypt',str(plain)],home)
-            inspect_cipher(cipher,subkey)
+            recipients=['--recipient-file',str(key_path)]+(['--recipient-file',str(restore_path)] if restore_path else [])
+            command(['--trust-model','always','--cipher-algo','AES256','--compress-algo','none']+recipients+['--output',str(cipher),'--encrypt',str(plain)],home)
+            inspect_cipher(cipher,subkey,restore_subkey=restore_record['subkey'] if restore_record else None)
             sha=digest_file(cipher);size=cipher.stat().st_size
             public={'schema':'orgavela-github-release-backup-public-manifest/v1','backup_id':backup_id,
                 'synthetic':synthetic,'contains_production_data':not synthetic,'archive_sha256':sha,'archive_bytes':size,
                 'public_key_fingerprint':primary,'encrypted':True,'source_components_encrypted':True}
+            if restore_record is not None:
+                public['schema']='orgavela-github-release-backup-public-manifest/v2'
+                public['restore_recipient']=restore_record
             side=stage/(archive+'.sha256');side.write_text(sha+'  '+archive+'\n')
             pub=stage/'public.json';pub.write_text(json.dumps(public,sort_keys=True)+'\n')
             for source,name in [(cipher,archive),(side,archive+'.sha256'),(pub,'manifest.json')]:

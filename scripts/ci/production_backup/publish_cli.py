@@ -12,6 +12,7 @@ from writer import assets, publish
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ciphertext', type=Path, required=True)
+    parser.add_argument('--restore-public',type=Path)
     args = parser.parse_args()
     authorize(os.environ, 'writer')
     reject_mixed_credentials(os.environ, 'writer')
@@ -20,7 +21,11 @@ def main():
     token = os.environ.get('BACKUP_GITHUB_TOKEN', '')
     if not token or any(char.isspace() for char in token):
         raise WriterError('dedicated backup repository token required')
-    backup_id, entries = assets(args.ciphertext)
+    record=None
+    if args.restore_public is not None:
+        from restore_recipient import load
+        record=load(args.restore_public,env=os.environ,require_live=True)
+    backup_id, entries = assets(args.ciphertext,restore_record=record)
     verify_repository(token)
     evidence = publish(token, backup_id, entries)
     print(json.dumps(evidence, sort_keys=True))

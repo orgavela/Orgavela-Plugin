@@ -19,7 +19,7 @@ REPOSITORY_ID = '1416889964'
 SUBJECT_PREFIX = 'repo:orgavela@'+OWNER_ID+'/orgavela-backups@'+REPOSITORY_ID
 WORKFLOW = REPOSITORY + '/.github/workflows/o03-private-live-backup.yml@refs/heads/main'
 ISSUER = 'https://token.actions.githubusercontent.com'
-ROLES = {'source':'orgavela-backup-source', 'abort':'orgavela-backup-source', 'writer':'orgavela-backup-writer'}
+ROLES = {'source':'orgavela-backup-source', 'abort':'orgavela-backup-source', 'writer':'orgavela-backup-writer', 'restore':'orgavela-backup-restore'}
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -126,6 +126,7 @@ def authorize(env, role, *, engine_root=None):
                      headers={'Authorization':'Bearer '+request_token},limit=32768).get('value')
     claims=verify_jwt(token,fetch_json(ISSUER+'/.well-known/jwks',limit=65536),audience)
     sha=controller_claims(claims,role)
+    if (env.get('GITHUB_SHA'),env.get('GITHUB_RUN_ID'),env.get('GITHUB_RUN_ATTEMPT'))!=(sha,claims['run_id'],claims['run_attempt']):raise ProbeError('signed runtime context drift')
     # Signed controller identity and physical checkout are distinct from engine identity.
     checkout(Path(env.get('GITHUB_WORKSPACE',''))/'controller',REPOSITORY,sha)
     engine_root=Path(__file__).resolve().parents[3] if engine_root is None else Path(engine_root)

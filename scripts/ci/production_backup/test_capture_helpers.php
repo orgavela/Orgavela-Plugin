@@ -63,6 +63,13 @@ try {
     check(str_contains(orgavela_client_value("quote\"newline\n"),'\\n'));
     check(strlen(orgavela_tar_header('database.sql.gz',3))===512);
     refused(fn()=>orgavela_tar_header('../escape',3));
+    $help='--defaults-file --protocol --ssl --ssl-verify-server-cert --max-statement-time';
+    $dump=orgavela_dump_client_args($help,false);
+    check(in_array('--ssl',$dump,true)&&in_array('--ssl-verify-server-cert',$dump,true)&&in_array('--protocol=tcp',$dump,true));
+    refused(fn()=>orgavela_dump_client_args('--defaults-file --protocol',false));
+    orgavela_validate_ustar_paths([str_repeat('a',128).'/',str_repeat('a',150).'/'.str_repeat('b',90)]);
+    refused(fn()=>orgavela_validate_ustar_paths([str_repeat('a',101)]));
+    refused(fn()=>orgavela_validate_ustar_paths([str_repeat('a',156).'/'.str_repeat('b',100)]));
     $self=orgavela_process_current(getmypid());check($self['pid']===getmypid());
     // A caller's inherited process group must never be signaled.
     refused(fn()=>orgavela_process_members(['pid'=>getmypid(),'group'=>1,'session'=>1,'start'=>$self['start']]));

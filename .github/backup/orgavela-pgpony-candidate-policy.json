@@ -36,5 +36,19 @@
   "device_pgpony_expected_plaintext_code_owner_confirmed": false,
   "owner_recovery_evidence_provenance": "Owner-attested in conversation 2026-10-20/21: two independently held offline recovery copies, second-device import/fingerprint and recovery decrypt reported successful. No assistant access to private keys or independent cryptographic replay.",
   "owner_recovery_evidence_verified_by_assistant": false,
-  "owner_offline_recovery_updated_on": "2026-10-21"
+  "owner_offline_recovery_updated_on": "2026-10-21",
+  "manual_o03_acceptance_authorization_20261107": {
+    "operator_requested_real_backup_acceptance": true,
+    "extra_ephemeral_restore_recipient_explicitly_allowed": true,
+    "owner_recipient_unchanged": true,
+    "ephemeral_private_key_receiver_memory_only": true,
+    "scope": "one manually supervised real Snapshot/Release/full-readback/isolated-restore acceptance; no automatic schedule",
+    "conditions": [
+      "integrated exact-SHA CI",
+      "private role separation",
+      "fresh recovery/preflight and TLS/runtime/archive probes",
+      "same-run/controller public recipient binding",
+      "no private key or plaintext artifact"
+    ]
+  }
 }
