@@ -106,7 +106,7 @@ function orgavela_database_tls_unverified(): bool {
 function orgavela_database_tls_args(?string $peerFingerprint=null): array {
     $unverified=orgavela_database_tls_unverified();
     if($unverified){
-        if($peerFingerprint===null || !preg_match('/^[A-F0-9]{40}$/D',$peerFingerprint))throw new OrgaVelaTrustRejection('database_tls_peer_unbound');
+        if($peerFingerprint===null || !preg_match('/^[A-F0-9]{40}$/D',$peerFingerprint))throw new OrgaVelaTrustRejection('database_tls_peer_fingerprint_invalid');
         // Unauthenticated in-memory continuity only. --ssl alone can fall back to plaintext.
     }
     $ca='/etc/ssl/certs/ca-certificates.crt';$binary=realpath(PHP_BINARY);$uid=posix_geteuid();
@@ -128,7 +128,7 @@ function orgavela_database_tls_args(?string $peerFingerprint=null): array {
 }
 
 function orgavela_dump_client_args(string $help, bool $schema, ?string $peerFingerprint=null): array {
-    if(orgavela_database_tls_unverified() && !str_contains($help,'--ssl-fp'))throw new OrgaVelaTrustRejection('database_tls_peer_unbound');
+    if(orgavela_database_tls_unverified() && !str_contains($help,'--ssl-fp'))throw new OrgaVelaTrustRejection('dump_tls_peer_option_unsupported');
     if (!str_contains($help,'--defaults-file') || !str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,'--ssl-ca')) throw new RuntimeException('controlled defaults unsupported');
     $args=array_merge(['mariadb-dump','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args($peerFingerprint),['--single-transaction','--skip-lock-tables']);
     if (str_contains($help,'--max-statement-time')) $args[]='--max-statement-time='.($schema?'2':'15');

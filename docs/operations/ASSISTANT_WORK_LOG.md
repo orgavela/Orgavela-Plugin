@@ -2539,3 +2539,8 @@ PR74/Engine2beb5d7 regulär integriert; exakte Main-CI Foundation42398497413/O03
 Lokaler Host besitzt kein PHP-CLI; Syntaxprüfung im gepinnten WordPress-Container erfolgreich, PHP-Hilfsregressionen dort ausgeführt. Diagnose ändert keine Datentransfer-/TLS-/Wartungsentscheidung.
 
 Diagnose erfasst zusätzlich bereits allowlistete Trust-/Peer-Bindungsablehnungen beim verzögert validierten Dumpclient im Ausnahmemodus; sonstige Clientfähigkeitsfehler bleiben feste Kategorie dump_option_unsupported. Keine Rohfehlermeldungen.
+
+
+### 2026-11-07 – O03: Bindungsablehnung in zwei belegbare Fälle getrennt
+
+Zweite Probe42400555502 auf CI-grüner Engine2b791c6/Controlleraea3f67 nach frischer Recovery42400313849 und Preflight42400456827 liest Peer und Fingerabdruck, stoppt danach database_tls_peer_unbound vor Wartung/Dump. Diese Kategorie kann fehlende --ssl-fp-Dumpclientfähigkeit oder ungültigen Fingerabdruck bedeuten. Deshalb ausschließlich Diagnose präzisiert: dump_tls_peer_option_unsupported und database_tls_peer_fingerprint_invalid, beide fest allowlistet. Zwei PHP-Hilfstestfälle prüfen getrennte Ablehnung mit bekannt gültigem Bindungswert bzw. ungültigem Peerwert; keine Datentransferentscheidung verändert und kein Klartextfallback. Neue reguläre Integration/exakte CI und Controllerpin bleiben Voraussetzung weiterer Sourceprobe. V1/O03 offen, kein Snapshot.
