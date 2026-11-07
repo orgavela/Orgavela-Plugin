@@ -3,168 +3,6 @@
 **Stand:** 12.10.2026, initiale V1-Baseline nach Liveprüfung. **V1-Status: NICHT ABGENOMMEN.**  
 **Normativer Masterplan:** [V1_ACCEPTANCE_PLAN.md](../operations/V1_ACCEPTANCE_PLAN.md) · **Verbindliche Fortschrittsdaten:** [V1_PROGRESS.json](../operations/V1_PROGRESS.json) · **Zentrales Abnahme-Issue:** [#15](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/15) · **Ergänzende Roadmap:** [V1_MASTER_PLAN.md](V1_MASTER_PLAN.md) · **Abnahmematrix:** [V1_ACCEPTANCE_MATRIX.md](V1_ACCEPTANCE_MATRIX.md) · **Arbeitsjournal:** [ASSISTANT_WORK_LOG.md](../operations/ASSISTANT_WORK_LOG.md).
 
-## Update 20.10.2026 – GH_TOKEN vom Betreiber hinterlegt, GH06 Release-Test bleibt vor Approval angehalten
-
-- Betreiber bestätigt `GH_TOKEN hinterlegt` im vorher vereinbarten CircleCI-Context `orgavela-age-release-tests`. **Nur Betreiberbestätigung**: kein Tokenwert gelesen, keine unabhängige CircleCI-Variablen-API, Scope oder Ablaufdatum geprüft; niemals Token in Chat/GitHub-Dokumente oder Screenshots bringen.
-- GitHub-Testbranch `test/orgavela-age-release-o03` noch `protected=true`, HEAD `eba067913eb0290b2a95e40029f77e3b803ed924`; PR #24 merged; synthetischer age GitHub-Release-Workflow `enable_gh06_age_release_remote` weiterhin `default=false` und hat separaten Hold `gh06-age-release-manual-approval`. **Keine neue Pipeline, kein Approval, kein GitHub Release** durch den Assistenten gestartet.
-- **Nächste Betreiberhandlung:** Freie CircleCI-Credits unter Plan/Usage erneut prüfen. Danach höchstens einen manuellen Pipeline-Trigger auf Config- und Checkout-Branch `test/orgavela-age-release-o03`, NUR Boolean `enable_gh06_age_release_remote=true`, alle anderen Flags false. Wenn `gh06-age-release-manual-approval` auf **On Hold** steht, Screenshot mit Job/Branch/Commit teilen und **NICHT auf Approve klicken**, bevor das Target und die Freigabegrenzen kontrolliert sind. Bei Kostenanforderung/unbekannten Jobs/fehlender Hold sofort stoppen. Nach Test/Abbruch Token widerrufen und Context-`GH_TOKEN` löschen.
-- Keine Betreiber-AgePony-Recovery-Identity in CI, keine echten WordPress-/MariaDB-/IONOS-Backups. GH03 unabhängige Owner-Recovery fehlt. V1-Zähler weiterhin 62/71 normative Codingpakete, M0–M7 formale 0/8, P4 0/4, Release-Gates 0/18, gestapelte PR-Integration offen.
-
-## Update 20.10.2026 – GH06 Context #283 PASS und geschützter Synthetic-PR24-Merge
-
-- **GH06 Context:** Post-Gruppenwiederherstellungs-CircleCI Pipeline #283, GitHub Commit `cb22a2b434ee18ef79811afd3c99f47a7ac36a4b`, Job `gh06-age-context-smoke` [#8](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/8), Providerstatus `success`. Betreiberlog: `GH06_CONTEXT_ACCESS=PASS`, `GH06_CONTEXT_SECRETS=NONE` (nur explizit abgefragte Namen) und `GH06_GITHUB_RELEASE_UPLOADED=NO`.
-- **[PR #24](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/24)** als genau 1-Datei/1-Commit-/+68/-0-Änderung geprüft, auf Ready for review gestellt und **über normalen geschützten PR-Squash-Merge** integriert: Zielbranch `test/orgavela-age-release-o03` jetzt SHA `eba067913eb0290b2a95e40029f77e3b803ed924`; GitHub API `protected=true`. Beleg: `.circleci/config.yml` auf Ziel enthält `enable_gh06_age_release_remote` Boolean **default false**, eigener CircleCI **Approval-Hold** vor dem Artificial-age-Release-E2E, nur im bereits eingeschränkten Context `orgavela-age-release-tests`, keine Cron-Jobs; andere GH05-/GH06-Tests bleiben erhalten.
-- **Nicht ausgeführt:** Noch kein Fine-grained-GitHub-Token, kein Remote-GH06-Release-E2E, keine wirkliche GitHub-API-Publikation. Repo `janjrre/orgavela-backups` ist privat und der Immutability-Schalter für neue Releases war laut Betreiber-Screenshot aktiviert. Nächste Betreiberhandlung: kurzlebigen nur für `orgavela-backups` zulässigen PAT mit Contents Read/Write als `GH_TOKEN` **direkt im geschützten Context** hinterlegen, niemals hier teilen; manuelle CI-Freigabe erst danach separat und nur im freien Kontingent. Kein Owner AgePony-/Recovery-Private-Key in CI.
-- **Unverändert:** V1 62/71 historische Codepakete, M0–M7 formal 0/8, P4 0/4, Release-Gates 0/18, PR-Integration offen. GH03 unabhängige Offline-Betreiber-Recovery und echte GH05 Capture/GH06 Upload/GH07 Restore/GH08 Scheduling nicht abgenommen.
-
-## Update 20.10.2026 – GH06 Context nach Gruppenwiederherstellung Pipeline #283 PASS
-
-- **Providerstatus nach All-members-Restore:** Betreiber-Screenshot CircleCI Projekt-Pipeline **#283**, protected `test/orgavela-age-release-o03`, SHA `cb22a2b434ee18ef79811afd3c99f47a7ac36a4b`, ausschließlich `gh06-age-context-smoke` grün. Protokoll: `GH06_CONTEXT_ACCESS=PASS`, `GH06_CONTEXT_SECRETS=NONE`, `GH06_GITHUB_RELEASE_UPLOADED=NO`. GitHub `ci/circleci: gh06-age-context-smoke=success` auf exakt diesem SHA, [Job #8](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/8), unabhängig geprüft. **Neuer Runtime-Scope PASS** (positive Kontextnutzung und geprüfte bekannte Variablen), nicht negativer Zugriffs- oder vollständiger Secret-Test.
-- **Zwei vorherige Secret-Preflight-Gates abgeschlossen:** CircleCI `All members` wieder zugeordnet; Betreiber bestätigt einzige Organisationsmitgliedschaft (kein eigenständiger User-Listen-API-Check), Projekt/geschützter Branch/no-SSH/no-Unversioned-API Expressions laut früheren Screenshots unverändert. GitHub Backup-Repo `janjrre/orgavela-backups` aktuelles `Enable release immutability` im UI checked. Bei weiteren CircleCI-Mitgliedern Sicherheitsbewertung erneut vor Secret-Nutzung durchführen.
-- **GH06 weiter keine tatsächliche `age`-Release-Publikation:** [Draft PR #24](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/24) enthält nur die 1 CI-Datei/1 Commit (+68/-0), flag `enable_gh06_age_release_remote` default false und zusätzliche Approval-Hold, ungemergt. Native-age synthetic writer und recovery Skripte statisch geprüft, nicht mit GitHub API durchgelaufen. Betreiber kann PR24 separat prüfen und danach Ready for review setzen; vor manuellem Remote-Lauf explizite Quota-/Tokenfreigabe erforderlich. Kein GH_TOKEN und kein Owner-Age-Key in CI.
-- **Projektstand unverändert:** GH05 synthetic age Pipeline #188, GH06 fake-GH QA 13/13 #209, Context #283 grün. Historische Coding 62/71, M0–M7 0/8, P4 0/4, Release-Gates 0/18 formale Abnahme, PR-Integration offen, GH03 unabhängig abgesicherte Owner-Recovery fehlt, echte GH05–08 gesperrt.
-
-## Update 20.10.2026 – GH06 Context All members nach Sperre wiederhergestellt
-
-- **CircleCI UI-Evidenz:** In der Organisations-Contexts-Liste steht `orgavela-age-release-tests` wieder mit `Security: All members`. Betreiber berichtet Solo-Mitgliedschaft der CircleCI-Organisation. Der zuvor gemeldete `currently unusable`-Zustand war auf die leere Gruppenzuweisung zurückzuführen; der nun erneut verfügbare positive Runtime-Zugriff ist **noch durch einen neuen no-secret Test nachzuweisen**, bevor man sicher von funktionsfähiger Context-Autorisierung spricht.
-- Geschützter GH06-Testbranch `test/orgavela-age-release-o03` GitHub `protected=true`, SHA `cb22a2b`, CI-Context-Smoke default FALSE nach Provider-Readback unverändert. Historisch grüner Context-Run #255 bezog sich auf den **vorherigen Gruppenzustand**. [Draft PR #24](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/24) offen/unmerged; kein Token und kein age-GitHub Release.
-- **Jetzt:** genau einen neuen manuellen no-secret `gh06-age-context-smoke` mit nur `enable_gh06_age_context_smoke=true` auf Config- und Checkout-Branch `test/orgavela-age-release-o03` bei Free-Kontingent ausführen. Nach Providerbeleg Status fortschreiben. Github zukünftige Release-Immutability bereits im UI bestätigt. GH03 getrennte Eigentümer-Recovery und echte GH05–GH08 weiterhin gesperrt. V1 historisch Coding 62/71, formal 0/8 Meilensteine, P4 0/4, Release R01–18 0/18, PR-Integration offen.
-
-## Update 20.10.2026 – GitHub immutable aktiviert, CircleCI-Context nach Gruppenentfernung gesperrt
-
-- Betreiber-Screenshot **GitHub** `janjrre/orgavela-backups` > Settings > General > Releases zeigt **Enable release immutability = aktiviert**. Das ist der gültige Nachweis der aktuell für künftige Releases aktivierten Einstellung. Noch kein tatsächlicher age Test-GitHub-Release.
-- Betreiber-Screenshot **CircleCI** Context `orgavela-age-release-tests`: `All members` wurde entfernt; Group restrictions leer. Provider-UI warnt ausdrücklich **`Context is currently unusable. To allow usage, add a security group`**. Die vorherige Admin-only-Empfehlung bei Null-Gruppen wird daher **für dieses konkrete Konto korrigiert**. Kontext ist für GH06 Remote-Test BLOCKED. PR #24 bleibt Draft/unmerged, kein PAT/CI-Remotejob freigegeben.
-- Nächster Schritt: `Add group restriction` öffnen, verfügbare Gruppen untersuchen. Bevorzugt eng autorisierte Nutzergruppe; wenn nur `All members` vorhanden ist, erst Organisations-Mitgliederkreis bewerten und bei Bedarf die Gruppe unter unveränderten Projekt-/Branch-/SSH-/API-Configrestriktionen wiederherstellen. Danach leerer Context Smoke erneut prüfen, bevor eventuell ein nur für `orgavela-backups` befristeter Token infrage kommt. GH03 unabhängige Owner-Recovery fehlt, echte GH05–08 weiterhin gesperrt. V1 unverändert 62/71 normative Coding, M0–M7 0/8, P4 0/4, R01–R18 0/18; restliche PR-Integration offen.
-
-## Update 20.10.2026 – GH06 Review: zwei letzte Secret-Gates identifiziert
-
-- **GH06 Code-Review/Repo-Zustand:** PR #24 weiterhin Draft, eine CircleCI-Datei, standardmäßig ausgeschaltet und separate manuelle Freigabe. Synthetische `age`-Skripte mit drei Assets, SHA-256-Readbacks, immutable-Prüfung und erneuter künstlicher Wiederherstellung statisch geprüft, echter GitHub-Release-Providerlauf steht weiter aus. Backup-Repo `janjrre/orgavela-backups` privat und nicht archiviert; einzig älteres **OpenPGP**-Testrelease ID 414750281 aktuell `immutable=true` – beweist nicht, ob Immutability heute für *neue* Releases an ist.
-- **Gate A – Zugriffskreis:** CircleCI Context `orgavela-age-release-tests` trägt bisher `All members`, trotz korrekter Projekt-/Branch-/SSH-/Config-Restrictions. CircleCI-Doku erlaubt das Entfernen aller Gruppen, sodass der Context nur von Organisationsadministratoren verwendet werden kann; erst danach separat bestätigen.
-- **Gate B – Immutability im GitHub UI:** `janjrre/orgavela-backups > Settings > General > Releases > Enable release immutability` muss für neue Releases eingeschaltet sein. Die separate GitHub REST-Abfrage erfordert `Administration(read)`, das nicht in den schreibenden nur für den künstlichen Test befristeten Einzelrepo-`GH_TOKEN` gehört; der verbundene GitHub-Connector unterstützt den Endpoint nicht. Screenshot vom Betreiber erforderlich. Keine PATs/Secrets/Provider-Releases vor diesen Nachweisen.
-- **Abnahmegrenze:** CircleCI GH05-Synthetik #188 PASS, GH06 Fake-gh 13/13 #209 PASS, GH06 leerer Context #255 PASS. GH06 Native-age-GitHub-Release **nicht** ausgeführt oder angenommen; GH03 Owner-Key offline unabhängig wiederherstellen noch offen. V1 62/71 historische Codingpakete, M0–M7 0/8, P4 0/4, Release 0/18 formale Gates, PR-Integration ausstehend.
-
-## Update 20.10.2026 – GH06 Context #255 PASS und synthetischer Release-Draft #24
-
-- Der auf geschütztem Branch `test/orgavela-age-release-o03` mit SHA `cb22a2b434ee18ef79811afd3c99f47a7ac36a4b` manuell gestartete CircleCI-Workflow **Pipeline #255**, Job `gh06-age-context-smoke`, ist **SUCCESS**, via GitHub-Commitstatus unabhängig bestätigt ([Job #7](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/7)). Betreiber-Log zeigt ausdrücklich `GH06_CONTEXT_ACCESS=PASS`, `GH06_CONTEXT_SECRETS=NONE` (nur geprüfte Variablennamen) und `GH06_GITHUB_RELEASE_UPLOADED=NO`.
-- **GH06-Release-Weiterentwicklung:** [Draft PR #24](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/24) **direkt vom geschützten GH06-Testbranch abgezweigt**, GitHub-Diff: nur **1 Datei `.circleci/config.yml`, 1 Commit, 68 neue Zeilen, 0 Löschungen**. Das neue Flag `enable_gh06_age_release_remote` ist `default=false` und der einzige künstliche age-Release-Job erfordert zusätzlich ein **eigenes CircleCI approval**; nur auf `test/orgavela-age-release-o03` mit eingeschränktem Context. Native age E2E- und Writer-Skripte liegen bereits bytegleich auf dem geschützten Branch, keine zusätzliche Dateiübernahme.
-- **Status PR24: DRAFT, ungemergt, nicht ausgeführt, Context noch ohne GH_TOKEN.** Keine echten GitHub Releases, kein Betreiber-AgePony-Key, kein IONOS- oder Datenbankzugriff. Vor Freigabe: Script-/GitHub-Repo-/Immutable-Konfiguration und PAT-Rechte, Context-Gruppe `All members`, Free-Credits kontrollieren. GH03 getrenntes Owner-Recovery weiterhin ausstehend, echte GH05–GH08 nicht abgenommen.
-- **V1 unverändert:** 62/71 historische technische Codingpakete, M0–M7 0/8, P4 0/4, Release-R01–R18 0/18 formal abgenommen. Alle anderen gestapelten Draft PRs bleiben offen.
-
-## Update 20.10.2026 – CircleCI Context-Smoke #255 erfolgreich
-
-- **Echter Providerlauf**: CircleCI Pipeline **#255** auf `test/orgavela-age-release-o03` an exakt geschütztem Commit `cb22a2b434ee18ef79811afd3c99f47a7ac36a4b`, ein einziger Job `gh06-age-context-smoke` mit grünem Status. Betreiber-Screenshot zeigt Log-Marker `GH06_CONTEXT_ACCESS=PASS`, `GH06_CONTEXT_SECRETS=NONE`, `GH06_GITHUB_RELEASE_UPLOADED=NO`. GitHub-Commitstatus `ci/circleci: gh06-age-context-smoke=success`, [Provider-Job #7](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/7), unabhängig verifiziert.
-- **Abnahme ausschließlich no-secret Context Runtime für erlaubten Branch**. Nicht geprüft sind negative Zugriffsversuche von anderen Branches/Projekten, andere willkürliche Env-Variablen, echte `age`-GitHub-Releases oder immutable Downloads. Context war für die geprüften bekannten Secrets leer. Kein tokengetragener GH06-Release-Job läuft.
-- **Nächste Stufe:** minimalen separaten synthetischen `age`-GitHub-Release-Writer über neuen protected-branch PR mit default-false Manual-Gate vorbereiten; Script-/Secret-Sicherheitsreview, geschützter Kontext und minimal berechtigter kurzlebiger PAT vor erstem manuellem Run. GH03 unabhängige Owner-Recovery fehlt weiterhin, daher keine produktive WordPress-/MariaDB-Sicherung und kein Scheduler. V1-Fortschritt 62/71 historisches Coding, M0–M7 0/8, P4 0/4, Release-R 0/18, PR-Integration offen.
-
-## Update 20.10.2026 – GH06 PR #23 geschützt und isoliert gemergt
-
-- Betreiber stellte [PR #23](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/23) auf Ready for Review. Exakter Patch und GitHub-Metadaten vor Merge geprüft: **1 Datei** `.circleci/config.yml`, **1 Commit**, **44 Ergänzungen, 0 Löschungen**; ausschließlich default-off-Boolean `enable_gh06_age_context_smoke` plus nicht-veröffentlichender Context-Job auf Testbranch. Altes GH05/GH06 CI erhalten.
-- **Normaler GitHub Merge erfolgreich:** API `merged=true` mit SHA `cb22a2b434ee18ef79811afd3c99f47a7ac36a4b` (Squash, erwarteter PR-Head `810954e5d1d5c71dc1e47dbdef137f903633abce`). Unabhängiger GitHub GET bestätigte `test/orgavela-age-release-o03` auf diesem SHA mit `protected=true` und exakt dem neuen CI-Flag + leerem Restricted Context. **Kein erforderlicher PR-CI-Status auf Head vorhanden**; der Runtime-Autorisierungstest steht weiterhin aus.
-- **Nächster Test, noch NICHT ausgeführt:** CircleCI Trigger Pipeline manuell auf **Config- und Checkout-Branch `test/orgavela-age-release-o03`**, ausschließlich Boolean `enable_gh06_age_context_smoke=true`, alle sonstigen Flags false. Erwartet genau ein `gh06-age-context-smoke`; Context `orgavela-age-release-tests` weiterhin ohne Environment Secrets. Bei Grün: `GH06_CONTEXT_ACCESS=PASS`, `GH06_CONTEXT_SECRETS=NONE`, `GH06_GITHUB_RELEASE_UPLOADED=NO`. Keine GitHub PATs, keine tatsächlichen age Releases, kein WordPress/IONOS.
-- **Fortschritt:** GH05 synthetischer age CI #188 erfolgreich, GH06 Fake-gh offline QA CI #209 13/13 erfolgreich. GH06 Context-Autorisierungsnachweis **noch OPEN**. Normative V1-Pakete 62/71 historisch; M0–M7 formal 0/8, P4 0/4, Release R01–R18 0/18, V1 offen. GH03 unabhängige Besitzer-Recovery und echte GH05/06/07/08 weiter gesperrt.
-
-## Update 20.10.2026 – GH06 Context-Prüfung auf minimalen PR #23 eingegrenzt
-
-- Auf Nutzerfrage, ob andere Draft-PRs ebenfalls auf „Ready for review“ sollen, alle GH06-Abhängigkeiten überprüft: PRs #17–#21 offen/Draft, PR #22 vom Betreiber auf Ready gestellt. **PR #22 hatte tatsächlich 6 Dateien/28 Commits** statt nur Context-Smoke und hätte unerwünschte GH06-Status-/Dokumentations-Commits in den geschützten Testbranch übernommen.
-- **Abhilfe umgesetzt:** Direkt von `test/orgavela-age-release-o03` einen neuen Branch `ci/gh06-context-smoke-isolated-20261020` abgezweigt, exakt nur `.circleci/config.yml` mit default-false `enable_gh06_age_context_smoke` ergänzt. GitHub-PR [#23](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/23) ist Draft, **1 Datei/1 Commit (44 Insertions)** unabhängig geprüft, noch nicht gemergt oder in CircleCI gelaufen. Breiten [PR #22](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/22) klar als superseded markiert und **ohne Merge geschlossen**.
-- **Nächste Betreiberaktion:** Nur PR #23 diff prüfen, bei Zustimmung **diesen** auf Ready for review stellen; PRs #17–#21 nicht pauschal umstellen. Danach normaler PR-Merge nach Review, dann genau ein manueller leeres-Context-CI-Smoke; **keine Secrets/Token/echter age-Release** bis test-spezifische Gates bestanden. V1 unverändert 62/71 historisches Coding, 0/8 M-Abnahmen, 0/4 P4, 0/18 Release-Gates, GH03 owner-recovery und produktive GH05/06/07/08 offen.
-
-## Update 20.10.2026 – GH06 branch rule Save bestätigt; Context-Autorisierungstest Draft PR #22
-
-- Betreiber bestätigt ausdrücklich **Save changes** für die auf Screenshots kontrollierte GitHub-Testbranchschutzregel `test/orgavela-age-release-o03`. GitHub-API `protected=true`, Detail-API 403, keine unabhängige Detailverifikation; **PR required/an**, **bypass verboten/an**, **force-push/aus**, **deletion/aus** gemäß Betreiber-Screenshots. Required Status Checks und Approvals weiterhin **aus**.
-- Neuer Default-off-no-secret Test `gh06-age-context-smoke` auf GH06-Featurebranch, nur zum Nachweis, dass der geschützt freigegebene Branch den leeren CircleCI Context `orgavela-age-release-tests` verwenden darf. [Draft PR #22](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/22) zur geschützten Branch-Integration vorbereitet, **noch nicht gemergt oder in CircleCI ausgeführt**. Kontext besitzt keine PATs/Owner age Keys; keine externen GitHub API Calls im Job.
-- **Nächster Gate:** Zunächst PR #22 reviewen; nur über geschützten Pull Request zusammenführen. Danach genau einen manuellen no-secret Context Smoke via `enable_gh06_age_context_smoke=true` auf dem Testbranch starten, alle anderen Flags false; Anbieter-Job/SHA verifizieren. Kein Token, kein synthetischer age-GitHub-Release und keinesfalls echtes Backup vor weiteren Gates.
-- **Fortschritt unverändert:** GH05 künstlicher age-Ciphertext-Producer/Writer CircleCI #188 grün; GH06 13/13 offline Fake-gh QA CircleCI #209 grün. Historische Coding-Implementierung 62/71, formale Meilensteine M0–M7 0/8, P4 0/4, Release-R01–R18 0/18, V1 offen, PR-Integration ausstehend; GH03 Owner Offline Recovery fehlt und sperrt echte GH05–GH08.
-
-
-## Update 20.10.2026 – GH06 klassische Branchregel anhand 3 Screenshots geprüft
-
-- Der Betreiber zeigt die klassische GitHub-Branchregel für exakt `test/orgavela-age-release-o03` (Applies to 1 branch): **Require PR=an**, **Do not allow bypassing=an**, **Allow force pushes=aus**, **Allow deletions=aus**. GitHub-Branch-API bestätigt `protected=true`; Detail-API liefert 403, daher Checkboxes sind **Screenshotbeleg**, nicht unabhängig aus Backend gelesen.
-- **Offene Härtung und Speicherbeleg:** `Require approvals` und `Require status checks to pass before merging` sind aus. Ein sichtbarer `Save changes`-Button kann auf noch nicht gespeicherte Änderungen hindeuten; nach dem Speichern/Neuladen als Betreiber bestätigen. Wegen Solo-Maintainer-Risiko nicht ohne Abstimmung Review-Pflicht erzwingen; passende erforderliche Checks erst nach prüfbarem GH06-Remote-Job setzen. Vor GitHub PAT außerdem CircleCI-Context-Gruppe `All members` / Rechtekreis und GH06 Source/Writer-Codegrenzen beurteilen.
-- **Keine Secrets oder echten Releases:** GH05 synthetisch #188 SUCCESS, GH06 13/13 no-secret #209 PASS. GH03 Owner-Recovery offline nicht abgenommen, GH05 echte OrgaVela-Quelle, GH06 private age Release, GH07 real Restore und GH08 Schedule gesperrt. V1 unverändert 62/71 Coding, M0–M7 0/8, P4 0/4, R01–18 0/18, PR-Integration offen.
-
-## Update 20.10.2026 – GH06 Context: beide Expressions aktiv, Detail-Branchschutz noch zu prüfen
-
-- Neuer Betreiber-Screenshot bestätigt beide separaten CircleCI-Expression-Restrictions: Branch `test/orgavela-age-release-o03` plus `not job.ssh.enabled` UND `not (pipeline.config_source starts-with "api")`. Vorheriger Screenshot hatte die Restriktion nur für Projekt `Projekt-Wordpress-Plugin` bestätigt; laut CircleCI-Dokumentation werden alle Expression-Zeilen und die Projekt-Restriction mit **AND** ausgewertet. Kein Token/Remote-Job/Release wurde erstellt.
-- **Nächster Gate:** GitHub-Branchschutz-Einzelregeln auf `test/orgavela-age-release-o03` im Settings-UI prüfen (PR-Pflicht, kein Bypass, Force-Push/Delete aus, Required Checks). GitHub API liefert nur `protected=true`, Einzelregeln 403; erforderliche Statuschecks derzeit nicht nachweisbar aktiv (`enforcement_level=off`). Danach ggf. CircleCI-Group statt `All members` enger und GH06-Source-/Writer-Isolation vor PAT-Hinterlegung bewerten.
-- Historisch GH05 CI #188 synthetisch grün und GH06 CI #209 Fake-Github-QA 13/13 grün. GH03 Owner-Recovery und produktive GH05–08 weiterhin unakzeptiert. V1-Zahlen unverändert 62/71 technische Pakete, M0–M7 0/8, P4 0/4, R01–18 0/18.
-
-## Update 20.10.2026 – GH06 CircleCI-Context eingeschränkt, zusätzliche API-Config-Sperre ausstehend
-
-- **Betreiber-Screenshots:** eigener CircleCI-Context `orgavela-age-release-tests`, noch keine Environment Variables; Project Restriction ausschließlich `Projekt-Wordpress-Plugin`; Expression Restriction genau `pipeline.git.branch == "test/orgavela-age-release-o03" and not job.ssh.enabled`. Group `All members` ist der Default; Projekt und Expression gelten laut CircleCI weiterhin zusätzlich (AND). GitHub-Testbranch `protected=true` unabhängig bestätigt.
-- **Ausstehende Nachschärfung vor PAT:** Expression um `and not (pipeline.config_source starts-with "api")` ergänzen, damit unversionierte API-Konfigurationen nicht an künftige Release-Secrets kommen. Für maximale Zugriffsbeschränkung nach Betreiber-/Admin-Prüfung optional Default-Gruppe `All members` entfernen (nur Org-Admins). GitHub-Branchschutz-Einzelregeln wegen API-403 weiterhin im UI zu bestätigen. Kein Secret oder Remote-Job freigeben.
-- **Technischer Status:** GH06 synthetische Offline-Tests CircleCI #209 weiter 13/13 PASS, echte age-Release-Remote-Tests **noch nicht durchgeführt**; token-bearing Job nicht ausgerollt, keine tatsächlichen Backups, keine Kosten. GH03 unabhängige AgePony-Recovery bleibt ausstehend. V1 62/71, M0–M7 0/8, P4 0/4, R01–R18 0/18, PR-Integration offen.
-
-## Update 20.10.2026 – GH06 age Release-Testbranch nach Betreiber-Änderung geschützt
-
-- **GitHub-Sicherheitsstatus bestätigt:** `test/orgavela-age-release-o03` meldet nach Betreiber-Einrichtung per unabhängiger Branch-API `protected=true`. Vorheriger Zustand `false` ist behoben. Die detaillierte Protection-API gibt jedoch `403` zurück – genaue Einzelcheckboxen (PR-Pflicht, Bypass, Force Pushes, Deletion) sind **nicht** vom Assistenten verifiziert. Required-Status-Checks sind derzeit laut Branch-Ansicht nicht erzwungen. Kein vollständiger Sicherheitsgate-PASS für Remote-Tokens.
-- **Nächste Aktion:** Neuer **leerer** CircleCI-Context `orgavela-age-release-tests` unter Organization Settings > Contexts, Project Restriction ausschließlich `Projekt-Wordpress-Plugin` und Expression Restriction `pipeline.git.branch == "test/orgavela-age-release-o03" and not job.ssh.enabled` setzen. **Noch keine Secrets, PATs, SSH-Zugänge, CI-Remote-Jobs oder GitHub-Releases**; Contextrestriktionen erst gesondert gegenprüfen.
-- **Beleggrenze:** GH06 Offline-Sicherheitstests 13/13 Pipeline #209 weiterhin erfolgreich; *kein* natives age GitHub-Release veröffentlicht, kein echter Quell-/Datenbank-Backup und kein Owner-GH03-Restore. V1 weiterhin 62/71 Coding-Pakete, M0–M7 0/8, P4 0/4 und R01–18 0/18 formal abgenommen, PR-Integration offen.
-
-## Update 20.10.2026 – GH06 geschützter Release-Testbranch noch nicht freigegeben
-
-- GH-06-Synthetik-**Offline-Test #209** bleibt 13/13 grün; genau eine neue Vorbereitungshandlung erfolgte: der separate Testbranch `test/orgavela-age-release-o03` wurde von GH06 Draft PR #21 aus SHA `7add8fb59ecc0de094e41363b637b0a1a764a6e9` angelegt.
-- **Unabhängige GitHub-Branchprüfung ergab `protected=false`.** Bis die branchspezifische PR-/Non-Bypass-/Non-Force-Push-/Non-Delete-Regel gespeichert und mindestens `protected=true` unabhängig bestätigt ist, **keinen CircleCI-GH06-Token/Context hinterlegen, keinen Remote-GitHub Release-Test starten**.
-- Im sicheren GH06-Pfad existiert weiterhin nur `enable_gh06_age_release_offline` (default false), ein Fake-GitHub-Testjob. Kein neuer produktiver oder tokenbetriebener CircleCI-Job, keine Releases, keine Kosten und keine realen Daten. Nächste direkte Betreiberaktion: [GitHub Branch Rules](https://github.com/janjrre/Projekt-Wordpress-Plugin/settings/branches) für den exakt bezeichneten Branch erstellen. [GH06-Runbook](../operations/W0_O03_GH06_AGE_RELEASE_PREPARATION_2026-10-20.md).
-- Unveränderte V1-Fakten: 62/71 normative Coding-Pakete historisch implementiert, M0–M7 formal 0/8, P4 0/4, Release R01–R18 0/18, V1 offen, gestapelte PRs offen. GH-03 unabhängige Owner-Recovery, GH-05 echte Quelle, GH-06 reale age-Veröffentlichung, GH-07 Restore und GH-08 Scheduler weiter blockiert.
-
-## Update 20.10.2026 – GH-06 CircleCI Offline-Sicherheitstests 13/13 bestanden
-
-- **Pipeline [#209](https://app.circleci.com/pipelines/github/janjrre/Projekt-Wordpress-Plugin)**: genau der manuelle Job `gh06-age-release-offline-qa` auf Featurebranch `feat/gh06-synthetic-age-release-20261020`, Quellcommit `6f885c585557661e3250fc477e2464779cf01adc`, grün. Der unabhängige GitHub-Commitstatus `ci/circleci: gh06-age-release-offline-qa` bestätigt `success`, [Job #6](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/6). Betreiber-Screenshot von stdout belegt **13/13 Python-Tests, 0 Fehler, OK** (0.147s).
-- **Wert der Abnahme:** Release-Publisher-Syntax, Negativtests für Secret-/Repository-/Format-/Hash-Eingaben und Fake-GitHub-Ablehnungen bestanden. Die Fake-CLI ist **keine echte GitHub-API**: weder Upload, persistentes Release, öffentliche/immutable Remote-Assetkontrolle noch echte Decryption hier durchgeführt. GH06-AGE-01/02/05 nur im OFFLINE-Scope als bestanden.
-- **Folgestufe:** Separate GH-06-Release-Testbranch mit GitHub-Branchschutz und CircleCI-Context auf **genau diesen Branch und OrgaVela-Projekt** beschränken, anschließend neuen kurzlebigen GitHub-Fine-grained-Token ausschließlich für privates `janjrre/orgavela-backups` erstellen (direkt in CircleCI, nicht im Chat). Kein Produktionspasswort/Owner-private-age-Key in CI. Echter synthetischer age-GitHub-Release-Remote-E2E erst nach dieser Freigabe und manueller kostenbewusster Aktivierung.
-- **Weiterhin offen:** GH03 unabhängige Owner-Recovery, produktiver GH05-Capture, GH06 Remote/Production, GH07 isolierter Echt-Restore und GH08 Daily; V1-Plan **62/71 historische Coding-Pakete**, M0–M7 formal 0/8, P4 0/4, Release R01–18 0/18. PRs weiter offen. [GH06-Runbook](../operations/W0_O03_GH06_AGE_RELEASE_PREPARATION_2026-10-20.md), [Fortschritt](../operations/V1_PROGRESS.json), [Abnahmematrix](V1_ACCEPTANCE_MATRIX.md).
-
-## Update 20.10.2026 – GH-06 native-age GitHub Release Transport als Draft-PR #21 vorbereitet
-
-- **GH-06 Draft-PR [#21](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/21)** auf GH-05 Draft #20 aufgebaut: nativer age-X25519-Release-Upload-Adapter ausschließlich für künstliche Daten, je drei Asset-Dateien (tar.age, Manifest, SHA256), doppelte vollständige numerische Asset-ID-Readbacks, distinct published Tag Download, künstliche remote-only Decryption und immutable-Flag-Prüfung. GH04-GPG-Canary unverändert.
-- **Sicherheit:** nur festes privates Ziel janjrre/orgavela-backups, keine Echt-Daten, keine Benutzer-Recovery-Schlüssel und keine IONOS-Verbindung; keine Release-Aktion durchgeführt. Token-gestützter GH06-Remote-CI-Job ist bewusst noch NICHT konfiguriert; geschützter Testbranch/Context bleiben offene spätere Gates.
-- **Tests:** 13 neue offline Fake-gh/Negativtests nur definiert; Shell-/Python-Dateien wurden über GitHub statisch gelesen. Noch KEIN GH06-Provider-Lauf und KEIN GH06-PASS. Neuer no-secret CircleCI-Job gh06-age-release-offline-qa, Flag enable_gh06_age_release_offline default false. GH05 Pipeline #188 ist getrennte historische synthetische age-Provider-Evidenz und wird nicht wiederholt.
-- **Nächste Abnahme:** Genau einen manuellen GH06-Offline-CI-Lauf auf feat/gh06-synthetic-age-release-20261020 bei verfügbarem Free-Kontingent mit Flag true starten, alle anderen Flags false, Job-Log und verifizierten Commit nachweisen. Erst nach PASS getrennte Sicherheitsabnahme/geschützter Testbranch/kurzlebiger PAT für echten synthetischen GH06-Remote-Versuch.
-- **V1-Fakten unverändert:** 62/71 historische Coding-Pakete, M0–M7 formal 0/8, P4 0/4, Release R01–R18 0/18, V1 offen. GH03 unabhängige Owner-Recovery und GH05 echte Quelle weiterhin nicht abgenommen; GH06 Produktionsupload, GH07 isolierte echte Recovery, GH08 Cron gesperrt. [Runbook](../operations/W0_O03_GH06_AGE_RELEASE_PREPARATION_2026-10-20.md) · [Fortschrittsdaten](../operations/V1_PROGRESS.json).
-
-## Update 20.10.2026 – GH-05 synthetische age-Producer/Writer-Pipeline #188 BESTANDEN
-
-- **Echte Anbieter-Ausführung:** CircleCI `Projekt-Wordpress-Plugin #188`, Workflow `gh05-synthetic-parity-manual`, Branch `feat/gh05-synthetic-age-20261019`, **genauer Quell-Commit `590d530686356d641774a27ff4004aa27fd063aa`**. Betreiber-Screenshots zeigen Pipeline **SUCCESS** in 20 s, `gh05-synthetic-source` **SUCCESS (11 s)** und `gh05-synthetic-writer` **SUCCESS (3 s)**. Ein `persist_to_workspace`-Step auf dem Producer zeigt verschlüsselten 11-KiB-Workspace erfolgreich hochgeladen.
-- **Unabhängig via GitHub:** Die Commit-Statuses `ci/circleci: gh05-synthetic-source` und `ci/circleci: gh05-synthetic-writer` stehen beide auf **success**, verlinkt auf [Job #4](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/4) und [Job #5](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/5). Die exakte `.circleci/config.yml` bei `590d530` wurde read-only aus GitHub gegen die vorgeschriebenen Installations-, Test-, Cipher- und Writersteps abgeglichen. Alle diese Schritte waren obligatorisch, kein `when` auf Einzelsteps und keine Secrets-/Deployment-/Live-Daten-Jobs.
-- **Teilabnahme:** Der zuvor wegen fehlendem lokalen CLI-Binary übersprungene **synthetische age-Verschlüsselungs-/Entschlüsselungstest** und die Zwei-Job-/Workspace-Parität sind durch den tatsächlich erfolgreichen Provider-Job nachgewiesen. Die einzelnen Stdout-Testzeilen und der konkrete age-Binary-Versionsstring wurden nicht separat abgeholt: keine erfundenen Testfallzahlen oder Versionen.
-- **Weiterhin gesperrt:** GH-03 unabhängiger Recovery-Key bei Geräteverlust (AgePony-PDF derzeit nur auf Original-iOS-Gerät), GH-05 echter konsistenter OrgaVela-/MariaDB-Snapshot, GH-06 private immutable age-GitHub-Release-Uploads und Full-Readbacks, GH-07 isolierter Wiederherstellungstest echter Backups und GH-08 Zeitplanung. **Kein** echtes OrgaVela-Backup, kein Datenzugriff, kein neues GitHub-Release, keine automatische Sicherung durchgeführt.
-- **V1-Zähler unverändert:** technisch historisch **62/71** implementierte Coding-Pakete, M0–M7 formal **0/8**, P4 **0/4**, R01–R18 **0/18**. Draft PR #20 weiterhin offen/ungemergt. [Masterplan](../operations/V1_ACCEPTANCE_PLAN.md), [Progress](../operations/V1_PROGRESS.json), [Abnahmematrix](V1_ACCEPTANCE_MATRIX.md).
-
-## Update 20.10.2026 – Dreamloud-Produktions-Backupverfahren als OrgaVela-Synthetik-Pipeline adaptiert
-
-**Dreamloud-Quelle read-only unabhängig geprüft:** Branch `backup/production-circleci` bei `da44f1a6d76ac25bce5cfed3122224c82c5da2fa` verwendet getrennte kontrollierte Capture- und verschlüsselte immutable-GitHub-Release-Writer-Jobs. Production-Backup (#348) und isolierter Restore (#353) sind im Dreamloud-Handoff belegt; täglicher realer Zeitplan ist davon unabhängig und noch nicht nachgewiesen.
-
-**OrgaVela Draft PR [#20](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/20):** neue `scripts/ci/orgavela_backup_parity.py` für ausnahmslos künstliche age-X25519-Dateien und ein streng nur Ciphertext/Manifest/Hash akzeptierender Writer; 13 separat **definierte** Python-Sicherheits- und negative Tests; Default-False-Parameter `enable_gh05_synthetic_parity` mit zwei getrennten branchgebundenen CircleCI-Jobs ohne Secret-Contexts. [Entscheidung und Abgrenzung](../operations/W0_O03_DREAMLOUD_PARITY_ADR_2026-10-20.md).
-
-**Wichtig:** Alle fünf neu/erweiterten Dateien wurden über GitHub lesenachgeprüft; **kein** tatsächlicher neuer Age-Crypto-CLI-/CircleCI-Run und **kein** Test-PASS für die 13 neuen Fälle bislang. Vor CircleCI-Integration ist die Konfiguration mit dem noch offenen **Draft PR #17** abzugleichen; niemals ein anderes CI-Pilotverfahren ersetzen. Keine realen Daten, kein Backup-Upload, keine Kosten, keine Dreamloud-Änderung und keine tägliche Automatik ausgelöst.
-
-**GH-03 weiter blockiert:** Betreiber AgePony-Identity und lokale PDF reichen nicht für unabhängig geschützte Offline-Wiederherstellung. GH-05 real capture, GH-06, GH-07 und GH-08 weiterhin nicht abgenommen. V1 unverändert **62/71 historische Coding-Pakete**, formal **0/8 M0–M7**, **P4 0/4**, **R01–R18 0/18**, PR-Integration offen.
-
-## Update 20.10.2026 – GH-05 age-CLI-Test wegen fehlendem offiziellen Binary blockiert
-
-- GH-05 Draft PR [#20](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/20): **8 Python-Tests lokal bestanden, 1 echter `age`-CLI-Test weiterhin SKIP**, weil die isolierte Laufzeit weder age noch age-keygen enthält und die offiziellen GitHub-/Spiegel-Downloads nicht möglich waren. Direkter künstlicher CLI-Runner verweigert zu Recht Erfolg mit **Exit 1**.
-- Original-Hersteller v1.3.2 und Linux-amd64 SHA256 sind bekannt, aber **keine heruntergeladene Datei oder Hashverifikation** vorhanden. PCjan derzeit offline. Kein grüner CI-/Provider-Status und kein tatsächlicher Verschlüsselungs-/Tamper-Test mit age behauptet.
-- Kein WordPress, IONOS, MariaDB, Dreamloud, GitHub-Release, Token, CI-Run oder kostenpflichtiger Dienst berührt. [GH-05-Nachweis](../operations/W0_O03_GH05_SYNTHETIC_PREPARATION.md) und [V1_PROGRESS.json](../operations/V1_PROGRESS.json) entsprechend fortgeschrieben.
-- **Fortsetzung:** synthetischen Test auf einer isolierten Umgebung mit geprüften age+age-keygen-Binaries ausführen; erst danach GH05-SYN-D beurteilen. Unabhängige GH-03-Recovery, echter Capture/Upload/Restore/Schedule bleiben offen. Historische V1-Zahlen **62/71 Coding**, **0/8 Meilensteine**, **0/4 P4** und **0/18 Release-Gates**, V1 nicht abgenommen.
-
-## Update 19.10.2026 – GH-05 synthetische Archiv- und age-Testvorbereitung
-
-- **Draft PR [#20](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/20)** (gestapelt auf Draft PR #18) erstellt. Drei neue Dateien: ausschließlich synthetischer TAR/age-Tester, Python-negative Unittests, [GH-05-Prüfanleitung](../operations/W0_O03_GH05_SYNTHETIC_PREPARATION.md).
-- **Lokal geprüfter Teilbereich:** Im isolierten Assistenz-Container bestanden 8 Python-Unit-/Sicherheitsprüfungen; 1 echter age-CLI-Test wurde **SKIP**, weil official age/age-keygen dort nicht installiert sind. Tests wurden mit dem äquivalenten vorher lokal aufgebauten Quellstand durchgeführt; kein grüner provider-/PR-HEAD-Nachweis.
-- **Wichtige Grenze:** Kein echter age-CLI-Krypto-PASS, kein MariaDB-/WordPress-Capture, keine Cloud-Uploads oder Releases, keine CircleCI-/GitHub-Actions-Runs, keine Kosten, keine Secrets. Das ist **GH-05-VORBEREITUNG**, keine produktive GH-05-Abnahme.
-- **GH-03 weiterhin blockierend:** Betreiber meldet erfolgreichen lokalen AgePony-Notiz-Roundtrip und PDF nur auf dem Originalgerät; kein unabhängiger Wiederherstellungsbeweis mit Kopie 2. GH-05 echte Captures, GH-06, GH-07 und GH-08 bleiben gesperrt.
-- **Nächster Beleg:** Committed Code statisch gegen Quell-/Secret-/Upload-Schranken prüfen; denselben künstlichen Ciphertext-Test mit installierter offizieller age-CLI separat durchführen. Keine automatische Freigabe für echte Daten oder Schedules.
-- **Formale Zahlen unverändert:** 62/71 historische Coding-Pakete, 0/8 M0–M7-Abnahmen, 0/4 P4, 0/18 Release-Gates, V1 noch offen, PR-Integration ausstehend.
-
-## Update 19.10.2026 – GH-03: AgePony-Notiz lokal erfolgreich entschlüsselt
-
-- **Operator-Nachweis:** AgePony-Screenshot zeigt eine native `age X25519`-Identität „OrgaVela Recovery v1“. Betreiber meldet eine passphrasegeschützte Paper-Backup-PDF unter iOS/iPadOS `Auf meinem iPhone/iPad` und erfolgreiche lokale Ver- und Entschlüsselung einer ausschließlich künstlichen Testnotiz.
-- **Abgrenzung:** Dieser Test ist ein **lokaler Roundtrip mit Original-App-Identität**, kein unabhängiger Restore aus einer zweiten Offline-Kopie und kein Hash-/Rekonstruktionstest der PDF auf einem anderen Gerät. Keine belastbare Redundanz bei Geräteverlust. Lokale Dateien können von Geräte-Backup-Einstellungen betroffen sein; nicht als „nachweislich cloudfrei“ kennzeichnen.
-- **GH-03 bleibt `in_progress` und NICHT abgenommen.** Die vereinbarten zwei getrennt geschützten Offline-Recovery-Kopien und der unabhängige Kopie-2-Restore sind nicht nachgewiesen. Betreiber hat derzeit keine USB-Medien und akzeptiert lediglich eine **vorläufige** lokale Ablage. Keine Absenkung der Produktiv-Freigabe-Gates.
-- **Nächste Arbeit:** GH-05 darf mit synthetischen Fixtures, rein lokalem Design und Tests vorbereitet werden, **ohne** echte WordPress-/MariaDB-Daten, SSH-/API-Produktivzugriff, Cloud-Uploads, Schlüsselgeheimnisse, Secret-Contexts oder automatisierte Backup-Schedules. Erst nach unabhängiger Recovery-/Betriebsabnahme über echte Backups entscheiden.
-- **Zahlen unverändert:** 62/71 technische Coding-Pakete, formal 0/8 Milestones, 0/4 P4, 0/18 R-Gates, V1 offen; Entwicklungs-PR-Integration ausstehend. Verbindliche Datendetails: [V1_PROGRESS.json](../operations/V1_PROGRESS.json).
-
 ## Aktuelle Welle: W0 – Bestands- und Sicherheitsabnahme
 
 **Stand 12.10.2026: IN ARBEIT, noch nicht abgenommen.** [W0-Live-/Restore-Bericht](../operations/W0_BASELINE_AND_RECOVERY.md) · [Issue #16](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/16) · [verbindliche maschinenlesbare Messwerte](../operations/V1_PROGRESS.json).
@@ -449,318 +287,386 @@ Betreiber hat das Speichern der CircleCI-Expression im Context `orgavela-backup-
 Der [Masterplan v2.11](../operations/V1_ACCEPTANCE_PLAN.md) bleibt normativ unverändert, [Maschinenstatus](../operations/V1_PROGRESS.json) und [Backup-Runbook](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md) enthalten neue Befunde. O03 `partial`, Release-/B04-/R03-Gates offen, kein realer Backup-/Restore-Nachweis, 62/71 Coding historisch, Milestones 0/8, P4 0/4, Release 0/18, Merges 0. Kein neuen Workflow oder Zahlung ausgelöst.
 
 
-### 13.10.2026 – GH-02 Quellbranch-Schutz jetzt über GitHub API bestätigt, GH-03 Offline-Key vorbereitet
+## 22.10.2026 — W0/O01/O03: PGP05 transport readiness, unchanged acceptance
 
-**Neuer GitHub-API-Beleg nach Betreiberaktion:** Für den `main`-Branch des **öffentlichen** OrgaVela-Quellrepositories gibt [GitHub `branches/main`](https://api.github.com/repos/janjrre/Projekt-Wordpress-Plugin/branches/main) nun **`protected=true`** und `protection.enabled=true` zurück (geprüfter HEAD `0adacb427bd95dd87594e358ec9c6f2f5b38aae8`), im Gegensatz zum früheren `protected=false`. Keine erforderlichen Statuschecks gesetzt (`enforcement_level=off`). Die verbindlichen PR-/Bypass-/Force-Push-/Delete-Details kann die aktuelle GitHub-Verbindung wegen `403` an `/branches/main/protection` **nicht unabhängig verifizieren**. Die CircleCI-Context-Expression ist **durch Betreiber bestätigt**, nicht per CircleCI Admin-API ausgelesen. **GH-02 deshalb noch nicht final freigegeben, keine Zugangstokens in Contexts.**
+[Execution readiness and independent review packet](../operations/PGP05_CLOUD_SSH_READINESS_AND_REVIEW_PACKET_20261022.md); tracking #27 / Draft PR32. Code SHA `80eda724f2339afe1804fff91c3c10c27d694852`: 93/93 exact-blob local synthetic tests OK; existing CircleCI #40 success reverified. Documentation-only continuation; no code/CI/deploy change.
 
-**GH-03 technische Vorbereitung:** Das [aktualisierte Offline-`age`-Runbook](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md#8-gh-02-neuer-sicherheitsnachweis-und-gh-03-betreiber-schlüsseltest-13102026) enthält bestätigte offizielle Windows-Installation via `winget install --id FiloSottile.age --exact`, Erstellung eines Schlüsselpaares auf einem **nicht synchronisierten, verschlüsselten** Betreiber-/USB-Datenträger, zweite getrennte Offline-Schlüsselkopie sowie **rein lokalen synthetischen** Encryption-/Decryption-/SHA-256-Test. **Noch keine Schlüsselerstellung oder Durchführung nachgewiesen** und keine Schlüssel in GitHub oder CircleCI abgelegt. Ab jetzt werden Repoänderungen nur auf einem Arbeitsbranch bzw. als Draft PR vorgeschlagen; keine eigenmächtigen Merges in `main`. Historische V1-Zählwerte und Masterplan **2.11** unverändert; O03 `partial`, B04/R03 offen.
+Cloud runtime has SSH tools but DNS fails and no configured private access is available; PCjan is offline. Official IONOS fingerprint rechecked, actual endpoint key/SSH namespace/domain-root **not checked**. Review handoff prepared, independent signoff absent. **Checkpoint 5 = 7/10**, open #6 review, #8 authenticated identity/domain binding, #10 live metadata run/acceptance. Next: existing authorized PCjan online, private transport readiness; then complete reviewed live design. No passwords/keys in chat or GitHub. V1 acceptance unchanged: 62/71 historical coding, M0–M7 0/8, P4 0/4, R 0/18; PR32 Draft/unmerged, last evidenced live alpha.2 (not re-queried this session).
 
 
-### W0/O03 – Dreamloud-Token-Verfahren verifiziert, PC-freier synthetischer Test für OrgaVela möglich (14.10.2026; v2.12)
+## 22.10.2026 — PGP05 CircleCI SSH-Prüfjob erstellt, Live weiterhin offen
 
-**Neue externe Eigenevidenz (nur lesender Zugriff auf anderes Projekt):** Das **private** GitHub-Repo `janjrre/dreamloud-backups` hat tatsächlich einen veröffentlichten, `immutable=true` [synthetischen Release `backup-dreamloud-synthetic-circleci-78`](https://github.com/janjrre/dreamloud-backups/releases/tag/backup-dreamloud-synthetic-circleci-78) mit künstlichem GPG-`.tar.gpg`, SHA256-Datei und Manifest; GitHub-Providerstatus auf Original-SHA [CircleCI #78 = success](https://circleci.com/gh/janjrre/dreamloud-portal/78). Tatsächliches [Dreamloud-Testscript](https://github.com/janjrre/dreamloud-portal/blob/test/github-release-transport-434-v3/scripts/test-github-release-remote-e2e.sh) erzeugt das GPG-Testschlüsselpaar **temporär in CircleCI**, setzt ausschließlich den GitHub-Upload-Token `GH_TOKEN` für das private separate Repo ein und führt Test-Rückdownload/Entschlüsselung durch. **Es gibt keinen Beleg für echte Dreamloud-Datei-/SQL-Backups oder einen realen WP/MariaDB-Restore.** Dreamloud bleibt unverändert und sämtliche Tokens getrennt.
+[Anleitung](../operations/PGP05_CIRCLECI_SSH_PROBE_OPERATOR_GUIDE_20261022.md) · #27 / Draft PR32. Standard off führt nur kontextfreie Offline-Tests aus; hostkey und metadata sind explizite separate, manuell freizugebende Abläufe mit getrennten exakt SHA-beschränkten Contexts. **116/116 lokale synthetische Tests PASS**, YAML-Struktur und Shellsyntax PASS; keine neue Provider-CI-/Live-/Review-Abnahme. Contexts/Secrets nicht angelegt, keine Siteänderung.
+
+Nächster Betreiber-Schritt: **orgavela-pgp05-hostkey-only** zuerst auf Projekt und exakte geprüfte Revision beschränken, danach nur Host/SHA/Zero-cost-Bestätigung eintragen, **kein Passwort**. Authentisierter Metadatenmodus bleibt vor unabhängigem Startup-/Codereview gesperrt. PCjan nicht erforderlich. Checkpoint5 **7/10**, #6/#8/#10 offen; V1 unverändert 62/71 historisch, M0–M7 0/8, P4 0/4, R 0/18; alpha.2 zuletzt belegt, PR32 Draft/unmerged.
 
-**OrgaVela-Schlussfolgerung:** Für **rein synthetische** GitHub-Releases-E2E-Tests muss der Betreiber **keinen PC, iSH oder eigenen permanenten age-/GPG-Key haben**. Ein durch CircleCI allein während des Tests erzeugtes **ephemeres Testschlüsselpaar** genügt. Erst für **reale produktive OrgaVela-Backups** bleibt ein dauerhafter, in zwei getrennten verifizierten Offline-Kopien privat verwahrter Betreiber-Entschlüsselungsschlüssel zwingend. OrgaVela darf nur eigenes `janjrre/orgavela-backups`, eigenen kurzlebigen fine-grained GitHub PAT und separat restriktierten Context `orgavela-backup-releases` verwenden.
 
-**Was noch wirklich fehlt:** Verifiziertes CircleCI GH-02 Secret-Gate auf dem Testbranch (geschützte Source-Branch-Identität, effektive Context-Expression, GitHub-PR-/Bypass-Details, Free-Credits), eigenes ausschließlich repo-beschränktes GitHub PAT als **`GH_TOKEN`**, opt-in synthetischer OrgaVela-Testcode/Live-Run, nachweisbarer eigener Remote-Readback/Restore. Noch **kein** OrgaVela-Release-Asset, kein echter Snapshot, kein realer Restore. Die Zähler bleiben **62/71** historische Codierung, M0–M7 **0/8** abgenommen, P4 **0/4**, R **0/18**, PR-Merges **0**, O03 `partial`. [Masterplan **2.12**](../operations/V1_ACCEPTANCE_PLAN.md) · [Fortschritt **2.12**](../operations/V1_PROGRESS.json) · [O03-Runbook](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md). Änderung liegt nur in der **ungemergten Draft PR #18**.
+## 2026-10-22 — PGP05 Hostkeykandidat tatsächlich PASS (Pipeline #537 / CircleCI #43)
 
+Betreiber-Screenshots zeigen genehmigten Hostkey-Approval und erfolgreichen Job pgp05-hostkey-candidate (3s). Sichtbare Ausgabe: PGP05_CIRCLECI_SSH_PROBE=PASS; mode=hostkey, hostkey_candidate_matches_provider=true, authenticated_ssh=false, production_capture_allowed=false. source_revision im Log durch CircleCI-Secretmaskierung verdeckt; kein eigenständiger vollständiger SHA-Readback aus dem Screenshot behauptet. GitHub-Commitstatus bestätigt unabhängig success für [Candidate #43](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/43) auf **392053bb0e3f24ef79cc66a5142a6558b3fa5ee5**, ebenso [Offline #41](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/41) und [Approval](https://circleci.com/workflow-run/9e8eb44c-16a1-413b-9713-1c19b9383ac5). Exact source + provider status + redacted receipt are combined evidence, not a direct assistant read of raw SSH packets.
 
-**Codeumsetzung (14.10.2026, nur Draft):** Die bei Dreamloud getestete PC-freie **synthetische** GitHub-Releases-E2E-Methode ist auf eigenständigem OrgaVela-Testbranch `test/orgavela-github-release-o03` vorbereitet; [Draft PR #19](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/19) ist gegen den noch ungemergten CircleCI-Pilot aus [Draft PR #17](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/17) gestapelt. Branchcode: zwei skriptbasierte künstliche OpenPGP-Archive-/Upload-/Remote-SHA256-/Immutable-/Restoreprüfungen, CircleCI-Parameter `enable_synthetic_github_release_e2e=false` standardmäßig aus, festen OrgaVela-Backupziel-/Branch-/Context-Guard. **GitHub testbranch protected=false** unabhängig geprüft: **kein GH_TOKEN eintragen**, bis Branchschutz und angepasste einzige CircleCI-Expression (derzeit main) geprüft wurden. CI YAML/Shell/Live-Lauf für diesen Branch noch **nicht** technisch ausgeführt; nur Source/Scope-Rückleseprüfung. Kein GitHub-Release, keine realen WP-Daten, kein Merge, keine Kosten. Operator-Anleitung: [PR #19 Runbook](https://github.com/janjrre/Projekt-Wordpress-Plugin/blob/test/orgavela-github-release-o03/docs/operations/W0_O03_GITHUB_SYNTHETIC_E2E_2026-10-14.md). Masterplan v2.12 und machine JSON entsprechend auf Draft PR #18 nachgezogen; `main` weiter v2.11.
+**Akzeptierter Teilnachweis:** Der vom festgelegten Endpunkt erhaltene ED25519-Keyscan-Kandidat stimmt gemäß geprüftem Code mit dem offiziell veröffentlichten IONOS-Pin überein. Provider-only Keyscan **beweist keine abgeschlossene authentisierte SSH-Sitzung oder Schlüsselbesitzprüfung im angemeldeten Transport**, kein bestimmtes Kundenkonto, Shell-Namespace oder aktive Domain/vHost-Zuordnung. Diese Grenzen sind im Receipt korrekt erhalten. Keine Login-Credentials, Site-Dateien, PHP/WordPress/SQL, Backup/Deploy/Restore/Release/Merge durch diesen Hostkeymodus.
 
+**Nächste Betreiberaktion:** Die drei temporären Variablen im ausschließlich für diesen Versuch eingerichteten Context orgavela-pgp05-hostkey-only entfernen (PGP05_SSH_HOST, PGP05_APPROVED_SHA, PGP05_ZERO_COST_CONFIRMED); Projekt-/Expression-Restrictions stehen lassen. Nur diesen Context bearbeiten, keine Backup-/Deploy-Zugänge. Kein Rerun. Entfernen sperrt die weitere Nutzung durch fehlende Pflichtfelder; vorherige Logs werden dadurch nicht gelöscht. Ausführung der Bereinigung noch nicht bestätigt. Vor Metadata-Context/Passworteingabe bleibt unabhängige Code-/Transport-/Startup-Sicherheitsabnahme zwingend. Neue autorenseitige Tests wären kein Ersatz.
 
-## GitHub-Re-Audit vom 15.10.2026 – Referenzvergleich Dreamloud / O03
+**Checkpoint5 unverändert 7/10 (70 %):** #8 hat jetzt zusätzlich den echten Hostkey-Kandidatenteil bestanden; vollständige authentisierte Konto/Namespace/vHost-Bindung bleibt offen, ebenso #6 unabhängiges Live-Review und #10 akzeptierter echter Metadatenlauf. Keine künstliche Erhöhung auf 8/10. Aktueller Fortschritt zeigt abgeschlossene Vorprüfung, nicht vollständige PGP05-/V1-Abnahme. Historische Abschnitte mit 'Hostkey nicht ausgeführt' sind durch diesen datierten Nachtrag im Kandidatenumfang überholt.
 
-**Quelle:** [Vollständiger tatsächlicher GitHub-/Dreamloud-Befund](../operations/W0_O03_GITHUB_DREAMLOUD_AUDIT_2026-10-15.md). **Normativer Hauptbranch unverändert bei v2.11**, Dokumentations-Draft [#18](https://github.com/janjrre/Projekt-Wordpress-Plugin/pull/18) wird auf v2.13 aktualisiert und **nicht gemergt**. Alle Werte sind GitHub-Prüfungen, keine neue OrgaVela-Liveabfrage.
+V1-Zähler unverändert: 62/71 historische Codingpakete, M0–M7 0/8, P4 0/4, R01–R18 0/18. Dieser Dokumentationsnachtrag verändert den gepinnten PR32-Codebranch nicht.
 
-| Aktueller Punkt | Bestätigter Stand | Stop-Gate / Nächstes |
-|---|---|---|
-| GitHub-`main` | SHA `0adacb427bd95dd87594e358ec9c6f2f5b38aae8`, `protected=true`; genaue PR-/Bypass-/Force-/Delete-Regeln nicht durch Connector bewiesen | Schutzdetails vor Secrets unabhängig prüfen |
-| Offene PRs | **10**: #1–#6, #11, #17, #18, #19; **0 Merges** | Draft #18 Dokumentation, #17 CircleCI, #19 synthetischer Release-Test; keine automatischen Merges |
-| CircleCI OrgaVela | Offline-Pilot [#2 erfolgreich](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/2); #19-E2E **nicht ausgeführt**; Commit `a03b0e079ad0f8bd782574abd5b0ed581bf3c12a` hat **0 externe Statuschecks** | `test/orgavela-github-release-o03` `protected=false`: **vor GH_TOKEN sperren**; Context/Free-Credits prüfen |
-| Privates OrgaVela-Ziel | `janjrre/orgavela-backups` **private**, GitHub Releases `[]` | **0** synthetische / **0** echte GitHub-Backup-Releases; GH-01 ja, GH-04/GH-06/07 nein |
-| Dreamloud historisch | Echte OpenPGP-Datei-/MariaDB-Sicherung via **GitHub Actions/S3**, teils früherer Restore | **Nicht** mit CircleCI→GitHub Releases verwechseln |
-| Dreamloud neue Methode | [synthetischer CircleCI-Lauf #78](https://circleci.com/gh/janjrre/dreamloud-portal/78) und [privates immutable Test-Release](https://github.com/janjrre/dreamloud-backups/releases/tag/backup-dreamloud-synthetic-circleci-78) mit 3 Assets | Nur Kunst-Daten; Produktions-Umstellung [Draft #450](https://github.com/janjrre/dreamloud-portal/pull/450) noch offen |
-| Dauerhaftes Backup/Restore OrgaVela | GH-03 echter Betreiber-Recovery-Key, GH-05/06 Capture/Upload, GH-07 realer Remote-only-Restore, GH-08 Dauerbetrieb **offen** | Vor echten Daten Verschlüsselungsformat (age vs. OpenPGP) bewusst festlegen, redundante offline Keyverwahrung, isolierter Restore |
 
-**V1-Zähler unverändert:** **62/71** historisch Code, **0/8** formale Meilensteine, **0/4** P4, **0/18** Release-Gates, **0** PR-Merges. Staging zuletzt verifiziert **UOP Core 0.1.0-alpha.2 aktiv**, 29 Tabellen/Version 2/2 im früheren Live-Audit. W0 bleibt offen; keine Freigabe für reale Teilnehmerdaten, Live-Upgrade oder tägliche Backup-Automatisierung. **W1–W7** weiterhin nach dem [normativen Masterplan v2.13 auf PR #18](../operations/V1_ACCEPTANCE_PLAN.md) und [ausführlichem Audit](../operations/W0_O03_GITHUB_DREAMLOUD_AUDIT_2026-10-15.md). Keine Secrets, Kosten oder Produktivänderungen dieser Prüfung.
-
-**Zusätzlicher aktueller CI-Nachweis PR #11 (15.10.2026):** Draft #11 HEAD `a34f4195371f9edf1fa24ea4abdef1fd479f2c19` hat zwei tatsächlich abgeschlossene erfolgreiche GitHub-Actions-PR-Läufe, [Foundation #38253835618](https://github.com/janjrre/Projekt-Wordpress-Plugin/actions/runs/38253835618) und [HTTPS/Mailpit #38253835549](https://github.com/janjrre/Projekt-Wordpress-Plugin/actions/runs/38253835549), **beide auf demselben HEAD**. Die im früheren Status dargestellten roten Läufe gehören zu **älteren** Commits, nicht diesem aktuellen HEAD. #11 bleibt Draft/ungemergt; der vollständige V1-R03-Release-Gate-Nachweis auf einem integrierten Release-Kandidaten ist weiter **nicht** formal abgenommen. Keine Änderungen der V1-Zähler.
-
-
-## GH-02 – Sicherheits-/Providerstatus erneut geprüft (15.10.2026, 21:37 MESZ)
-
-**Stand: BLOCKIERT / NICHT ABGENOMMEN.** GitHub `main` geschützt, aber **`test/orgavela-github-release-o03 protected=false`** auf `a03b0e079ad0f8bd782574abd5b0ed581bf3c12a`; `rulesets=[]`. GitHub-Connector kann Branch-Protection nicht schreiben und deren einzeln geltende Classic-Regeln nicht ausreichend adminseitig kontrollieren. CircleCI Context `orgavela-backup-releases`-Projekteinschränkung, effektive Expression und Free-Kontingent konnten **nicht neu direkt ausgelesen oder geändert** werden. Die verbundene Desktop-Instanz war offline; ein kostenpflichtiges Browsertool wurde nicht eingesetzt. Keine Token/Secrets, CI-Läufe oder GitHub Releases.
-
-**Sofortige Betreiberaktionen, ohne Secretoffenlegung:** [GitHub Branch Protection](https://github.com/janjrre/Projekt-Wordpress-Plugin/settings/branches) für exakt `test/orgavela-github-release-o03`, Require PR + No Bypass, Force Push/Delete aus; danach [CircleCI Organization Settings/Contexts](https://app.circleci.com/settings/organization) → `orgavela-backup-releases`, nur OrgaVela-Projekt und **genau eine** effektive Expression `pipeline.git.branch == "test/orgavela-github-release-o03" and not job.ssh.enabled and not (pipeline.config_source starts-with "api")`, bisherige `main`-Freigabe **ersetzen**. Free-Plan/Plan Usage und Fork-/PR-Trigger prüfen; zunächst keinen `GH_TOKEN` eingeben. Detailanleitung und **GH-02-Abnahmecheckliste** [Runbook §11](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md).
-
-**Bis zur belegten Erledigung:** GH-02 `false`, GH-04 noch nicht startbereit, O03 `partial`, alle V1-Zähler unverändert (**62/71**, M **0/8**, P4 **0/4**, Release **0/18**, 0 PR-Merges). Normativer `main`-Plan v2.11; v2.13 mit dieser Ergänzung weiterhin nur Draft PR #18. Kein WordPress-/Dreamloud-Eingriff.
-
-
-## GH-02-Teilnachweis (15.10.2026, nach bestätigter GitHub-Änderung)
-
-**Neu bestätigt:** Der synthetische Testbranch `test/orgavela-github-release-o03` hat nach Betreiber-Einstellung laut direktem GitHub GET jetzt **`protected=true`, `protection.enabled=true`**, HEAD `a03b0e079ad0f8bd782574abd5b0ed581bf3c12a` **unverändert**. PR #19 bleibt Draft, kein Merge. Dieser **eine GitHub-Boolean-Abnahmepunkt ist bestanden**; ältere `protected=false`-Einträge sind chronologisch, jetzt abgelöst.
-
-**Noch nicht belegt:** Die einzelnen Classic-Regeln (GitHub API `GET .../protection` → 403), CircleCI Context `orgavela-backup-releases` mit effektiver Project Restriction und von `main` ersetzter Testbranch-Expression sowie Free-Restcredits, Fork-/PR-/SSH-/API-Secret-Schutz. [GH-02-Runbook](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md) enthält die exakten Schritte; die offizielle [CircleCI-Context-Dokumentation](https://circleci.com/docs/guides/security/contexts/) bestätigt die Regel. **GH-02 formal weiter offen; keinen GH_TOKEN eintragen und keinen synthetischen GH-04-Cloudjob starten.**
-
-**V1-Gesamtstand unverändert:** 62/71 historisch als Code implementiert, **0/8** M0–M7 formal abgenommen, P4 **0/4**, R01–R18 **0/18**, W0/O03 teilweise, kein Merge und kein reales Backup/Restore. Normativer Plan auf der ungemergten Dokumentations-PR #18 jetzt **v2.14**, `main` bleibt beim älteren Stand. Nächste Aktion: Betreiber prüft GitHub-Einzeloptionen und stellt eingeschränkten CircleCI-Context um; danach unabhängige GH-02-Nachkontrolle und formale Teilfreigabe.
-
-
-## GH-02 nach erneuter Betreiber-Konfigurationsbestätigung (15.10.2026, 23:09 MESZ)
-
-**Sicherheitskonfiguration weitgehend abgeschlossen; formale Gesamtfreigabe noch ausstehend.** Unabhängige GitHub-API: `test/orgavela-github-release-o03 protected=true`, unveränderter HEAD `a03b0e079ad0f8bd782574abd5b0ed581bf3c12a`. Betreiber bestätigt jetzt ausdrücklich die Prüfung der einzelnen GitHub-Branchschutzoptionen und die CircleCI-`orgavela-backup-releases`-Project-Restriction sowie das Speichern der neuen Context-Expression für exakt den Testbranch. GitHub-Detail-API weiter 403, CircleCI-Admin-API nicht verfügbar: **Benutzerbestätigung ist nicht unabhängiger API-Beweis**.
-
-**Letztes GH-02-Go/No-Go vor irgendeinem Token:** Betreiber prüft in CircleCI unter **Plan → Plan Overview**, dass die Organisation tatsächlich den kostenlosen **Free-Plan** nutzt (keine zahlungspflichtige Planübernahme/Share/Upgrade), sowie in den OrgaVela-Projekteinstellungen, dass die **Weitergabe von Secrets an Builds aus Fork-PRs deaktiviert** ist. Laut [offizieller Credits-Dokumentation](https://circleci.com/docs/guides/plans-pricing/credits/) bietet der Free-Plan für öffentliche Linux-Open-Source-Builds bis 400.000 Credits/Monat, aber **keine UI-Anzeige für die verbleibenden Open-Source-Credits**; kein konkreter Restwert verlangt. [CircleCI Security](https://circleci.com/docs/guides/security/security-overview/) beschreibt Fork-PR-Secretweitergabe standardmäßig als deaktiviert; konkrete Projekteinstellung vor Token kontrollieren. **GH-02 bis dahin formal `partial`; GH-04 nicht gestartet.**
-
-**Sonst keine Statusänderung:** Draft #18 Dokumentation mit [normativem Masterplan v2.15](../operations/V1_ACCEPTANCE_PLAN.md); Draft #19 unverändert ungemergt; im privaten `orgavela-backups` 0 Releases. Kein Token/CI-Canary, kein echtes Backup/Restore. V1 **offen**, 62/71 historisch implementierte Pakete, M0–M7 **0/8** formal abgenommen, P4 **0/4**, R-Gates **0/18**, keine Feature-PR-Merges. Nächster Schritt: Betreiber bestätigt Free-/Fork-Gates, dann GH-02 abnehmen und separat GH-04 vorbereiten.
-
-
-## GH-02 formal abgenommen – Sicherheits-/Free-Plan-Vorprüfung (15.10.2026)
-
-**Neuer Status: GH-02 ACCEPTED.** Betreiber bestätigt als letzte offene Voraussetzungen **CircleCI Free-Plan aktiv** und **Secret-Weitergabe an Fork-Pull-Requests deaktiviert**. Bereits bestätigt: GitHub Require-PR/No-Bypass/Force-Push-/Delete-Schutz und CircleCI-Kontext orgavela-backup-releases nur für OrgaVela mit exakt auf den geschützten Testbranch umgestellter Expression. **Unabhängig über GitHub API erneut verifiziert:** Testbranch protected=true, protection.enabled=true, HEAD a03b0e079ad0f8bd782574abd5b0ed581bf3c12a unverändert; GitHub CI-Test-YAML parameter default false. Einzelregeln und CircleCI-Context/Plan **Betreiber-UI-Bestätigung, nicht eigener Admin-/CircleCI-API-Read**; Credential-/Review-Sicherheit vor einem späteren Lauf erneut kontrollieren.
-
-**GH-04 ist das nächste Arbeitspaket, noch NICHT ausgeführt:** PR #19 Draft/unmerged enthält einen optionalen ausschließlich synthetischen OpenPGP-GitHub-Release-Canary. Der private Backuprepo-Zielbereich janjrre/orgavela-backups hat weiterhin **0 Releases**; kein GH_TOKEN eingerichtet oder verwendet, keine CI-Pipeline und keine echten OrgaVela-Dateien/Datenbanken gesichert oder isoliert zurückgespielt. GH-04 später mit separatem befristetem OrgaVela-only Fine-grained PAT (Contents R/W im geschützten CircleCI Context), *manuellem* Testparam, vollständiger Remote-Readback-/Hash-/Restore-/Immutability-Prüfung und anschließendem Tokenwiderruf. Kein kostenpflichtiges Upgrade/Vertrag; Produktivdaten nur nach eigenem GH-03 und GH-05–GH-07.
-
-**W0/O03 weiter partial, V1 weiterhin nicht abgenommen.** Codestand historisch 62/71, Meilensteine M0–M7 formal 0/8, P4 0/4, Release-Gates R01–R18 0/18, gestapelte PRs weiterhin ungemergt. Verbindlicher Normplan auf Draft PR #18 **v2.16**, main weiterhin ältere v2.11; keine Änderung an WordPress oder Dreamloud. [GH-02-Runbook](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md), [maschineller Fortschritt](../operations/V1_PROGRESS.json), [V1-Abnahmematrix](V1_ACCEPTANCE_MATRIX.md).
-
-
-## GH-04 Backup-Versuch: synthetischer Offline-Test bestanden, Cloud-Test wartet auf separaten Test-Token (15.10.2026)
-
-**Tatsächlich ausgeführt:** Ohne echte Daten wurde ein fest definiertes synthetisches `data.txt`-Testarchiv mit einem nur temporären OpenPGP-Testschlüssel verschlüsselt, die kopierte verschlüsselte Datei per SHA256 geprüft, das Keymaterial in ein isoliertes zweites GPG-Keyring importiert, das TAR entschlüsselt und Archiv wie Klartextinhalt bytegenau wiederhergestellt. **PASS**, 537 Bytes verschlüsseltes TAR, Ciphertext-SHA256 `0018ecaa027d88a4e45760fac2149707233b1d6bafe78b1c0a5ad3392fc3db0d`. Wegwerf-Schlüssel und temporäre Daten am Ende entfernt. Das ist ein **lokaler Krypto-/Restore-Teiltest, kein ausgeführter CircleCI-PR-#19-Gesamtjob**.
-
-**Aktueller externer Stand:** GitHub bestätigt erneut Testbranch `protected=true`, SHA `a03b0e079ad0f8bd782574abd5b0ed581bf3c12a`; Draft PR #19 weiter offen. Backuptarget `janjrre/orgavela-backups` privat mit **0 Releases**. **Noch kein** neuer GitHub Fine-grained-Token `GH_TOKEN`, keine CircleCI-Pipeline, kein Upload/Remote-Readback/immutable Release und kein vollständiger Cloud-Restore. GitHub-Verbindung kann weder PAT/Context anlegen noch CircleCI selbst auslösen; kein kostenpflichtiger Browser oder fremder Secrets-Workaround. Ein echter Sicherungsstand von OrgaVela wurde **nicht** angelegt.
-
-**Priorisierte Handlung:** Betreiber erstellt kurzlebigen Fine-grained PAT ausschließlich auf privates `janjrre/orgavela-backups` (Contents Read and write), hinterlegt ihn ausschließlich als `GH_TOKEN` im auf den geschützten Testbranch eingeschränkten `orgavela-backup-releases`-Context und bestätigt die Einrichtung **ohne den Token offenzulegen**. Dann CircleCI manuell mit `enable_synthetic_github_release_e2e=true` starten und nach Providerbeweis den GH-04-Remote-End-to-End-Test dokumentieren; Token sofort widerrufen/aus Context entfernen. Bis dahin **GH-04 offen**.
-
-**Projektstatus:** GH-01 und GH-02 accepted; GH-04 örtliche Teilprüfung PASS, Cloud/Release-Gate offen; GH-03/05–08/echter Restore und W0/O03 weiterhin offen. V1 unverändert **62/71 historische Codepakete**, **0/8** formale Milestones, **0/4** P4, **0/18** Release-Gates, kein PR-Merge. Normativer Masterplan in Draft PR #18 **v2.17**; kein Live-/Dreamloud-Eingriff. [GH-04 Runbook](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md) · [V1_PROGRESS.json](../operations/V1_PROGRESS.json).
-
-
-## GH-04 16.10.2026 – Token eingerichtet laut Betreiber, manueller synthetischer Cloudtest noch offen
-
-**Neue Bestätigung:** Kurzlebiger repo-begrenzter GitHub Fine-grained PAT wurde nach Betreiberangabe als `GH_TOKEN` im eingeschränkten CircleCI-Context `orgavela-backup-releases` hinterlegt. Es gibt keine direkte CircleCI-Admin-/Pipeline-Verbindung: Tokenfunktion und Scope wurden **nicht selbst ausgelesen/getestet**. Sicherer GitHub-Lesecheck: Source-Testbranch `test/orgavela-github-release-o03 protected=true`, SHA `a03b0e079ad0f8bd782574abd5b0ed581bf3c12a` unverändert, PR #19 Draft, private Backuptarget `janjrre/orgavela-backups` weiterhin **0 Releases**.
-
-**Neu erkannter Upload-Vorabblocker:** Die für den GH-04-E2E-Code obligatorische `immutable=true`-Prüfung setzt voraus, dass unter **`orgavela-backups → Settings → General → Releases`** die GitHub-Funktion **Enable release immutability** **vor** Erstellen des ersten Releases eingeschaltet ist. Eine unabhängige Statusabfrage ist wegen fehlenden GitHub-Admin-Read-Rechts/Connector-Allowlist nicht möglich; Betreiber muss diese Einstellung im UI bestätigen/aktivieren. Sonst droht ein nach Veröffentlichung wegen fehlender Unveränderlichkeit gescheiterter Test mit eventuell bereits existierendem nicht-immutable synthetischen Release. Offizielle [GitHub-Anleitung](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes).
-
-**Nächster unmittelbar ausführbarer Schritt:** Nach Bestätigung der Immutability: Betreiber nutzt die [CircleCI-Projekt-Pipelines](https://app.circleci.com/pipelines/github/janjrre/Projekt-Wordpress-Plugin), **Trigger Pipeline** auf geschütztem Branch `test/orgavela-github-release-o03`, falls in der UI getrennt sowohl Config Source als auch Checkout Source auf denselben Branch, Parameter **Boolean `enable_synthetic_github_release_e2e=true`**. Danach CircleCI Run/Job-URL und Exitstatus melden, damit der Assistent private Release-ID/Assets, binäre SHA256-Readbacks, Immutability und unabhängigen Remote-GPG-Restore prüfen/dokumentieren kann. PAT danach widerrufen und Context-Eintrag entfernen; weder Tokenwert noch produktive Daten im Chat/Repo ausgeben.
-
-**Projektstand:** GH-02 accepted, GH-04 lokaler künstlicher Krypto-Test zuvor PASS, **Cloud-Release-Test noch NICHT gestartet, daher GH-04 weiter offen**. GH-03/GH-05–08, W0/O03 und V1 weiter offen; historische Implementierung 62/71, M0–M7 **0/8**, P4 **0/4**, R01–R18 **0/18**, keine PR-Merges/keine Kosten/kein reales Backup. Normativer Masterplan im Draft PR #18 **v2.18**.
-
-
-## GH-04 16.10.2026 – Synthetischer Cloud-Backuptransport technisch erfolgreich, Token-Cleanup offen
-
-**Neu geprüft:** Betreiber berichtet CircleCI-Job/Workflow `d70d145b-b76b-47f4-854c-838d7ad227ed` **SUCCESS**. Das private `janjrre/orgavela-backups` enthält nun **ein veröffentlichtes `immutable=true` Release** [`backup-orgavela-synthetic-circleci-3`](https://github.com/janjrre/orgavela-backups/releases/tag/backup-orgavela-synthetic-circleci-3), ID `414750281`, published 16.10.2026 09:06:20 UTC, `draft=false`. GitHub REST bestätigt **genau drei** Assets mit `state=uploaded`: künstliches `.tar.gpg` (549 B, SHA256 `0fbb3b4077b7b360f76ec9d105772936f48b76f9c531e3c490804267eda4e70a`), `manifest.json` und `.tar.gpg.sha256`, jeweils mit GitHub-Asset-Digest. Die GitHub-Release-/Asset-Objekte wurden unabhängig nachgeprüft, die private CircleCI-Erfolgsmeldung stammt vom Betreiber; echte CircleCI-Step-Logs/Asset-Binärbytes können von der aktuellen Toolverbindung nicht unabhängig ausgelesen werden. Der erfolgreiche Source-Testcode erfordert vor Job-Ende einen unabhängigen Remote-Download, SHA256-Readback und Entschlüsselungs-/Restore-Probe: **Technischer GH-04-Test durch beide Evidenzarten gestützt.**
-
-**Formal GH-04 noch nicht geschlossen (Sicherheitsnacharbeit):** Neu angelegten kurzlebigen Fine-grained-PAT jetzt unter [GitHub Token Settings](https://github.com/settings/personal-access-tokens) widerrufen **UND** im [CircleCI-Context `orgavela-backup-releases`](https://app.circleci.com/settings/organization) die Environment Variable `GH_TOKEN` löschen; beide Aktionen durch Betreiber erst **noch zu bestätigen**. Nie den Tokenwert mitteilen. Release/immutable Assets als synthetische Testevidenz erhalten, keine weiteren Token-/Cloudruns nötig. Nach Cleanup Abschluss in Runbook/Status/Plan durch Folgeprüfung dokumentieren.
-
-**Abgrenzung:** Das Release enthält ausschließlich künstlichen Text und keinen verifizierten OrgaVela-/IONOS-/MariaDB-Snapshot; realer Backupprozess, privater Besitzer-Key und Recovery fehlen. GH-03 → GH-05/06/07/08 bleiben Gate. V1: **62/71 historisch Code-implementiert, M0–M7 0/8, P4 0/4, R01–R18 0/18**, W0/O03 weiter nicht abgenommen, keine PR-Merges. Normativer Masterplan in Draft-PR #18 jetzt **v2.19**. **Nächster konkreter Schritt: Token widerrufen und CircleCI-Eintrag löschen.**
-
-
-## GH-04 17.10.2026 – synthetischer Cloudtest samt Credential-Cleanup FORMAL ACCEPTED
-
-**Fortschritt seit letztem Snapshot:** Betreiber bestätigt nach seinem zuvor erfolgreich beendeten CircleCI-Testlauf `d70d145b-b76b-47f4-854c-838d7ad227ed` ausdrücklich **„PAT widerrufen und GH_TOKEN gelöscht“**. Die befristeten Test-Credentials sind damit laut Betreiber-UI geschlossen; GitHub-PAT-/CircleCI-Secret-Verwaltung bleibt für den Assistenten nicht unabhängig auslesbar. Die unabhängige erneute GitHub-Kontrolle bestätigt, dass das private GitHub Release [`backup-orgavela-synthetic-circleci-3`](https://github.com/janjrre/orgavela-backups/releases/tag/backup-orgavela-synthetic-circleci-3), ID `414750281`, veröffentlicht am 16.10.2026, weiterhin **`immutable=true`** ist und genau drei synthetische `uploaded` Assets mit GitHub-SHA-256-Digests enthält. Der geschützte Testbranch ist auf HEAD `a03b0e079ad0f8bd782574abd5b0ed581bf3c12a` unverändert.
-
-**Belegart offenlegen:** CircleCI `success`, Hash-/Decrypt-/Restore-Exit-Code und Token-Löschung sind **Betreiberbestätigung plus Quellcode-Kontrollfluss**, nicht vom Assistenten unabhängig in CircleCI-/Secret-Admin-API gelesen. Release/Assets und `immutable` sind unabhängig via GitHub API gelesen. Die ursprüngliche GH-04-Testimplementierung bricht vor Erfolg ab, wenn künstliches Remote-Readback, Hashes oder unabhängige separate OpenPGP-Wiederherstellung fehlschlagen. In diesem Umfang ist der **GH-04-synthetische Gate nun `accepted`**; GH-02 `accepted` bleibt bestehen und die einzig einmalige Testtoken-Nutzung ist beendet.
-
-**Abgrenzung:** Kein echtes WordPress-/MariaDB-Backup oder isolierter produktiver Restore, keine dauerhafte private Schlüsselkopie, keine automatisch laufenden Backups, keine Änderung an Staging/WordPress/IONOS/Dreamloud. Das 549-Byte-Synthetikarchiv ist kein Produktionsschutz.
-
-**Aktives nächstes Arbeitspaket: GH-03** – Besitzer legt nach dokumentierter Entscheidung `age` vs. OpenPGP einen **dauerhaften privaten Offline-Recovery-Key** auf vertrauenswürdigem Gerät an, sichert ihn an **zwei unabhängig geschützten physischen/offline Orten** und testet Restore aus Ersatzkopie. CI bekommt zukünftig nur den **öffentlichen Verschlüsselungs-Empfänger**. Kein Private-Key-Upload in GitHub, CircleCI, ChatGPT oder Server. Danach erst GH-05/06 reale konsistente verschlüsselte Backups, GH-07 echter isolierter Full-Restore, GH-08 Tagesbetrieb/Monitoring.
-
-**Gesamtstand unverändert:** W0/O03 weiterhin `partial`, **V1 NICHT abgenommen**: 62/71 historische implementierte Codepakete, formale M0–M7 **0/8**, P4 **0/4**, R01–R18 **0/18**, **keine PR-Merges**. Normativer Masterplan auf dem nicht gemergten Dokumentations-Draft-PR #18 nun **v2.20**. [V1_PROGRESS.json](../operations/V1_PROGRESS.json) · [GH-04-Runbook](../operations/W0_O03_GITHUB_PRIVATE_BACKUP_RUNBOOK.md).
-
-
-## 17.10.2026 – GH-03 ist gestartet: age-Architektur beschlossen, Besitzer-Recovery noch nicht erzeugt
-
-**Erledigt:** Nach synthetischem GH-04-Canary/Tokenbereinigung ist **`age` als einheitliches Produktions-Backupformat** entschieden und mit Gründen/Alternativen im neuen [GH-03-ADR](../operations/W0_O03_GH03_ENCRYPTION_RECOVERY_ADR.md) dokumentiert. Der genaue, ausschließlich lokal am eigenen Windows-PC auszuführende [GH-03 Offline-Owner-Key-Runbook](../operations/W0_O03_GH03_OWNER_OFFLINE_KEY_RUNBOOK.md) mit offiziellem kostenfreiem age-Installer, zwei geschützten physischen Offline-USB-Kopien und synthetischem Hash-/Copy2-Restore ist vorbereitet. Die bestehenden GH-04-OpenPGP-`*.tar.gpg`-Synthetikartefakte werden nicht als age-Format umgedeutet; GH-05/06/07 müssen das neue Format neu implementieren und verifizieren.
-
-**Noch OFFEN und von diesem Chat bewusst nicht vorgetäuscht:** Kein neuer **privater** langlebiger Owner-Recovery-Key auf Betreibergerät angelegt, zwei räumlich getrennte/offline Kopien nicht nachgewiesen, kein age-Entschlüsselungs-/SHA256-Test von Kopie 2 durch den Betreiber bestanden, keine Verlust-/Rotationpraxis überprüft; kein `age1…`-öffentlicher Recipient konfiguriert. Der verbundene `PCjan` war bei Start dieser Arbeit **offline**. Keine privaten Schlüssel in Cloud/Chat/Repository erzeugen oder speichern. Der frühere GH-04-`GH_TOKEN` bleibt laut Betreiber widerrufen/entfernt. **GH-03 Status `in_progress`, formale Abnahme `false`**.
-
-**Exakt nächster Schritt:** Betreiber installiert `age` auf seinem vertrauenswürdigen Windows-PC, trennt das Netz, erzeugt die private Recovery-Identität direkt auf einem verschlüsselten Offline-USB-Stick, erstellt/prüft eine zweite eigenständig verschlüsselte Offline-USB-Kopie und stellt ein rein synthetisches Testarchiv mit der **zweiten** Identitätskopie wieder her (`SHA256 Original == Restore`). Danach ohne private Bytes nur Erfolg und ggf. öffentlichen `age1…`-Empfänger mitteilen; bei fehlendem PC/zweitem Datenträger GH-03 kontrolliert offen lassen. **Keine echten OrgaVela-Backups, kein Produktionsdeploy/Schedule** vor GH-03/05/06/07.
-
-**Gesamtstand:** GH-01/02/04 akzeptiert nur als Vorbereitungs-/Synthetikabnahmen, W0/O03 weiterhin `partial`. Historische Codepakete **62/71**, formale M0–M7 **0/8**, Minderjährige P4 **0/4**, Release-Gates R01–18 **0/18**, ungemergte PR-Integration. Normativer Masterplan auf Draft PR #18 jetzt **v2.21**; keine Kosten, Staging-/WordPress-/IONOS-/Dreamloud-Mutationen. [Fortschrittsdaten](../operations/V1_PROGRESS.json) · [Abnahmematrix](V1_ACCEPTANCE_MATRIX.md).
-
-## 20.10.2026 – GH06 native-age GitHub Release E2E synthetisch erfolgreich; Cleanup offen
-
-**Neuer belegter Teststand (W0/O03, GH06 synthetisch):** CircleCI Pipeline [#298](https://app.circleci.com/pipelines/github/janjrre/Projekt-Wordpress-Plugin) wurde vom Betreiber auf dem geschützten Testbranch `test/orgavela-age-release-o03` am SHA `eba067913eb0290b2a95e40029f77e3b803ed924` manuell freigegeben. Screenshot belegt `gh06-age-release-synthetic-e2e=success`, vor/nach Veröffentlichung geprüften SHA256-Readback und unabhängigen synthetischen Age-Decrypt/Restore. GitHub REST bestätigte im **privaten** `janjrre/orgavela-backups` Release ID **418380590**, Tag `backup-orgavela-age-synthetic-ci-10`, `immutable=true`, `draft=false`, genau drei Assets. Separate CircleCI #299 zeigt korrekt ON HOLD vor dem Writer ohne Freigabe. Empfehlung: #299 abbrechen; Abbruch noch nicht rückbestätigt.
-
-**Vor administrativem GH06-Abschluss zwingend:** GH06-Test-PAT widerrufen und `GH_TOKEN` aus CircleCI Context `orgavela-age-release-tests` löschen; Betreiberbestätigung steht aus. Weitere kosten-/secret-tragende Testläufe zunächst nicht erforderlich. Es gab **kein** OrgaVela-DB-/WordPress-Backup, **keinen** Dauerbetrieb und **keine** Owner-Key-Wiederherstellung aus unabhängig gesicherter Kopie. GH03 Offline-Backup/Recovery und produktive GH05–08 bleiben blockiert; die synthetische GH06-Laufzeitabnahme ist *kein* V1-Release-Gate.
-
-**Fortschritt unverändert:** 62/71 historisch implementierte Codingpakete, M0–M7 formal **0/8**, P4 **0/4**, R01–R18 formal **0/18**, V1 weiterhin **nicht abgenommen**. Detailbelege in `V1_PROGRESS.json`, `W0_O03_GH06_AGE_RELEASE_PREPARATION_2026-10-20.md` und `ASSISTANT_WORK_LOG.md`.
-
-## 20.10.2026 – GH06-Testzugänge laut Betreiber bereinigt, synthetische Testabnahme abgeschlossen
-
-**Betreiberbestätigung:** Auf die drei konkreten letzten Bedienungsschritte (CircleCI #299 HOLD abbrechen, GH06 Fine-grained GitHub-PAT widerrufen, `GH_TOKEN` aus CircleCI Context `orgavela-age-release-tests` entfernen) antwortete der Betreiber ausdrücklich „Erledigt“. Diese Zustände sind **operator-attested**; die GitHub-Integration hat keinen lesenden Zugriff auf die private Tokenverwaltung oder CircleCI Context/Abbruchstatus. Keine Werte/Secrets eingesehen, keine weiteren Jobs ausgelöst.
-
-**GH06 synthetisch vollständig:** #298 Release/Remote-SHA256/Age-Decrypt-Restore PASS laut Betreiber-Joblog; GitHub Release ID 418380590 privat, `immutable=true`, drei Asset-Digests direkt bestätigt; #299 manuelles HOLD vor Writer gezeigt und Abbruch bestätigt. Das Synthetik-Testkonto wird nicht weiter benötigt. Synthetische GH06-Transport-/Approval-/Cleanup-Abnahme **abgeschlossen**. **Nicht** identisch mit GH06-Produktivwriter oder V1-R01–R18-Abnahme; keine echten Dateien oder DB-Daten gespeichert.
-
-**Nächste Sicherheitshürde:** GH03 Owner age-Key wurde mit AgePony auf einem iPhone lokal getestet und ein PDF unter „Auf meinem iPhone/iPad“ angelegt, aber keine unabhängig verwahrte geschützte zweite Offline-Kopie und keine Kopie-2-Wiederherstellung nachgewiesen. Ohne geeignete zweite physische Sicherung noch **kein** realer Backup-Writer/Restore/Schedule. GH05 darf nur synthetisch vorbereitet werden.
-
-**V1 unverändert:** Coding historisch 62/71, M0–M7 0/8 formal, P4-01…04 0/4, Release R01–R18 0/18, PR #21 weiterhin Draft/unmerged und OrgaVela Alpha.2 nicht aus diesem Testbranch aktualisiert.
-
-## 20.10.2026 – GH03: AgePony-Paper-Backup auf Papier im Safe (Teilnachweis)
-
-Der Betreiber meldet: eigener Drucker vorhanden, AgePony-Backup-PDF **bereits gedruckt und im Safe verwahrt**. Das hebt den bisherigen Blocker „nur Originalgerät und PDF im selben iPhone/iPad“ teilweise auf: **eine physische Offline-Papierkopie ist laut Betreiber vorhanden**. Weder die Lesbarkeit des Ausdrucks noch seine sichere Passphrasen-Verwahrung noch die rekonstruierbare `age1…`-Identität sind unabhängig geprüft. Eine zweite, getrennt geschützte physische Kopie und ein vollständiger synthetischer Entschlüsselungstest **nur** mit einem aus dem Papierausdruck wiederhergestellten privaten Schlüssel stehen noch aus.
-
-**Sicherer nächster Schritt:** Auf einem separaten vertrauenswürdigen Offlinegerät/testweise isolierten Profil eine **synthetische** age-Datei allein durch aus Papier rekonstruierten Schlüssel entschlüsseln, öffentlichen Empfänger und SHA256 des entschlüsselten Inhalts vergleichen, ohne ursprüngliche iPhone-AgePony-Identität zu ändern. Vorab Passphrase-Schutz ohne Geheimnisoffenlegung klären und zweite physische Kopie an anderem Ausfallort sichern. Keine echten OrgaVela-/MariaDB-Daten oder GH05–GH08-Schedules, bis sämtliche Recovery- und Realbackup-Gates erfüllt sind.
-
-**V1-Status:** W0/O03 weiterhin **partial**, GH03 weiterhin **nicht formal akzeptiert**, synthetischer GH06-Test zuvor abgeschlossen. Historisches Coding 62/71, M0–M7 0/8 formal, P4 0/4, Release R01–18 0/18; keine neue PR-Integration/Live-Änderung.
-
-## 20.10.2026 – PGPony/OpenPGP-Migration für künftige OrgaVela-Backups beschlossen
-
-**Betreiberentscheidung:** Wechsel weg vom bisherigen AgePony/age-Zielformat hin zu PGPony/OpenPGP. Entscheid und Grenzen im [OpenPGP-Migrations-ADR](../operations/W0_O03_PGPONY_OPENPGP_MIGRATION_ADR_2026-10-20.md) sowie im normativen [V1-Masterplan v2.22](../operations/V1_ACCEPTANCE_PLAN.md). Dreamloud nur **lesend** als technisches Vorbild geprüft: Branch `backup/production-circleci`, OpenPGP-GnuPG-Public-Key-Fingerprint, separater konsistenter Capture-Job, ciphertext-only Writer, private immutable GitHub Releases und isolierter Restore. Kein Schlüssel, Token, Repository oder Backup von Dreamloud übernommen.
-
-**GH03 neu:** Alter AgePony-Key bleibt unverändert, gedrucktes age-Papierbackup liegt laut Betreiber weiter im Safe; dieser Ausdruck **zählt nicht** als PGPony-Schlüsselkopie. Für den neuen GnuPG-kompatiblen exportierbaren PGPony-Key fehlen Generierung/Nachweis, zwei geschützte unabhängige Kopien, zweites Gerät mit erfolgreichem Test aus Kopie 2 und bestätigter öffentlicher Fingerprint. Der neue [PGPony-Owner-Runbook](../operations/W0_O03_PGPONY_OWNER_OFFLINE_KEY_RUNBOOK.md) gibt die nächsten Sicherheitsmaßnahmen vor.
-
-**Historische Tests korrekt eingeordnet:** GH04 synthetischer GPG-Release nachweislich bestanden und GH06 synthetischer age-Release #298, Release ID 418380590, samt owner-attestierter Tokenbereinigung bestanden. Beide bleiben historische Einzelprüfungen und belegen keinen produktiven OrgaVela-PGPony-Restore. Ein isolierter OpenPGP-GnuPG-Synthetik-Prototype (Einmaltest, temporärer Schlüssel) hat lokal einen Encrypt/Decrypt-/SHA256-Roundtrip sowie Negativtests bestanden; noch **kein** commitierter, auf PGPony-Eigentümerschlüssel getesteter Release-Writer.
-
-**Stop-Gates:** noch kein reales Backup, kein neuer Secret-Context, kein Trigger, keine Automatik, kein Merge/IONOS-Deployment. GH05–08 real bleiben blockiert. Historische Implementierungszählung 62/71 Coding, formale M0–M7 0/8, P4 0/4, R01–R18 0/18. V1 offen.
-
-## 20.10.2026 – PGPony OpenPGP-Codevorbereitung in separatem Draft-Branch
-
-**Angelegte Code-Dateien:** `scripts/ci/orgavela-openpgp-synthetic-pack.sh` (Commit `64b0a81`) und `scripts/ci/test-orgavela-openpgp-synthetic-pack.sh` (Commit `2e13391`) auf `feat/o03-pgpony-openpgp-migration-20261020`. Der Packer verwendet GnuPG, einen ausschließlich synthetischen Opt-in-Modus, separate GNUPGHOME, Fingerprintprüfung, Ablehnung von geheimem Eingabeschlüssel und produktiven Parametern sowie verschlüsseltes internes Manifest und separate Prüfsumme. Das Testskript erzeugt ausschließlich einen ephemeren RSA-Testkey, Test-DB/Files und überprüft Wiederherstellung, Hashes und mehrere Fail-Closed-Negativfälle.
-
-**Evidenzgrenze:** Eine lokal separat erstellte OpenPGP-Synthetik-Probe lief erfolgreich; **die exakt committed Version ist bislang nicht als CI-Lauf oder gegen einen echten PGPony-Eigentümerschlüssel geprüft**. Ein anschließender Abruf der neuen GitHub-Rohdateien in der lokalen Testlaufzeit schlug aufgrund nicht verfügbarer DNS/Internetverbindung fehl. Kein automatisches Hochstufen auf bestandenes PGP-02/03/04. Der spätere Betreiber kann einen kostenfreien, ausdrücklich manuellen no-secret CI-Run auf genau geprüftem Commit separat freigeben; keine GH_TOKEN/IONOS-Credentials dafür.
-
-**Nächste Priorität:** PGPony-Key auf Betreibergerät erstellen, v4/encryption-subkey-Kompatibilität mit GnuPG unabhängig prüfen, 2 physisch getrennte gesicherte OpenPGP-Private-Key-Kopien samt Notfallpassphrase und getrennte Restore-Probe; ohne solche Nachweise keine echten GH05–08 Backups. Projektstände bleiben **62/71 Coding, 0/8 M, 0/4 P4, 0/18 R**, V1 offen.
-
-## 20.10.2026 – Neuer PGPony-Owner-Schlüssel laut Betreiber erzeugt (GH03 Teilfortschritt)
-
-Betreiber meldet nach OpenPGP-Migrationsauftrag: **PGPony-Schlüssel erstellt**. Im verbindlichen `V1_PROGRESS.json` unter W0/O03 ist die Erzeugung deshalb als **owner-attested** markiert. **Noch nicht geprüft**: ob OpenPGP v4 oder v6, Algorithmus und Encryption-Subkey, voller öffentlicher Fingerprint, GnuPG-Kompatibilität, Schlüsselkopien mit eigenständigem Notfallzugang, vom Ursprungstelefon unabhängiges Restore. Der zuvor gedruckte AgePony-Papierausdruck im Safe **enthält nicht diesen neuen OpenPGP-Schlüssel**.
-
-**Unmittelbar nächste Betreiberaktion:** Nur in PGPony unter Keyring die **lokal angezeigte Key-Version und den Algorithmus** nachsehen und diese unvertraulichen Eigenschaften mitteilen; keine geheimen QR-Codes, private Exportdateien, Passphrase oder vollständigen Screenshots. Später zwei getrennte geschützte Recovery-Kopien des PGPony-Keymaterials anlegen und mindestens eine in unabhängigem Offline-Tool gegen künstliche Daten testen. Bis dahin kein echter Backup-Upload, keine Keys in CI, keine automatische Sicherung.
-
-V1 unverändert: historische 62/71 Coding-Pakete, formal M0–M7 0/8, P4 0/4, Release-Gates 0/18. Draft PR #25 bleibt ungemergt.
-
-## 20.10.2026 – GH03: PGPony-Public-Key v4 unabhängig mit GnuPG geprüft (Owner-Decryption weiter offen)
-
-**Betreiber-Eingabe:** vollständiger **PUBLIC** PGPony-Block ohne persönliche E-Mail mit UID `OrgaVela Backup 2026`; ausdrücklich KEIN privater Schlüssel. Sicher isolierter Test mit GnuPG **2.4.7**: OpenPGP **v4**, Signatur-/Zertifizierungshauptschlüssel **Ed25519**, primärer Fingerprint `7C9DC60D8E1B293E514696EB333D15A4D8BA625C`, Verschlüsselungs-Unterschlüssel **cv25519 / Curve25519**, Subfingerprint `CF5D8A8498F65C6D894ECE2FD9E58CC6484AF1DE`; beide Selbstsignaturen gültig. Öffentlicher Import und GnuPG-Verschlüsselung einer rein künstlichen Textdatei erfolgreich. Privates Schlüsselmaterial im isolierten GnuPG-Test: **null**; erwartete Decryption ohne Secret-Key schlug fehl.
-
-**Für PGPony-Interop vorbereitet:** verschlüsselte Testdatei `orgavela-pgpony-kompatibilitaetstest.gpg`, 288 Bytes, SHA256 `8da079bd89e8048a3238133fb7fe5f5daf6076c6e2d3b3947733dd1522da2be1`. Erwarteter synthetischer Code nach lokaler Entschlüsselung in PGPony: `OV-PGP-2026-10-20-7C9DC60D`. Der Ciphertext wurde als Download nur dem Betreiber bereitgestellt; der **private** PGPony-Key bleibt ausschließlich beim Betreiber. Ein erfolgreicher Decrypt wurde noch **nicht** bestätigt. Die Public-Key-Datei `.github/backup/orgavela-backup-candidate-public.asc` und angeheftete Candidate-Metadaten `.github/backup/orgavela-pgpony-candidate-policy.json` befinden sich ausschließlich auf dem **Draft PR #25** Branch, sind aber wegen des öffentlichen OrgaVela-GitHub-Repositories für Dritte einsehbar. **NICHT produktiv aktiviert.**
-
-**Abnahmegrenzen:** Öffentlicher GnuPG Encrypt-PASS beweist *noch nicht* die Entschlüsselbarkeit durch den Eigentümer, den Offline-Export oder ein unabhängiges Wiederherstellungsmedium. GH03-Owner-Recovery bleibt offen, zwei getrennte private Offline-Kopien fehlen und das alte AgePony-Papier-Backup ist kein OpenPGP-Recovery-Key. Kein CircleCI-Release, GitHub-Token, IONOS-Datenzugriff, Merge oder produktiver Zeitplan; GH05–08 echte Backups blockiert. V1 unverändert 62/71 Coding, 0/8 M formal, 0/4 P4, 0/18 R.
-
-## 20.10.2026 – GH03 PGPony entschlüsselt von GnuPG erzeugte Testdatei (Betreiber-PASS)
-
-**Neuer tatsächlicher Betreiberbefund:** Auf die Frage, ob die bereitgestellte künstliche `.gpg`-Datei in **PGPony auf dem iPhone** entschlüsselt werden konnte, antwortet der Betreiber: „ja ich konnte es entschlüsseln“. Somit ist der zuvor separat durch GnuPG 2.4.7 erfolgreich verschlüsselte synthetische Test-Ciphertext mit der **persönlichen PGPony-Identität auf dem ursprünglichen Gerät** lesbar (**operator-attested PASS**). Der genaue Inhalt des harmlosen Soll-Prüfcodes `OV-PGP-2026-10-20-7C9DC60D` wurde nicht noch einmal wörtlich bestätigt; er wird nicht als unabhängig verglichen ausgegeben.
-
-**Schlüssel-Kandidat:** Nur `PUBLIC` OpenPGP v4, Ed25519 Haupt-/cv25519 Verschlüsselungsunterschlüssel, FPR `7C9DC60D8E1B293E514696EB333D15A4D8BA625C`. Die Candidate-Policy wurde um das bestätigte geräteseitige Decrypt aktualisiert, bleibt explizit `candidate-not-production-approved` und damit **keine** automatische produktive Freigabe.
-
-**Wichtiger verbleibender GH03-Gate:** Zwei voneinander unabhängige, gesicherte **PGPony-PRIVATE**-Schlüsselkopien inklusive unabhängig wiederherstellbarer Passphrase und ein synthetischer Entschlüsselungstest auf einem **zweiten vertrauenswürdigen Offline-Gerät nur aus Kopie 2** sind weiter **nicht** nachgewiesen. Die frühere AgePony-Papierkopie im Safe schützt den neuen OpenPGP-Schlüssel nicht. Niemals Geheimnisse/QR-/Private-ASC/Passphrase im Chat, öffentlichen Repo, CI, Cloud-Synchronisation oder Screenshots übertragen. Kein GitHub Release, CircleCI-Token, IONOS-Backup, Merge, Release oder Cron ausgelöst. PGP-03/04 und echte GH05–08 weiterhin gesperrt; V1 unverändert: historisches Coding 62/71, formal M0–M7 0/8, P4 0/4, R01–18 0/18.
-
-## 20.10.2026 – PGPony/OpenPGP: Exakt im GitHub-Branch versionierte Offline-Testskripte lokal bestanden
-
-**Auftrag „bis dahin weiter machen“:** Während der Betreiber den privaten PGPony-Key auf sein iPad übertragen und testen will (noch **nicht bestätigt**), wurde ausschließlich die **kostenfreie synthetische OpenPGP-QA** weiterentwickelt. Der bestehende OpenPGP-Packer `scripts/ci/orgavela-openpgp-synthetic-pack.sh` (Git-Blob `0bdf88d...`) und der owner-public-only Fingerprint-/GnuPG-Test `scripts/ci/test-orgavela-pgpony-public-key.sh` (Blob `94727028...`) sind exakt lokal aus GitHub wiedergegeben worden: `git hash-object` = GitHub Blob SHA. Gleicher SHA-Abgleich für das erweiterte Testskript `scripts/ci/test-orgavela-openpgp-synthetic-pack.sh` (Blob `0419da15...`).
-
-**Lokaler ausführlicher PASS unter GnuPG 2.4.7:** ausschließlich künstliche SQL-/WordPress-Archive, temporärer RSA-Testschlüssel und neuer nicht geheimer PGPony-Public-Key; `bash -n`, PGP-Ciphertext-Erstellung, GnuPG-Entschlüsselung, SHA-256- und Manifestprüfungen erfolgreich. Acht Negativfälle wurden richtig abgewiesen: falscher Fingerprint, Import eines geheimen (nur synthetischen) Schlüsselblocks als öffentliche Eingabe, Produktionsmodus, Dateiausgabe überschreiben, verbotenes `GH_TOKEN`-Umgebungsmerkmal (nur fiktiver Testmarker), fehlender Synthetic-Opt-in, unzulässige Backup-ID und symlinked Public-Key-Input. Public-Only-Test bestätigt erneut den festgelegten OrgaVela-Fingerprint und Verschlüsselungs-Unterschlüssel **ohne einen privaten Owner-Key**.
-
-**CircleCI-Code vorbereitet, nicht ausgeführt:** `.circleci/config.yml` enthält neuen Parameter `enable_pgpony_openpgp_offline` standardmäßig `false` und `pgpony-openpgp-offline-qa` nur auf `feat/o03-pgpony-openpgp-migration-20261020`, ohne Context/Token, IONOS-Zugriff, Release-Publisher, Secret-Exporte oder Cron. CI-Lauf/Provider-SHA-Abnahme stehen aus; keine CircleCI-Credits in diesem Arbeitsschritt verbraucht. Der noch nicht abgeschlossene iPad-Restore ist **kein** Bestandteil dieser lokalen Prüfung.
-
-**Nächster sicherer Ablauf:** Danach einen einzigen opt-in **ohne Geheimnisse** gestarteten CircleCI-Lauf nur nach Prüfung verfügbaren Free-Kontingents; technische Fehlermeldungen sachlich prüfen statt Rerun-Schleife. Parallel owner-only GH03: geschützte zweigeteilte Private-Key-Offline-Sicherung und Nachweis der unabhängigen Wiederherstellung, ohne private Inhalte ins Repository. Produktive GH05–08 bleiben gesperrt. V1-Zahlen unverändert: historisches Coding 62/71, M0–7 formal 0/8, P4 0/4, R 0/18; Draft PR #25 bleibt offen/ungemergt.
-
-## 20.10.2026 – Manuelle PGPony-CircleCI-Pipeline fehlgeschlagen, Diagnostik ergänzt
-
-**Echter Provider-Beleg:** Betreiber-Screenshot 17:23: Workflow `pgpony-openpgp-offline-qa` auf Commit `76d8ebdf45a5c9b57c69c63e1212733d7bb9d41c` **FAIL**. Werkzeuginstallation 6s grün, danach Schritt „Exercise pinned owner PUBLIC key and synthetic-only roundtrip“ rot, `Exited with code exit status 1` ohne präzisen Ursprung im sichtbaren Log; Job ~12s. **Ursache noch unbestätigt.** Kein automatischer zweiter Lauf; CircleCI-Creditverbrauch nicht überprüft.
-
-**Fix-Vorbereitung auf Draft-PR #25:** CircleCI-QA-Step mit sicheren Stage-Markern `PGPONY_QA_STAGE=syntax/public_key_preflight/synthetic_openpgp_roundtrip` und beide Offline-Testskripte mit nur Scriptname/Zeilennummer im Fehlerfall. Im Public-Key-Test wird `gpg --check-sigs` erst in ein geschütztes temporäres Log umgeleitet, statt direkt unter `pipefail` in `grep -q`, um ein mögliches SIGPIPE-Problem zu vermeiden (nicht als bestätigte ursprüngliche Fehlerursache ausgeben). **Neuer Code lokal GnuPG 2.4.7 PASS**, exakte GitHub-Testblobs `3003f07073f8398e986546480c9b38d5a1506b44` und `04802b19a51ca1e68a3d538ad667e81b38d84323`: Public-Key-Encrypt-PASS, synthetischer GPG-Encrypt/Decrypt/Hashes-PASS und 8/8 Negativfälle. Neuer CI-Run noch **NICHT** ausgeführt.
-
-**Nächstes:** In CircleCI kostenloses Plan-Usage-Kontingent prüfen und erst dann eine **neue Pipeline** auf aktuellem PR-Branch-HEAD mit einzig `enable_pgpony_openpgp_offline=true`; nicht den alten roten SHA mittels „Rerun“ erneut laufen lassen. Bei Fehler die Stage-Marker/Zeile aus neuem Log sichern; keine erneute blinde Wiederholung. GH03 Offline-iPad-Recovery weiterhin offen, produktive GH05–08 weiterhin gesperrt. V1: historisches Coding 62/71, M0–M7 0/8 formal, P4 0/4, R01–18 0/18.
-
-## 20.10.2026 – Zweiter CircleCI-FEHLVERSUCH lokalisiert: OpenPGP-Public-Key-Test Zeile 27
-
-**Neu belegter Provider-Test:** Betreiberscreenshot ~17:39, manuelle CircleCI-Pipeline aus Source-Commit `49ace9daa06308d483c891b744b8420046ce037c`; `pgpony-openpgp-offline-qa` ca. 12s FAIL. Diagnosestages `PGPONY_QA_STAGE=syntax` und `PGPONY_QA_STAGE=public_key_preflight` erschienen; `PGPONY_DIAGNOSTIC_FAILED script=test-orgavela-pgpony-public-key.sh line=27 exit=1`. **Synthetische Archivprüfung wurde gar nicht erreicht**. Zweiter fehlgeschlagener CircleCI-Anlauf (erster 17:23, Commit `76d8ebd`).
-
-**Abgeglichene Zeile 27:** Die bisherige harte Regex `^pub:[^:]*:255:22:` verlangt für den OpenPGP-Ed25519-Hauptschlüssel exakt `255` in der GnuPG-Kolon-Ausgabe. Diese Bitlängenanzeige kann nach GnuPG-Version zwischen `255` und `256` variieren; die vollständigen Fingerprints und OpenPGP-Algorithmus-IDs sind das belastbarere Prüfkriterium. Der beobachtete Exit 1 stammt nachweislich aus der harten Regex-Zeile. Die **tatsächlich von CircleCI ausgegebene Bitlänge** wurde im Screenshot nicht gezeigt, daher die konkrete GnuPG-Version/Anzeige nur als sehr plausible Ursache, nicht als endgültig gemessen bezeichnen.
-
-**Gezielte Korrektur in Draft PR #25:** `scripts/ci/test-orgavela-pgpony-public-key.sh` Commit `22952acf0b8ca2d77cad16745de55dbae68879e8`; nun Ed25519 OpenPGP-ID `22` sowie cv25519-Encryption-Subkey-ID `18` und Capability `e` per AWK geprüft, ohne Bitlängen-String; die **vollständigen Public-Key- und Subkey-Fingerprints, Signaturprüfungen, Secret-Key-Verbot, eigene temporäre GnuPG-Umgebung** bleiben unverändert. Zusätzlich Regressionstest mit simuliertem `256` statt `255` in der Colons-Length-Spalte. **Exaktes GitHub-Blob `1f23cbbd625cb60e51b57f4db2643f5fee3ec162` mit lokalem `git hash-object` identisch; Shellsyntax und vollständiger Public-only GnuPG-2.4.7-Test erneut PASS**, inklusive 256-Anzeige-Regressionsprobe. Kein dritter CircleCI-Test gestartet oder neue Credits behauptet.
-
-**Nächstes Gate:** Nach verfügbaren CircleCI-Free-Credits und separater Betreiberentscheidung eine neue Pipeline (kein `Rerun` des alten SHA) auf neuem Draft-PR-HEAD, nur `enable_pgpony_openpgp_offline=true`; genau einen neuen Run auswerten. Wenn weitere Fehler, keine unkontrollierten Wiederholungen. GH03 unabhängige iPad-/Private-Key-Offline-Recovery und produktive GH05–08 weiter OFFEN/BLOCKIERT. V1 historisches Coding 62/71, formal M0–M7 0/8, P4 0/4 und R01–18 0/18 unverändert.
-
-## 20.10.2026 – PGPony/OpenPGP manuelle CircleCI-Offline-QA erfolgreich (dritter Versuch)
-
-**Providerbeleg:** Zwei Screenshots des Betreibers, 17:48 Uhr, auf dem PGPony-Branch. Quell-SHA `50509600f5e3df842e8f320bcf5160726072a374`; CircleCI-Job `pgpony-openpgp-offline-qa` **SUCCESS**, circa 14 Sekunden. CircleCI meldet **GnuPG 2.2.19**. Der echte Job-Log enthält nacheinander `PGPONY_QA_STAGE=syntax`, `PGPONY_QA_STAGE=public_key_preflight`, Public-Key/Fingerprint/CV25519/Selbstsignatur/Encrypt **PASS**, `PGPONY_QA_STAGE=synthetic_openpgp_roundtrip`, verschlüsseltes synthetisches Archiv mit SHA-256 **PASS**, wiederhergestelltes synthetisches Testarchiv und **8/8 negative Sicherheitstests PASS**, zuletzt `PGPONY_OFFLINE_QA=PASS`.
-
-**Konsequenz:** Das zuvor identifizierte Bitlängen-Regex-Problem ist durch die algorithmusbasierte Public-Key-Prüfung auf dem realen GnuPG-2.2.19-Runner beseitigt. Die vorherigen zwei roten manuellen Runs bleiben historisch FAIL. Dies ist die bestandene **no-secret, synthetic-only CircleCI-QA**; sie hat weder Besitzer-Private-Key importiert noch WordPress-Produktivdaten verarbeitet noch ein Backup-Release ausgelöst. CircleCI-Creditverbrauch und vollständige Job-UUID sind mangels API-Zugriff nicht separat geprüft. Keine CI-, Deploy- oder Mergeaktion durch Assistenten.
-
-**Weiterhin offen:** GH03 private PGPony-Offline-Kopien auf zwei unabhängigen Schutzdomänen und synthetische Wiederherstellung auf iPad nur aus separater Kopie (Betreiber hat Ergebnis noch nicht gemeldet). Die bisherige AgePony-Papierkopie gehört zu einem anderen Schlüssel. Echte GH05–GH08-Backups, Remote-Releases und Scheduling bleiben blockiert. Draft PR #25 nicht gemergt; V1 historisch 62/71 Coding, M0–M7 formal 0/8, P4 0/4 und Release R01–R18 0/18.
-
-## 20.10.2026 – GH03 PGPony-iPad-Import, Fingerprintvergleich und Testentschlüsselung erfolgreich (Betreiber-Nachweis)
-
-**Neu bestätigte Einzelprüfungen:** Betreiber meldet ausdrücklich „iPad-Import erfolgreich, Fingerprint stimmt, Entschlüsselung erfolgreich“. Damit ist ein **zweites Gerät** (iPad) mit der zu OrgaVela gehörenden PGPony-Privatidentität laut Betreiber einsatzbereit; der vollständige öffentliche Fingerprint entspricht dem bereits geprüften FPR `7C9DC60D8E1B293E514696EB333D15A4D8BA625C`, und die extern durch GnuPG verschlüsselte synthetische OrgaVela-Testdatei lässt sich dort wieder entschlüsseln. Genaue Klartext-Sollcodegleichheit wurde nicht gesondert angegeben. Der ursprüngliche iPhone-Decrypt-PASS und der dritte grüne no-secret-CircleCI-Run bleiben unabhängige historische Belege.
-
-**Abgrenzung:** Die Methode der Übertragung (bewusster Offline-/AirDrop-Import einer zuvor exportierten und geschützten `.asc`-Datei oder automatische Schlüssel-Synchronisierung), die dauerhafte Aufbewahrung des exportierten Geheimschlüssels, Passphrase-Recovery und zwei physisch/technisch und räumlich getrennte geschützte **Offline-Backups** wurden noch nicht durch den Betreiber bestätigt. Ein erfolgreiches zweites **Gerät** beweist keine unabhängige, sicher verwahrte Notfallkopie für gleichzeitigen Verlust beider Geräte. Das alte AgePony-Papierbackup kann den neuen OpenPGP-Key nicht wiederherstellen. Deshalb GH03 weiterhin **nicht formal abgenommen**, GH05–08 echte Quellen/Remote-Releases und Zeitpläne blockiert.
-
-**Nächster Betreiberpunkt:** Ohne private Key-Daten, Passphrase oder QR zu übertragen, nur bestätigen, ob das iPad den Schlüssel aus einer manuell via AirDrop/lokal übertragenen Secret-ASC importiert hat oder ob er automatisch via iCloud-Keychain erschien. Danach zwei geschützt verwahrte, unabhängig verfügbare Offline-Kopien des neuen PGPony-Privatexports organisieren und zumindest eine davon im isolierten Zweitprofil erfolgreich importieren/entschlüsseln. Keine funktionierenden iPhone-/iPad-Schlüssel zurücksetzen. PR #25 weiter Draft, V1 historisch Coding 62/71, M0–M7 formal 0/8, P4 0/4, R01–R18 0/18, Gesamt V1 offen.
-
-## 20.10.2026 – GH03 AirDrop-Gerätewechsel zum iPad bestätigt
-
-**Betreiberaussage:** Auf die Rückfrage „AirDrop oder iCloud“ antwortet der Betreiber „Per AirDrop“. Der zuvor bestätigte iPad-Import des OrgaVela-PGPony-Privatschlüssels, der vollständige Fingerprint-Abgleich und das erfolgreiche Entschlüsseln der externen GnuPG-Testdatei gelten als operator-attested manueller Gerätewechsel, nicht lediglich als iCloud-Synchronisierung.
-
-**Grenze:** AirDrop ersetzt weder zwei unabhängig gelagerte geschützte physische Offline-Schlüsselkopien noch einen Notfall-Restore aus einer dieser dauerhaften Kopien, wenn beide Geräte fehlen. Auch gesicherter Notfallzugang zur separat gehaltenen Passphrase ist noch nicht bestätigt. Alte AgePony-Papierkopie passt nicht zum PGPony-Schlüssel. GH03 bleibt offen und produktive GH05–08-Sicherungen bleiben gesperrt.
-
-**Nächster Schritt:** Verfügbarkeit eines privaten Druckers oder anderer eigener sicherer Offline-Medien klären. Private Key-Dateien und QR-Codes niemals ins öffentliche GitHub, den Chat, CircleCI oder Cloud-Sync hochladen. Erst bei zwei unabhängigen sicher aufbewahrten Kopien und Wiederherstellung aus einer solchen gespeicherten Kopie GH03 abschließen; niemals funktionierende iPhone-/iPad-Vaults löschen. V1 Coding 62/71 historisch, M0–M7 0/8, P4 0/4, R01–R18 0/18; PR #25 Draft.
-
-## 20.10.2026 – Neue PGPony-Private-Key-Papierkopie laut Betreiber im Safe (GH03 Teilfortschritt)
-
-**Betreiberbericht:** Der Betreiber hat den privaten **NEUEN PGPony/OpenPGP-Schlüssel** erneut als Papier-Wiederherstellungsunterlage ausgedruckt und in seinen Safe gelegt. Dies ist **eine** vom Betreiber bestätigte separat liegende physische Offline-Schlüsselkopie für OpenPGP, zusätzlich zu den auf iPhone und iPad funktionsfähig importierten PGPony-Schlüsseln. Nicht mit der älteren **AgePony**-Papierkopie verwechseln.
-
-**Wichtige Abnahmegrenze:** Dass der Papierausdruck vorhanden und geschützt gelagert ist, bestätigt **nicht**, dass die vollständige private PGP-Datei später lesbar/wiederherstellbar ist, eine QR-Darstellung tatsächlich einen importierbaren Private-Key enthält, die zugehörige Passphrase separat notfallfest verfügbar ist oder ein Restore **aus genau diesem Papier** die künstliche OrgaVela-GnuPG-Datei entschlüsseln kann. Der bisherige iPad-Erfolg stammt von **AirDrop** und wird nicht als Papier-Recovery verbucht. Ebenso fehlt weiter eine **zweite**, räumlich/technisch unabhängige geschützte Private-Key-Offlinekopie. `gh03_owner_openpgp_offline_copy1_attested=true` nur als **operator-attested Papier im Safe**, Kopie-1-Restore, Kopie 2, Copy-2-Restore und GH03 formal weiterhin FALSE.
-
-**Nächster Schritt:** Ohne private Schlüssel/QR/Passphrase/Scans mit dem Assistenten oder GitHub zu teilen, den Betreiber fragen, ob tatsächlich bereits **aus dem Papierdruck** in einer isolierten Umgebung wiederhergestellt und künstliche GPG-Testdaten entschlüsselt wurden, oder ob bislang nur gedruckt/verwahrt wurde. Falls noch nicht, nicht-destruktiven Papier-Restore planen und anschließend zweite unabhängige Offlinekopie herstellen und verifizieren. Weder Original-iPhone noch iPad-Schlüssel löschen oder zurücksetzen; keine Cloud-/Online-Druckdienste für das Material. Echte GH05–08-Backups weiter gesperrt, V1 unverändert: historisch 62/71 Coding, M0–M7 formal 0/8, P4 0/4, R01–18 0/18; PR #25 Draft, kein Merge.
-
-## 20.10.2026 – GH03: PGPony-Schlüssel direkt vom eigenen Papierausdruck wiederhergestellt, Testdatei entschlüsselt
-
-**Betreiberbestätigung:** Auf die direkte Frage „Hast du den PGPony-Schlüssel bereits einmal direkt mithilfe dieses Papierausdrucks wiederhergestellt und damit unsere Testdatei entschlüsselt – oder bislang nur ausgedruckt und im Safe verstaut?“ antwortet der Betreiber „Ja habe ich es hat geklappt“. Das ist ein **owner-attested erfolgreicher Restore aus der im Safe verwahrten Papierkopie #1**, einschließlich erfolgreicher Entschlüsselung der künstlichen OrgaVela-GnuPG-Testdatei. Es ist getrennt vom früheren erfolgreichen AirDrop-Geräteimport auf das iPad zu werten. Ein vollständig isolierter Test-Keyring und ein erneuter Fingerprintvergleich speziell für den Papier-Restore sind nicht ausdrücklich dokumentiert, darum keine unabhängige technische Begutachtung behaupten.
-
-**Fortschritt:** `gh03_owner_openpgp_offline_copy1_restore_verified=true` und Herkunft/Betreiber-Attestation in `V1_PROGRESS.json` aufgenommen. Papierkopie #1 ist laut Eigentümer tatsächlich wiederherstellbar, nicht nur vorhanden. **GH03 bleibt trotzdem offen:** Eine **zweite, physisch und räumlich unabhängige geschützte Offline-Privatkey-Kopie**, ein Wiederherstellungstest speziell aus dieser zweiten Kopie sowie ein gesicherter Notfallzugang zur Passphrase sind weiterhin **nicht bestätigt**. Die alte AgePony-Papierkopie gehört zu einem anderen Schlüssel und zählt nicht. Weiterhin kein produktiver GH05–08-Capture, kein GitHub Backup-Release, Secret-Upload, CircleCI-Rerun, Deployment oder Merge.
-
-**Nächster Schritt:** Dem Betreiber die Erstellung einer eigenständig verwahrten zweiten Offlinekopie an einem anderen geschützten Ausfallort erklären. Niemals private ASC-, QR-, Papierfotos oder Passphrases im Chat/öffentlichen GitHub/CI übermitteln. Private Passphrase getrennt verwahren. Erst nach erfolgreichem Copy-2-Restore aus einem isolierten Profil/Gerät und überprüften Schlüsseldetails GH03 formell beurteilen. Historische V1-Zahlen unverändert: Coding 62/71, M0–M7 0/8 formal, P4 0/4, Release R01–R18 0/18; PR #25 Draft offen.
-
-## 20.10.2026 – GH03 OpenPGP Eigentümer-Key-Recovery erfolgreich bestätigt (Owner-Attestation)
-
-**Neu vom Betreiber gemeldet:** Die **zweite** unabhängig geschützte PGPony-Papier-Recoverykopie wurde ebenfalls zur erfolgreichen Wiederherstellung verwendet. Die Passphrase ist laut Betreiber zusätzlich **offline und auf einem zweiten Gerät** gesichert. Das folgt auf die vorher bestätigten Wiederherstellungen aus Papierkopie #1, manuell per AirDrop auf das iPad importierte Schlüsselidentität, übereinstimmenden vollständigen Public-Fingerprint und erfolgreiche Entschlüsselung des externen künstlichen GnuPG-Fixtures sowie den grün belegten no-secret CircleCI-GnuPG-2.2.19-Pipeline-Lauf.
-
-**Bewertung:** Das gebundene Unter-Gate **GH03 PGPony/OpenPGP Owner-Recovery ist mit Betreiberbestätigung als bestanden abgenommen** (`gh03_formal_accepted=true`). Die getrennte Aufbewahrung wird nicht durch fremde Einsicht überprüft; ein exakt dokumentierter Kopie-2-SHA256-Vergleich und vollständiger technischer Keyring-Isolationsnachweis fehlen. Daher ist die Abnahme präzise als **operator-attested** gekennzeichnet, keine externe Prüfung, keine Offenlegung von Paper-Key/QR/Passphrase und keine formale V1-Gesamt- oder Release-Abnahme.
-
-**Nächster technischer Schritt:** W0/O03 PGP-03 als **default-OFF rein synthetischen** CircleCI Zwei-Job-Transport vorbereiten: Fake-MariaDB/WordPress-Archivarzeugung -> OpenPGP-Verschlüsselung mit dem hinterlegten OrgaVela-PUBLIC-Key -> weiterreichen von **nur** Ciphertext, SHA-256-Sidecar und öffentlichem bereinigtem Manifest -> unabhängig prüfender Writer ohne privaten Key, Remote-Token, IONOS- oder WordPress-Zugriff. Ein produktives Backup, eine GitHub Release-Erstellung, ein CircleCI-Kontext mit Secrets, PR-Merge oder automatische Planung sind nicht durch GH03 abgedeckt. Der synthetische Workflow muss erst im eigenen Provider-Run verifiziert werden.
-
-**Fortschritt:** GH03 Owner-Recovery erfüllt (Betreiber-Attestation), GH05–08 produktiv **weiter blockiert**, V1 weiterhin offen mit Coding 62/71 historisch, M0–M7 0/8, P4 0/4, R01–R18 0/18; PR #25 Draft/ungemergt.
-
-## 20.10.2026 – GH03 Owner-Recovery erfüllt; PGP-03 synthetische Source/Writer-Grenze lokal PASS
-
-**Betreiberbestätigung GH03:** Auf die Bitte um zweite unabhängig und geschützt verwahrte Papierkopie meldet der Betreiber, dass diese vorhanden und **die Wiederherstellung auch aus dieser zweiten Kopie erfolgreich** war. Die Passphrase ist offline und auf einem zweiten Gerät gesichert. Dies ergänzt die bereits bestätigte erste PGPony-Papierkopie im Safe, Wiederherstellung aus Papier 1, erfolgreichen manuellen iPad-AirDrop-Import mit identischem Full-Fingerprint und künstlichem GPG-Decrypt sowie den früher grün getesteten No-Secret-CircleCI-Job mit GnuPG 2.2.19. **GH03 PGPony Owner-Key-Recovery: PASS aufgrund Betreiber-Attestation.** Der Assistent konnte weder physische Trennung noch eigenen unabhängigen Copy-2-Hash-/Keyring-Isolationsnachweis auditieren. Keine Private ASC, QR, Passphrase oder genaue Lagerung an GitHub/Chat übermittelt. Nur Unter-Gate GH03 erfüllt: **nicht** O03 vollständig / Release-R03.
-
-**Neues PGP-03-Paket auf Draft PR #25:** `scripts/ci/orgavela-openpgp-synthetic-handoff.sh` (GitHub Blob SHA `a20169ada8779c4c394b48d26e5ffc93e6756f2f`) erzeugt ausschließlich **erfundene** Datenbank-/WordPress-Probedateien und verschlüsselt sie mit dem im Projekt PUBLIC hinterlegten PGPony-Schlüssel, bevor genau drei Dateien für den Writer freigegeben werden: OpenPGP `.tar.gpg`, `.tar.gpg.sha256`, sanitiertes `manifest.json`. Der Writer kontrolliert vollständige SHA-256, synthetische Flags, Public-Key-Fingerprint, Empfänger-Unterschlüssel-ID und OpenPGP-Header, verweigert zusätzliche Dateien, Secrets und vorhandene Private-Keys. Kein Upload, echter Quellzugriff, private Backup-Schlüssel oder Token. Negativtests in `scripts/ci/test-orgavela-openpgp-synthetic-handoff.sh` (Blob `b23fb8253813ee7a18765e30641eddb64abcfb2d`) testen neun unsichere Situationen: vorhandene Ausgaben, vierte Klartextdatei, manipulierte Ciphertext-Hashes, manipuliertes Manifest, fehlendes Manifest, Symlink, unerlaubter Token-Parameter, fehlender Synthetic-Opt-in und falscher Empfängerfingerprint.
-
-**Lokale Laufzeitevidenz:** GnuPG **2.4.7**, `bash -n`, `producer` PASS, `writer` PASS, `PGPONY_WORKSPACE_PLAINTEXT=NONE`, `PGPONY_RELEASE_UPLOAD=DISABLED`, **9/9 Negativprüfungen PASS**; bytegleicher `git hash-object`-Nachweis für beide ausgeführten Dateien gegenüber GitHub. Die neue `.circleci/config.yml` (Blob `d0ba2248ce2bb109239155ce8cffe7c12a98a6a8` vor abschließender Dokumentation) enthält **default false** für `enable_pgpony_ciphertext_handoff`, neuen zweistufigen Workflow `pgpony-ciphertext-handoff-manual` mit Jobs `pgpony-handoff-source` und `pgpony-handoff-writer` auf exakt diesem Featurebranch, ohne CircleCI-Context, Secrets oder Zeitplan. **Neuen Workflow noch NICHT bei CircleCI ausgeführt**; zusätzlicher Provider-PASS und vollständige branch-/rechtliche Produktionsgates fehlen.
-
-**Nächster Schritt:** Betreiber kontrolliert vorhandene kostenlose CircleCI-Credits und startet bei Zustimmung einmal **eine neue** Pipeline auf `feat/o03-pgpony-openpgp-migration-20261020`, Flag `enable_pgpony_ciphertext_handoff=true`, alle übrigen Flags `false`, keine Credentials. Zwei Jobs auf exakt gleichem Quell-SHA prüfen und erst dann PGP-03 CI als bestanden erfassen. Erst später nach eigener Berechtigungsprüfung/Besitzerfreigabe PGP-04 synthetischer privater immutable GitHub Release (separater kurzlebiger Token), erst nach vollständiger Real-Backup-/Restore-Kette echte GH05–08 und Zeitplan. **V1 weiterhin offen**, historisches Coding 62/71, M0–M7 formal 0/8, P4 0/4, R01–R18 0/18. PR #25 Draft/ungemergt.
-
-## 20.10.2026 – PGP03 OpenPGP-Public-Key Source→Ciphertext-only Writer erfolgreich durch CircleCI bestätigt
-
-**Neue Provider-Evidenz:** Vier Betreiber-Screenshots, Uhrzeit ~18:57. CircleCI-Workflow `pgpony-ciphertext-handoff-manual` **grün** auf geprüftem GitHub-Commit `4eac786c3868dc4e79f1cf1dd16dc11b93512ff8` (GitHub PR#25 Head vor Dokumentations-Commits). Beide Jobs grün: `pgpony-handoff-source` ca. 21s und `pgpony-handoff-writer` ca. 12s, ganzer Workflow ca. 37s. Synthetischer Producer meldet `PGPONY_HANDOFF_PRODUCER=PASS`, `PGPONY_WORKSPACE_PLAINTEXT=NONE`, **9 fail-closed regressions PASS** und `PGPONY_HANDOFF_CI_SOURCE=PASS`. CircleCI-Workspace wurde mit **1,7 KiB** hochgeladen; laut Packer-/Writer-Quellcode ausschließlich `.tar.gpg`, SHA256-Sidecar und öffentlichem sanitierten Manifest. Writer validiert erfolgreich `PGPONY_HANDOFF_WRITER=PASS`, `PGPONY_RELEASE_UPLOAD=DISABLED`, `PGPONY_HANDOFF_CI_WRITER=PASS`. Die grüne Provider-Ausführung des tatsächlichen Source/Writer-Jobs ist durch Screenshots nachgewiesen. **PGP03 synthetische No-Secret-Zwei-Job-CI-Abnahme PASS**.
-
-**Abgrenzung:** Dieser Erfolg bestätigt echte CircleCI-Ausführung, aber **nur** künstliche WordPress/DB-Testfixtures, OpenPGP-Verschlüsselung mit dem PUBLIC Owner-Key, SHA256 und den ciphertext-only Writer ohne Secret-Context. **Kein** reales OrgaVela-Capture, privates GitHub-Release, GH_TOKEN, Besitzer-Private-Key, IONOS-Zugang, WordPress-Änderung oder automatisches Backup. Vollständige CircleCI-Job-UUID, Creditkosten und separater Provider-API-Readback nicht verifiziert. GH03 Owner-Papierkopie 1+2 einschließlich Restore/Passphrase weiterhin **Betreiber-bestätigt**, keine öffentliche Offenlegung.
-
-**PGP04 nächster entscheidender Blocker:** Das Featurebranch `feat/o03-pgpony-openpgp-migration-20261020` ist per GitHub API **`protected=false`**. Branchfilter des CircleCI-Workflows allein ist kein verlässlicher Secretzugriffsschutz. Für den **neuen** PGPony-PUBLIC-Key-basierten remote privaten immutable Release-Test ist daher eine eigene geschützte Testbranch-/CI-Context-Grenze mit PR/no-bypass/no-force/no-delete, Restriktion auf genau diesen Branch und ausschließlich für `janjrre/orgavela-backups` begrenztem kurzlebigem Contents-RW-Token zwingend; zunächst nur Plan/Review, keine Tokenfreigabe. `janjrre/orgavela-backups` wurde als **privat** nachgelesen. Der historische GH04-GPG-Test mit Wegwerf-Key bzw. GH06-age-Synthetikrelease beweist **nicht** die neue PGPony-E2E-Remote-Parität.
-
-**Weiterhin:** PR #25 Draft, ungemergt; echte GH05–08 und V1-Release-Gates gesperrt. V1 historisches Coding **62/71**, M0–M7 formal **0/8**, P4 **0/4**, Release R01–18 **0/18**.
-
-## 20.10.2026 – PGP04 lokaler Offline-Review-Zwischenstand
-
-Der OrgaVela-GitHub-Branchschutz wurde nach Betreiber-Screenshot im korrekten Quellrepo angelegt und traf 1 Branch. Vorbereitender No-Bypass/No-Force/No-Delete-Stand anhand der UI dokumentiert; endgültiges Lock branch weiter OFFEN.
-
-Der Publisher (Git-Blob 5ecb211eb7f856ff1d676201ee2a5ede55d11fe2) wurde exakt reproduziert (lokaler git hash-object identisch), bash -n Exit 0. Synthetische Fake-Datei ausschließlich mit dem verifizierten PGPony PUBLIC-Schlüssel verschlüsselt, nie mit privatem Key. Temporäres Mock-GitHub-API-Skript testete mit einem erkennbar falschen Testtoken den simulierten Release-Erfolgsweg samt binärem Readback und die Sicherheits-Abbrüche. **13/13 Fallausgänge wie erwartet, Python Exit 0, nur lokal.** Die Testdateien konnten aufgrund einer Sicherheitsblockade nicht nach GitHub committed werden und sind noch nicht providerreproduziert.
-
-Statischer Check der echten GitHub-CircleCI-Datei (Blob d430033f001d13bb83bb1b086b336b2dd43c522b): PGP04-Workflow default false, Source ohne Context, Writer mit separat benanntem Context, Source-Abhängigkeit und Branchfilter. **Nicht** als CircleCI-Config-Lint oder Context-Abnahme werten.
-
-**BLOCKER:** finaler Branch-Lock und SHA-Codefreeze, verifizierter eigener CircleCI-Context mit Projekt-/Branchrestriktion, echte GitHub-Releases-Immutability, Besitzer-PGPony-Restore, separate kurzlebige Tokenfreigabe. Kein produktiver OrgaVela-/IONOS-Zugriff, keine neuen CircleCI-Runs, kein kostenpflichtiger Dienst. W0/O03 partial; Codinghistorie 62/71, M0–M7 0/8, P4 0/4, R01–18 0/18. Nächstes Paket: reproduzierbare Providerpreflight-/Code-Review-Gates vor Branch-Lock/Context/Token.
-
-## 20.10.2026, 22:33 – PGP04 Release Immutability / Manual Approval
-
-GitHub-Screenshot des privaten Zielrepositorys `janjrre/orgavela-backups` zeigt `Enable release immutability` aktiv (**Betreiber-UI nachgewiesen**; noch kein neuer PGP04-Release und kein `immutable=true` an Release-ID überprüft). In `.circleci/config.yml` ist mit Commit `6c8431fb1dab860ad52c77c1d88ca7eefd23ca64` ein manueller CircleCI-Approval-Job zwischen dem contextlosen Source-Job und dem Writer ergänzt; nachträgliche statische Codeprüfung bestätigt die Kette. Provider-YAML-Validierung offen. Nächster Schritt: neuer **leerer** CircleCI-Context, genau auf Quellprojekt und PGP04-Branch beschränkt; erst anschließend Code-Freeze/Lock, Testfreigabe, einmaliger kurzer Zielrepo-Token. Produktionsdaten weiterhin gesperrt, W0/O03 offen. V1-Zählstand 62/71 historische Codingpakete; M 0/8, P4 0/4, R 0/18.
-
-## 20.10.2026, 22:48 – PGP04 CircleCI Context und 14 lokale Offline-Tests
-
-Betreiber-Screenshots zeigen einen neu angelegten CircleCI-Context `orgavela-pgp04-release-only` mit **genau einem** Project-Restriction-Eintrag `Projekt-Wordpress-Plugin`, einer gespeicherten Expression-Restriction auf Branch `security/pgp04-synthetic-release-20261020`, Repo-Name, Eigentümer `janjrre`, SSH-Rerun und API-unversionierte Konfiguration ausgeschlossen. Unter Environment Variables ist die Liste **leer**; bei Group Restrictions steht `All members` (Betreiber berichtete bisher von ausschließlich eigenem Zugang; tatsächliche Mitgliederliste nicht unabhängig ausgelesen). **UI-Konfigurationsnachweis gegeben, Runtime-Context-Sicherheitsprüfung noch nicht ausgeführt.**
-
-Publisher wurde auf GitHub-Blob `6e207aefa7edcb9e9302efccacd88fa0c633287a` (Commit `71c0d6cc3dc9ec619b13096b350d1670bee7ef46`) verschärft: exakte Manifest-Keys, Release-ID-Konsistenz, alle drei Binärassets **vor und nach Veröffentlichung** bytegenau gelesen. Exakt identische GitHub-Version (`git hash-object` lokal identisch) bestand lokal `bash -n` und **14/14 offline Fake-GitHub-API Testfälle** (einschließlich neuem Fehlerfall: remote Bytes nach Publish verändert), Python Exit 0. Prüfprotokoll SHA256 `b497d65634c28af70c7a8be62fa86bba11600af6b68ed0dbb827fbafd3135bbe`. **Fake-GitHub-API, kein echter Remote-Test, kein Token; der lokale Mock-Harness ist noch nicht in GitHub versioniert**.
-
-**STOP-Gates:** CircleCI Config/Context Runtime noch nicht nachgewiesen, SHA-fixierter GitHub-Branch noch nicht gelockt, keine Einmal-Tokenfreigabe, kein synthetischer PGPony-Release, kein Besitzer-Restore. Keine produktiven WP/MariaDB-Backups. V1 historisches Coding 62/71; M0–M7 0/8, P4 0/4, R01–R18 0/18. Nächste Entscheidung: finalen Testbranch-SHA nach Code-Review erfassen, Branch-Lock durch Betreiber, SHA-Confirm; danach einmaliger manuell freizugebender CircleCI-Ciphertext-Release-Test unter strengem Context.
+## 2026-10-22 — PGP05 unabhängige KI-Zweitprüfung und Fehlerbehebung
+Der ausdrücklich beauftragte separate Prüfagent prüfte PR32 auf 392053bb0e3f24ef79cc66a5142a6558b3fa5ee5.
+Zwei P2-Befunde: unerwartetes SSH-stderr konnte PASS ergeben; veränderliches
+cimg/python:3.12 ist vor Passwortinjektion nicht ausreichend festgeschrieben.
+Stderr-Fehler und widersprüchliche historische Credential-Dokumentation auf
+**4d7b257ae398d663cf35668777e7b5bbea95b17c** korrigiert; Zweitprüfer bestätigte
+beide Korrekturen und unabhängig **117/117 lokale synthetische Tests OK**.
+Keine menschliche Audit-/GitHub-Approval-Abnahme behauptet.
+[Reviewbericht und Nachprüfung](../operations/PGP05_INDEPENDENT_SECURITY_REVIEW_20261022.md).
+
+**Live-Urteil weiterhin BLOCKED**, #6 nicht erfüllt: immutable Runtime-Identität
+und tatsächlicher Provider-/Account-Startup-Nachweis fehlen. #8 benötigt zusätzlich
+authentisierte Namespace-/Domainbindung, #10 den akzeptierten echten Metadatenlauf.
+**Checkpoint5 7/10 (70%)**, #6/#8/#10 offen. Produktionscapture bleibt false.
+Keine Secrets/Kontexte eingerichtet, kein neuer Runner, SSH-Login, PHP/WordPress/SQL,
+Backup/Deploy/Merge oder Kauf. Alte CircleCI-Erfolge #41/#43 gelten ausschließlich
+für 392053..., neue Code-SHA hat noch keinen Provider-Testbeleg.
+Nächste tatsächliche Benutzeraktion: bestehendes CircleCI #41 öffnen, Abschnitt
+Spin-up environment mit vollständigem Image-Repository und Registry-Manifestdigest
+zeigen (keine Secrets, kein neuer Lauf). Danach Provenienzprüfung, beide Jobs
+immutable pinnen, genaue SHA erneut reviewen und kontextfreie Provider-CI.
+Hostkey-only-Variablen sind bereits entfernt; alte Restrictions nicht erweitert.
+V1 unverändert offen: 62/71 historisch, M0–M7 0/8, P4 0/4, R 0/18; PR32 Draft/
+ungemergt, zuletzt belegte Live-alpha.2 nicht erneut abgefragt.
+
+
+## 2026-10-22 — PGP05 Executor immutable gepinnt, kontextfreier Providerlauf als nächster Schritt
+
+Das bereitgestellte Build41-Spin-up-Log enthält keinen vollständigen Manifestdigest;
+kurze Layer-IDs beweisen keine historische Imageidentität. Direkter HTTPS-Abgleich
+mit DockerHub cimg/python und Registry zeigte einen neuen legitimen linux/amd64-
+Kandidaten; Index- und Manifestbytes wurden SHA256-verifiziert. Beide Jobs sind
+auf **docker.io/cimg/python@sha256:793ca7ea5a2fc27fa5b379fd077bf571c456d103992c7b3098cfc885f46cfa08**
+festgeschrieben, Code-SHA **c952645000b2954c04f1c0446c333392048065e6**.
+Kein Bezug auf den exakt historischen Job41-Digest behauptet.
+[Provenienz](../operations/PGP05_IMMUTABLE_EXECUTOR_PROVENANCE_20261022.md).
+
+Runtimecheck ist lokal/begrenzt, keine Installation/Verbindung: x86_64, benötigte
+Binaries, SSH-/System-Pythonversionen und trusted-binary-Prüfung. YAML-/Shellsyntax
+PASS, **117/117 lokale synthetische Tests PASS**, vom separaten Reviewer erneut
+ausgeführt; exakte publizierte Config ebenfalls überprüft. Default-off bleibt
+ohne Context/Secrets und ist für den nächsten Provider-Test geeignet.
+
+**Nächste Betreiberaktion:** Featurebranch feat/pgp05-readonly-ssh-metadata-check-20261021
+auf exakter SHA c952645000b2954c04f1c0446c333392048065e6 mit pgp05_ssh_probe=off
+starten, übrige Modi aus. Spin-up-Image, Runtime-Step und Offline-Ergebnis zeigen.
+Kein Approval-/SSH-Job erwartet; keine Contextpins/Secrets anpassen.
+Provider-Pull und Runtime auf dieser SHA bleiben bis zu diesem Lauf unbestätigt.
+
+Live-Metadata weiter BLOCKED: Provider-Runtime und tatsächlich geprüftes SSH-
+Startupverhalten fehlen; Domainbindung/authentisierter Lauf ebenfalls offen.
+**CP5 7/10 (70%), #6/#8/#10 offen**; production_capture_allowed=false.
+V1 unverändert offen62/71 historisch, M0–M7 0/8, P4 0/4, R0/18; PR32 Draft/
+ungemergt; alpha.2 zuletzt belegt, kein neuer Livezugriff oder Kauf.
+
+
+## 2026-10-22 — PGP05 Build44: gepinnte Runtime und 117 Tests beim Provider bestanden
+
+[CircleCI #44](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/44) auf exakter
+SHA **c952645000b2954c04f1c0446c333392048065e6**: GitHub-Commitstatus
+ci/circleci: pgp05-offline-security=success. Sechs Betreiberlogs zeigen Quelle/
+Checkout passend, Isolation PASS, Start des exakt gepinnten amd64-Images aus
+Providercache, Runtime PASS, **117/117 Tests OK**. Kein neuer Registrydownload
+behauptet. OpenSSH8.9p1 Ubuntu-3ubuntu0.17/OpenSSL3.0.2, /usr/bin/python3=3.10.12;
+dies ist der geprüfte System-Helper, nicht die pyenv-Anwendungs-Pythonversion.
+Separater Reviewer las Logs und Status unabhängig und akzeptiert damit den
+Immutable-Executor-/tatsächlichen Runtime-Teilnachweis für genau diese SHA.
+
+**Noch keine SSH-Livefreigabe.** Es fehlt das tatsächliche IONOS-/Konto-
+Startverhalten vor dem übergebenen Kommando. Clientcode/env-i kann frühere
+SSH-/Shell-Hooks nicht ausschließen. Öffentliche Hilfe/SSH-Dokumentation ergibt
+keine konkrete IONOS-Kontokonfiguration. Providerbestätigung der tatsächlichen
+Shell/Home/Startupkette, danach private lesende Prüfung nur der relevanten
+Kontodateien über Providerdateimanager ist der nächste sichere Nachweisweg.
+[Vorbereitete, nicht versandte IONOS-Anfrage](../operations/PGP05_IONOS_STARTUP_EVIDENCE_REQUEST_20261022.md).
+Keine Startup-Dateien/SSH/SFTP testweise ausführen; keine Secrets im Chat/GitHub.
+
+**CP5 weiter 7/10 (70%)**: #6 Startup-/Live-Sicherheitsabnahme, #8 authentisierte
+Konto/Namespace/Domainzuordnung, #10 echter akzeptierter Metadatenlauf offen.
+Keine Contextpins/Secrets geändert; keine neue CI/Livesitzung/WordPress/PHP/SQL/
+Backup/Deploy/Merge/Kauf oder Supportnachricht durch den Assistenten.
+V1 unverändert offen62/71 historisch, M0–M7 0/8,P4 0/4,R0/18; DraftPR32/
+ungemergt; zuletzt belegte Live-alpha.2 nicht erneut abgefragt.
+
+
+## 2026-10-22 — verbindliche Neufassung PGP05-SSH-20261022.2
+
+**Überholt die frühere pauschale Pflicht zur IONOS-Supportauskunft/Prüfung aller
+globalen Startup-Hooks.** Diese Pflicht war für den begrenzten Metadatencheck
+unverhältnismäßig. Die Revidierung ist keine Behauptung einer Hookinspektion.
+
+Der separat beauftragte unabhängige Prüfagent erteilt **APPROVED** für genau
+c952645000b2954c04f1c0446c333392048065e6, festen Remote-Skript-SHA256
+7d8e383ca0e09738b11a31a20d79c88b38a540539763f0091f0c69f692882e99,
+unter normalem Vertrauen in die IONOS-gemanagte SSH-/Serverinfrastruktur und
+deren übliches Kontostartverhalten. Dieses Infrastrukturverhalten ist nicht
+unabhängig beobachtet. Kein absolutes Null-Nebenwirkungsversprechen.
+
+Scope: eine gepinnte Verbindung zum privat gebundenen bestehenden OrgaVela-Konto,
+exakt festes stdin-Shellskript für Account/Root/Pfad/Typ/Owner/Mode/Dateinamen.
+Kein angefordertes PHP, WordPress-Bootstrap, SQL, Inhaltslesen, Schreiben,
+Backup oder Deployment. 117/117 aktuelle CircleCI44-Tests, stderr-Fix und
+unabhängig geprüfte immutable Runtime bleiben gültige Nachweise.
+
+Unverändert erforderlich: exakte Projekt/Repo/Branch/SHA-Contextrestriction
+vor Secretinjektion, getrennte private Credentialablage, feste Hostpin-Prüfung,
+Ausgabe-/Zeitlimits, exaktes stdout/leeres stderr, eigene manuelle Freigabe.
+Der Providertrust überstimmt keine bekannte ungewöhnliche Konfiguration,
+Customhooks mit Sitecode/Schreibwirkung, Warnungen oder abweichende Ausgabe:
+bei konkretem Gegenbeleg stoppen und erneut prüfen. IONOS-Anfrage ist dann ein
+gezieltes Diagnosemittel, keine normale pauschale Vorbedingung.
+
+**PGP05_STARTUP_REVIEWED=yes** bezeichnet nach dieser dokumentierten Neufassung
+ausschließlich die erfolgte unabhängige Prüfung/Annahme dieses Startup-Scope
+und Infrastruktur-Vertrauensmodells. Es behauptet NICHT die tatsächliche
+Inspektion oder Abwesenheit jedes Hooks. Der historische Feldname bleibt auf
+der bereits getesteten SHA unverändert; keine stille Semantikänderung.
+Receipt bleibt startup_hooks_independently_observed_by_probe=false,
+server_enforced_readonly_account=false, domain_vhost_binding_proven=false,
+production_capture_allowed=false.
+
+**Checkpoint5 jetzt 8/10 (80%)**: Kriterium6 unabhängige Sicherheitsprüfung
+im präzisen obigen Scope ERFÜLLT. #8 tatsächliche authentisierte Account-/
+Namespace-/Domainbindung und #10 akzeptierter realer Metadatenlauf OFFEN.
+Reviewabschluss ist weder durchgeführter Login noch Produktionsbackupfreigabe.
+V1-Zähler unverändert62/71 historisch,M0–M7 0/8,P4 0/4,R0/18.
+
+[Dreamloud-Wiederverwendung und nächster Schritt](../operations/PGP05_DREAMLOUD_REUSE_AND_BOUNDED_METADATA_DECISION_20261022.md).
+
+
+## 2026-10-23 — Metadatenjob47 verweigert; feste redigierte Diagnose freigegeben
+Job47 auf c952645... endet REFUSEDexit78; GitHub bestätigt failure, Offline45/
+Approvalsuccess. Ursache und erreichteAuthentisierungsstufe unbekannt.
+KeinBlindretry/Pfad-/Permissionwechsel. Code **b31e6cc0684593cca63d493ba0f56dd562e11f53**
+ergänzt nur feste lokaleStufen/Remote-reportedExitkategorien ohne Rohoutput.
+KeinGuard/Command/Pin/Timeout/Cleanup gelockert, keinPHP/WP/SQL/Writes/Discovery.
+**121/121 lokaleTests**, separate unabhängige Nachprüfung/exakteBlobprüfungPASS;
+neueSHAProviderprüfung nochOFFEN. ScriptHash
+1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58.
+[Diagnose-/Wiederanlaufplan](../operations/PGP05_METADATA_REFUSAL_DIAGNOSTICS_20261023.md).
+[Akzeptiertes unabhängiges Review](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6358998616).
+
+NächsterBetreiberpunkt: nur exakteContextrevision+PGP05_APPROVED_SHA auf neueSHA,
+PGP05_REMOTE_SHA256 auf neuenHash, PGP05_METADATA_REVIEW_REF auf neuesReview
+aktualisieren. Host/User/Passwort/Root unverändert. NeueMetadata-Pipeline, erst
+aktuellerOfflineerfolg und richtigeExpression/Graph vor erneutemApproval prüfen.
+KeinAssistenten-Livejob/Contextmutation/Backup/Deploy/Merge/Kauf.
+CP5 weiter8/10,#8/#10offen; productioncapturefalse. V1 unverändert62/71historisch,
+M0–M7 0/8,P4 0/4,R0/18; PR32Draft,alpha.2zuletztbelegt.
+
+
+## 2026-10-23 — Job50 eingegrenzt; SSH-Diagnostik unabhängig freigegeben
+Job50 auf b31e6cc0684593cca63d493ba0f56dd562e11f53 meldet
+SSH / PROCESS_EXIT; Offline48 und Approval unabhängig als success bestätigt.
+Settings und Hostkeypin passiert, aber Authentisierung/Ursache unbekannt.
+Kein Passwort-/Pfad-/Rechtewechsel auf Verdacht, kein alter Job-Rerun.
+
+Neuer exakter Code **f5e35ea36b192288920558b783fee2c46c854c18**:
+125/125 lokale synthetische Tests PASS, separat unabhängig wiederholt;
+Prüfer hat publizierte Probe3fd7610d53978f722485f27c2a337beb88deac7d,
+Testsbf4064608f5613d372d41b5dd1e2e1320f0ed8e8 und unveränderte
+Config2085eb8e2296df0fa97908564de1faffe0931a1c nachgeprüft. **APPROVED**
+im unveränderten PGP05-SSH-20261022.2 Scope, keine externe menschliche
+Auditbehauptung. [Exakter Reviewbeleg](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6359237075).
+Nur vollständige kanonische bounded stderr-Zeilen werden festen
+SSH_REPORTED_* Kategorien zugeordnet; leeres stdout/zulässige Exitklasse
+nötig, mehrdeutig/unbekannt generic. Keine Rohtexte/Identifiers/Returncodes.
+Die Kategorie beschreibt gemeldeten Text, keinen bewiesenen Fehlergrund.
+Remote-Skript/SSHargs/Config/Guards unverändert, ScriptSHA256 weiter
+1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58.
+NeueSHA hat noch keine Provider-CI; VorgängerOffline48 ist kein solcher Beleg.
+
+Nächste tatsächliche Betreiberaktion: im vorhandenen MetadataContext nur
+Expressionrevision und PGP05_APPROVED_SHA auf f5e35ea36b192288920558b783fee2c46c854c18,
+PGP05_METADATA_REVIEW_REF auf https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6359237075 setzen.
+ScriptHash und private Settings bleiben unverändert. Dann eine NEUE Pipeline
+auf exakt dem Featurebranch mit pgp05_ssh_probe=metadata; aktueller
+kontextfreier Offlinejob muss vor manueller Approval erfolgreich sein.
+Keine Contextmutation/Liveausführung durch Assistent; keine Secrets gelesen.
+
+**CP5 unverändert8/10 (80%)**, #8 authentisierte Account-/Namespace-/Domainbindung
+und #10 akzeptierter echter Metadatenlauf offen. production_capture_allowed=false.
+V1 offen:62/71 historische Codingpakete, M0–M7 0/8,P4 0/4,R0/18;
+PR32 Draft/unmerged, alpha.2 zuletzt belegt. Kein Backup/Deploy/Merge/Kauf.
+
+
+## 2026-10-23 — tatsächliche Dreamloud-Transportübernahme statt weiterer Sonderdiagnose
+Der Betreiber verlangt erneut die vorhandene funktionierendeDreamloud-Lösung.
+Die frühere reineÜbernahmeplanung wird nicht als fertigePortierung gewertet.
+AktuelleVorlage backup/production-circleci07d4ffbcc3c6d70f0716fda070050d6532a69df6;
+DreamloudIssue434 weist jetzt8/8Abnahme und Tagescapture1139/writer1141 aus.
+DortigerSSH-Transport wird benötigt, um QuellDateien/DB aufIONOSzu sichern.
+EigeneOrgaVelaStartup-/Wrapper-/Diagnosekonstruktion ist keineallgemeinePflicht.
+
+**Umgesetzt auf Source 8c4b445ea5dced969f63b0f30e0e371342f64680:** initiale festeMetadata-Anweisung direkt als
+SSH-command wieDreamloudsprobe_circleci_password_source.py; kein extraabsolutes
+env-/bin/sh-Wrapper, kein stdinInterpreter. Validierte/gequoteteParameter vor
+identischemMetadataBody. TatsächlicheSammlung/Guards/SSHoptionen unverändert.
+PrivateSSHargv/Root/User undRohoutput nichtloggen. ManagedPOSIX-Shell/Environment
+explizitvertrauenswürdigangenommen; inkompatibleShell verweigert ohneFallback.
+Dies ist keineBeobachtungallerStartuphooks und keinBeweis fürhistorischeFehlerursache.
+BodyHash1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58
+bleibt; gesamteBuilder/Transportidentität ist durch neueSourceSHA gebunden.
+
+**127/127lokaleTests PASS, separatwiederholt; exaktepublizierteBlobs geprüft,
+APPROVED.** [Review](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6359766814),
+[Implementierung/Abgrenzung](PGP05_DREAMLOUD_TRANSPORT_REUSE_20261023.md).
+NeueSourcehatnochkeineProviderCI und keinenLiveerfolg. Die historischgrüne
+Offline51prüfung gilt fürf5e35ea, nichtfürneueSHA. KeineautomatischePipeline.
+
+**WeitererÜbernahmepfad:** vorhandeneCapture/PublicKeyVerschlüsselung/separater
+CiphertextWriter/ImmutableReadbacks/isolierterWPMariaDBRestore ausDreamloud
+adaptieren; bestehendeOrgaVelaPGP04-Nachweise weiterverwenden. EigeneQuellidentität,
+Tabellenerwartungen,PGPonyEmpfänger und orgavela-backups bleiben getrennt.
+VollständigerProduktionscollector ist nochNICHTportiert/ausgeführt. PHP/DBlocks/
+Wartung erst in späterer getrenntgegateterCapturephase, nicht im aktuellen
+readonlyCheck. KeineneuenpauschalenStartup-Anforderungen/Blindrerruns.
+
+NächsterkonkreterTest benötigtContextrevision+PGP05_APPROVED_SHA auf neueSHA
+und PGP05_METADATA_REVIEW_REF aufobigesReview; RemoteBodyHash/privateWertegleich.
+Dann neueexakteFeaturebranch-MetadataPipeline, aktuelleOfflineprüfung vorApproval.
+CP5unverändert8/10,#8/#10offen,productioncapturefalse. V1offen62/71historisch,
+M0–M7 0/8,P4 0/4,R0/18;PR32Draft,alpha.2zuletztbelegt. KeineDreamloudÄnderung,
+keineSite-/Backup-/Deploy-/Merge-/Kostenaktion.
+
+
+## 2026-10-23 — tatsächlicher Metadatenlauf PASS; CP5 9/10
+**Neue verbindlicheEvidenz:** Pipeline542,Source8c4b445ea5dced969f63b0f30e0e371342f64680,
+Workflowb97d93e3-802e-466d-9124-89a73a553314. GitHub unabhängig bestätigt
+Offline54/Approval/Metadata56 alle success:
+https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/56 .
+BetreiberScreenshotimage(20261023-074040).png lokal gelesen: PASS,
+authenticated_ssh=true,expected_user_and_root_shape_matched=true,
+hostkey_candidate_matches_provider=true. MaskierteSource/Hashwerte nicht
+"zurückgelesen"; Sourcebindung überGitHubStatus+geprüfteImplementierung/Context.
+GenauerErfolg benötigt erfolgreichenboundedSSH-Prozess,exaktesstdout/leeresstderr.
+Providerhostpin jetzt im authentisiertenHandshake genutzt, nichtnurKeyscan.
+
+**UnabhängigeResultatprüfung:** separatbeauftragterPrüfagent las Originalbild
+undexakteGitHubstatuses selbst. Kriterium#10 ausdrücklichACCEPTED im begrenzten
+MetadataScope,keineexterneHuman-Auditbehauptung.
+[Ergebnis-/Reviewbeleg](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6360036292).
+**Checkpoint5 jetzt9/10 (90%), genau#8 offen.** DessenAccount-/Namespace-Teil
+ist bestanden; nuraktuelleDomain->Installation/DocumentRootRelation muss durch
+expliziteProviderUI-Kette komplettiert werden. BisherigeWordPressTarget-/Pfad-
+undWP_HOME/SITEURL-Indizien allein ersetzen dievollständigeKette nicht.
+
+**Einzige verbleibende#8Beobachtung:** IONOS orgavela.com aktuelleVerwendung/Ziel
+ansehen; beiProjekt/Appziel dessenverknüpfteInstallationbiszumWebspacefolder
+verfolgen undprivatmitbereitsgeprüftemRoot vergleichen. ZusammenhängendeUI-Kette
+reicht,keineEinbild-LiteralRootpflicht/Providerbrief/neuerSSH-/PHP-/WP-Lauf.
+Nichtsverbinden/trennen/speichern/DomainoderDateienändern. Nurrelevante
+redigierteAnsichtteilen; keineCredentials/Kundendaten. OffizielleUI-Hilfe:
+https://www.ionos.de/hilfe/domains/mit-webspace-verbinden/domain-mit-einem-webspace-verzeichnis-verbinden/
+und https://www.ionos.de/hilfe/wordpress/administration-von-wordpress/verbinden-einer-domain-mit-wordpress/ .
+DomainvhostFeldimProbeReceipt bleibtfalse; externeEvidenzkann#8erfüllen,ohne
+historischesReceipt umzudeuten. NachAbschluss temporärenMetadata-Credentialpfad
+bereinigen; nochkeineBereinigungbehauptet.
+
+**Grenzen:** database_connected/php_requested/wordpress_bootstrap_requested,
+server_enforced_readonly_account,startup_hooks_independently_observed_by_probe,
+production_capture_allowed,isolated_restore_proven bleibenfalse.
+FrühereFehlerursache nichtbewiesen; keinweitererRerun nötig. KeinBackup,
+DB-Dump,Restore,Deploy,Merge,ScheduleroderKauf. Dreamloudunverändert.
+V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,PR32Draft,
+alpha.2zuletztbelegt. NachCP5: tatsächlicheCapture-/Writer-/Restoreübernahme
+mitgetrenntenGatesweiterbearbeiten; keinProductionCollectorportvorgegeben.
+
+
+## 2026-10-23 — PGP05 CHECKPOINT5 ABGESCHLOSSEN: 10/10 (100%)
+**Kriterium#8jetztACCEPTED:** Betreiberbildimage(20261023-075106).png zeigt
+IONOSWeb-ProjektOrgaVela,zugewieseneDomainorgavela.com unddenselbenprivat
+verglichenenHostingvertragwiedieaktuelleDomainansicht074717. ZweitesBild
+075109istnureinwinzigerAusschnitt,keinzusätzlicherNachweis. Separatebeauftragte
+PrüfinstanzhatdasvolleOriginalbild selbstgelesenunddieKombinationsketteabgenommen:
+aktuelleDomain->konkretesProjekt/Installation -> vorherakzeptierteprojektbezogene
+Explorer-/WordPressSiteHealthRootbelege -> authentisierterMetadatenlauf56.
+DasneueBildzeigtdenRootnichtselbst; keinefingierteEinbild-/ProviderAPIprüfung.
+KeineVertragskennungen/privatenPfade/Rohbilderöffentlichübernommen.
+
+[Abschluss-/Reviewbeleg](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6360194115).
+PrüferistseparaterAgent,keinexternerMenschenaudit. Sourceweiterexakt
+8c4b445ea5dced969f63b0f30e0e371342f64680,PR32Draft/unmerged;
+GitHubbestätigtOffline54/Approval/Metadata56alle success.127lokale/separat
+wiederholteTestsbelegt,keinneuerProviderEinzeltestcountgelesen.
+Kriterium#10bereitsseparatalsausgeführterbegrenzterMetadataCheckakzeptiert.
+
+**Alle10festenKriterienerfüllt,keinoffenesCheckpoint5-Kriterium:**
+1. IONOSProjekt-/DomainUIbelege.
+2. WordPressStruktur/ConfigmodeUIbelege.
+3. 52/52InnoDBTabellen-Metadaten.
+4. MUPluginDateinameninventar.
+5. SynthetischerNoBootstrapScanner/Guards/Tests.
+6. UnabhängigertechnischerScope-/SourceReview.
+7. PR32Implementierung+aktuelleProviderOfflineCI(keinMerge).
+8. Hostpin/authentisiertesKonto/Namespace+separateDomain/Projekt/RootKette.
+9. PrivaterWP-/IONOSDBNamensvergleich(owner-attested).
+10. BetreiberfreigegebenerrealerMetadatenlauf+redigiertergebnis+separateAbnahme.
+
+**Evidenzgrenzen bleiben:** domain_vhost_binding_provenimProbeReceipt=false,
+daProviderrelationexternbelegt; Receiptwirdnichtrückwirkendumgeschrieben.
+server_enforced_readonly_account/startup_hooks_independently_observed_by_probe/
+database_connected/production_capture_allowed/isolated_restore_provenbleibenfalse.
+CP5AbschlussistwederVollbackupportnochBackup-/Deploy-/Merge-/Schedulerfreigabe.
+KeineweitereSSH-/PHP-/WordPress-/SQL-/DateioperationindiesemAbschnitt.
+
+**OperativerNachlauf(keinerfundenes11.Kriterium):** nurPGP05_SSH_PASSWORDaus
+orgavela-pgp05-reviewed-metadataentfernen. KeinIONOSPasswortreset/Keyrotation,
+keineÄnderungandererDeploy-/Backupcontexts. OhnePflichtfeldverweigertder
+Metadatentool-SettingscheckvorNetzwerk; Contextrestriktionenstehenlassen.
+Bereinigungistvorbereitet,nichtdurchgeführt/nichtbestätigt. Danachkeine
+weitereMetadataPipeline. ÜbergangzurvorhandenenDreamloudCapture-/Verschlüsselungs-/
+CiphertextWriter-/Readback-/RestoreübernahmefürOrgaVela,eigeneWerte/Gates.
+Gesamtissue27bleibtoffen,keinProduktivbackup/Restore/Deploy/Merge/Kauf.
+
+V1unverändertoffen:62/71historischeCodingpakete,M0–M7 0/8,P4 0/4,R0/18,
+alpha.2zuletztbelegt. CP5AbnahmeerhöhtkeinenanderenAbnahmezähler.
+
+
+## 2026-10-23 — Dreamloud-Collector als geprüfter Offline-Kandidat (W0/O03, #27)
+Checkpoint 5 bleibt abgeschlossen 10/10 (100%); kein Kriterium offen. Der nächste
+Collector-/Verschlüsselungs-/Writer-Baustein liegt auf `feat/pgp05-dreamloud-collector-port-20261023`
+als gestapelter Draft auf PR31, mit hart deaktivierten produktiven Entry Points.
+16/16 lokale Python-Tests, PHP-Hilfstests, vier PHP-Lints und öffentliche
+Verschlüsselungsintegration PASS. Temporärer künstlicher Testschlüssel: Decrypt
+und Byte-/Hashvergleich aller drei Komponenten PASS. Separates Agentenreview
+nach drei behobenen Befunden APPROVED ausschließlich für Offline-Draft; kein
+externes menschliches Audit. Provider-CI des neuen Kandidaten noch offen.
+Bericht: [Portierung und Prüfgrenzen](../operations/PGP05_COLLECTOR_PORT_OFFLINE_20261023.md).
+Nächster Schritt: genau eine context-/secretfreie CircleCI-Pipeline auf diesem
+Branch mit `run_collector_port_tests=true`; danach tatsächlichen begrenzten
+Transport/Runtimepins und konkrete getrennte Source-/Writer-Gates fertigstellen.
+Kein echtes Backup/Restore/Livezugriff/Deploy/Merge/Schedule. Vollständige produktive
+Collectorportierung bleibt offen; production_capture_allowed=false. V1-Zähler
+unverändert 62/71, M0–M7 0/8, P4 0/4, R0/18; alpha.2 zuletzt belegt.
+
+## O03/PGP05 – bounded Capture und synthetische WP-Recovery, 06.11.2026
+
+Neue getrennte Capture-/Ciphertext-Writer-/Restore-Einstiege implementiert,27 lokale Regressionen und echte synthetische verschlüsselte Docker-WP/MariaDB-Recovery bestanden. [Belege und verbleibende Live-/Integrationsgates](../operations/O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md). Kein echter Snapshot/Restore, keine Liveänderung oder neue formale Abnahme; PR62 bleibt Draft.
+
+
+### O03-Nachtrag 06.11.2026 – Sicherheitskorrekturen zur erneuten Work-Prüfung
+
+PR64 bleibt Draft/unintegriert: ausführbaren Restore von Source-PHP getrennt, tatsächlichen TAR-Inhalt gegen Inventar gebunden und private Controller-/integrierte Engineidentität getrennt geprüft. Lokal34 Regressionen und synthetische PHP-Drop-in-/DB-/Abbruchproben erfolgreich; kein echter Snapshot oder IONOS-Abbruchnachweis. Nächste Zuständigkeit Work: unabhängige Sicherheitsnachprüfung des neuen Kandidaten; anschließend reguläre Parentintegration und Codex für echte Abbruch-/private Sicherungs-/Readback-/Restoreprobe. PR62 Draft4fb50cb; kein Sitechange, alpha.2 letzter Livebeleg. V1-Zähler unverändert62/71 historisch,M0–M7 0/8,P4 0/4,R0/18. Aktuelle Run-/Commitbelege im append-only Arbeitslog.
+
+
+### O03 – Registrierungsabbruch, lokaler Kandidat 06.11.2026
+
+Work-Befund 44554bd auf Basis 7c170f3 rot reproduziert und korrigiert. Erweiterte synthetische Containerprobe 13/13, 34 Python-Regressionen und ergänzte PHP-Hilfstests grün: eigene registrierte Gruppen einschließlich temporärer vollständiger Registrierung beendet, WRITE-Locks freigegeben, HTTP erholt, fremde Prozesse/Marker erhalten. Unvollständige Identitäten bleiben ohne Signalautorität und liefern Fehlerstatus; der eigene Marker wird trotzdem hashgebunden entfernt. Details/Prüfgrenzen im Arbeitslog docs/operations/ASSISTANT_WORK_LOG.md. Work-Nachprüfung, Provider-CI und Parentintegration offen; PR62/64 Draft und ungemergt. Kein IONOS-Abbruch, Snapshot, Rückdownload oder Restore. Zähler unverändert: 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18; alpha.2 letzter Livebeleg.
+
+
+### O03 – Erstprobe isolieren, PR65 (06.11.2026)
+
+Work-Prüfliste ec83e31 umgesetzt als abhängiger Draft [PR65](https://github.com/orgavela/Orgavela-Plugin/pull/65): Cleanup complete/unknown/survivors, Wartung und Eskalation bei ungeklärtem Ende; eigener Abort-CLI mit Capability-, Exception- und hartem Kanalmodus samt unabhängiger Prozess-/Lock-/Marker-/Originprüfung und Watchdog-Abschlussquittung. Kein automatischer Capture-/Package-Fallthrough. Details: docs/operations/O03_ABORT_ONLY_2026-11-06.md und append-only Arbeitslog. Lokale/Providerprüfungen sind synthetisch; Main-Ancestry, Work-Nachprüfung, private Source-only-Runneranbindung und praktisch belegter unabhängiger Recoveryweg bleiben vor IONOS erforderlich. PR62/64 bleiben Draft und ungemergt; kein Live-Abbruch, Snapshot oder Restore. V1 unverändert offen: 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18, alpha.2 letzter Livebeleg.
+
+Provider-Nachtrag PR65: Engine `5c395148bd395a5688e9d5ef240433d63c48a351`, [Run42311225902](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42311225902) samt Joblog vollständig grün:37 Regressionen,13 Abbruchfälle und neue vollständige synthetische Abortprotokollprobe. Kein echter SSH-/IONOS-Beleg, kein Merge oder Signoff; Work-Nachprüfung/Mainintegration/privater Sourcejob/Recoveryroute bleiben vor Live offen.

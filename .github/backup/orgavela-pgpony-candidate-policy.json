@@ -1,7 +1,7 @@
 {
   "schema": "orgavela-openpgp-public-candidate/v1",
   "project": "OrgaVela / UOP Core",
-  "usage": "synthetic-only-until-gh03-owner-independent-recovery-accepted",
+  "usage": "synthetic-only-until-pgp05-real-source-consistency-and-operator-production-gates-approved",
   "state": "candidate-not-production-approved",
   "source": "Owner-provided PGPony PUBLIC key block, verified via GnuPG 2.4.7 on 2026-10-20",
   "public_key_file": ".github/backup/orgavela-backup-candidate-public.asc",
@@ -25,13 +25,16 @@
   "public_only_gnupg_synthetic_encrypt_passed": true,
   "no_private_key_present_in_test": true,
   "device_pgpony_decrypt_of_external_gpg_ciphertext_passed": true,
-  "independent_owner_key_recovery_from_second_copy_verified": false,
-  "two_physical_backup_copies_verified": false,
+  "independent_owner_key_recovery_from_second_copy_verified": true,
+  "two_physical_backup_copies_verified": true,
   "production_backup_enabled": false,
   "remote_github_release_enabled": false,
   "automatic_schedule_enabled": false,
   "previous_age_owner_paper_backup_reused": false,
-  "notes": "No productive release or backend activation. Owner's PGPony iPhone decrypt of external GnuPG synthetic ciphertext passed by owner statement; separate private-key offline custody and independent recovery from copy 2 not verified. Exact code not separately attested; public key only in this repository.",
+  "notes": "Historical 2026-10-20 candidate: now owner-attested two independently held private-key recovery copies and independent second-copy device restore; these facts are OWNER ATTESTED, not independently replayed or read. Initial synthetic GnuPG-to-PGPony decryption was owner-attested. Synthetic PGP04 V3 remote release verified via GitHub API and owner-side decrypt/content/hash attested on 2026-10-21. NEVER upload private keys. Public candidate still NOT APPROVED for real source capture, production backups, real restores, release writer or scheduler; separate PGP05 gates and explicit operator approval required.",
   "device_pgpony_decrypt_verification_level": "Owner-attested: user confirms PGPony on original iPhone decrypted GnuPG-produced synthetic file; exact code equality not explicitly confirmed. Not an independent restored-key test.",
-  "device_pgpony_expected_plaintext_code_owner_confirmed": false
+  "device_pgpony_expected_plaintext_code_owner_confirmed": false,
+  "owner_recovery_evidence_provenance": "Owner-attested in conversation 2026-10-20/21: two independently held offline recovery copies, second-device import/fingerprint and recovery decrypt reported successful. No assistant access to private keys or independent cryptographic replay.",
+  "owner_recovery_evidence_verified_by_assistant": false,
+  "owner_offline_recovery_updated_on": "2026-10-21"
 }
