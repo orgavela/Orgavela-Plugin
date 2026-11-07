@@ -158,8 +158,86 @@ def controlled_abort(binding, *, password, maintenance_approved=False):
         output=Path(folder)/'abort.json'
         receive(binding.argv(),program,output,env={'PATH':'/usr/bin:/bin','LC_ALL':'C','SSHPASS':password},max_bytes=4096)
         evidence=json.loads(output.read_bytes())
-    expected={'schema':'orgavela-controlled-abort/v1','aborted_after_table_locks':True,
+    expected={'schema':'orgavela-controlled-abort/v2','own_processes_ended':True,'aborted_after_table_locks':True,
               'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
     if evidence!=expected:
         raise ProbeError('controlled abort cleanup unverified')
+    return evidence
+
+
+def disconnect_when_armed(argv, program, *, env, timeout=45):
+    """Kill the actual local SSH process group only after remote lock acknowledgement."""
+    child = None
+    try:
+        with tempfile.TemporaryFile() as source:
+            source.write(program); source.seek(0)
+            child = subprocess.Popen(argv, stdin=source, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                     env=env, start_new_session=True, close_fds=True)
+            deadline=time.monotonic()+timeout
+            data=b''; diagnostics=0
+            with selectors.DefaultSelector() as poll:
+                poll.register(child.stdout,selectors.EVENT_READ,'data')
+                poll.register(child.stderr,selectors.EVENT_READ,'diagnostic')
+                while poll.get_map() and time.monotonic()<deadline:
+                    for key,_ in poll.select(.2):
+                        block=os.read(key.fileobj.fileno(),4096)
+                        if not block:
+                            poll.unregister(key.fileobj);continue
+                        if key.data=='data':
+                            data+=block
+                            if data==b'ORGAVELA_ABORT_ARMED\n':
+                                os.killpg(child.pid,signal.SIGKILL)
+                                child.wait(timeout=5)
+                                return
+                            if len(data)>64:raise ProbeError('abort acknowledgement refused')
+                        else:
+                            diagnostics+=len(block)
+                            if diagnostics>MAX_DIAGNOSTIC:raise ProbeError('abort diagnostic limit')
+                raise ProbeError('abort was not armed')
+    except (OSError,subprocess.SubprocessError):
+        raise ProbeError('abort channel operation failed') from None
+    finally:
+        if child is not None:
+            try:os.killpg(child.pid,signal.SIGKILL)
+            except ProcessLookupError:pass
+            child.wait()
+            child.stdout.close();child.stderr.close()
+
+
+def hard_disconnect_abort(binding, *, password, maintenance_approved=False):
+    """Separate SSH sessions for interruption and independently rechecked cleanup."""
+    import json
+    import secrets
+    if not password or '\0' in password:raise ProbeError('source credential required')
+    token=secrets.token_hex(16)
+    base=live_program(binding,maintenance_approved=maintenance_approved)
+    declarations=('\nconst ORGAVELA_CAPTURE_ABORT_AFTER_LOCK = true;\nconst ORGAVELA_ABORT_TOKEN = "'+token+'";').encode()
+    program=base.replace(b'<?php',b'<?php'+declarations,1)
+    env={'PATH':'/usr/bin:/bin','LC_ALL':'C','SSHPASS':password}
+    disconnect_when_armed(binding.argv(),program,env=env)
+    # The independent watchdog has a 15-second deadline; this wait does not prove cleanup.
+    time.sleep(18)
+    verify=program.replace(b'<?php',b'<?php\nconst ORGAVELA_ABORT_VERIFY = true;',1)
+    with tempfile.TemporaryDirectory(prefix='orgavela-abort-observer-') as folder:
+        output=Path(folder)/'evidence.json'
+        receive(binding.argv(),verify,output,env=env,max_bytes=4096,timeout=30)
+        evidence=json.loads(output.read_bytes())
+    expected={'schema':'orgavela-hard-disconnect/v1','watchdog_completed':True,'ssh_channel_killed':True,'own_processes_ended':True,
+              'fresh_connection_write_locks':True,'maintenance_removed':True,'origin_recovered':True,'snapshot_created':False}
+    if evidence!=expected:raise ProbeError('independent abort recovery unverified')
+    return evidence
+
+
+def abort_preflight(binding, *, password, maintenance_approved=False):
+    import json
+    if not password or '\0' in password:raise ProbeError('source credential required')
+    program=live_program(binding,maintenance_approved=maintenance_approved).replace(b'<?php',b'<?php\nconst ORGAVELA_CAPTURE_ABORT_AFTER_LOCK = true;\nconst ORGAVELA_ABORT_PREFLIGHT = true;',1)
+    with tempfile.TemporaryDirectory(prefix='orgavela-abort-preflight-') as folder:
+        output=Path(folder)/'preflight.json'
+        receive(binding.argv(),program,output,env={'PATH':'/usr/bin:/bin','LC_ALL':'C','SSHPASS':password},max_bytes=4096,timeout=45)
+        evidence=json.loads(output.read_bytes())
+    expected={'schema':'orgavela-abort-preflight/v1','runtime':'8.3.36','posix_sessions':True,'proc_identity':True,
+              'hardlink':True,'independent_watchdog':True,'table_scope':True,'table_locks':True,'origin_reachable':True,
+              'maintenance_created':False,'snapshot_created':False}
+    if evidence!=expected:raise ProbeError('abort capabilities unverified')
     return evidence

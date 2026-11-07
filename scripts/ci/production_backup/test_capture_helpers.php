@@ -68,5 +68,43 @@ try {
     refused(fn()=>orgavela_process_members(['pid'=>getmypid(),'group'=>1,'session'=>1,'start'=>$self['start']]));
     $record=$root.'/child-negative.stat';file_put_contents($record,file_get_contents('/proc/'.getmypid().'/stat'));
     check(!orgavela_process_stop_groups($root));check(posix_kill(getmypid(),0));unlink($record);
+    // A corrupt early record must not veto later, fully verified groups.
+    $childPipes=[];$process=orgavela_process_open(['/bin/sleep','30'],[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']],$childPipes,$root);
+    $owned=orgavela_process_stat(file_get_contents(glob($root.'/child-*.stat')[0]));
+    file_put_contents($root.'/child-000-invalid.stat','partial');
+    file_put_contents($root.'/child-partial.stat.tmp','partial');
+    check(!orgavela_process_stop_groups($root));
+    check(!orgavela_process_members($owned));proc_close($process);
+    foreach(array_merge(glob($root.'/child-*.stat'),glob($root.'/child-*.stat.tmp')) as $file)unlink($file);
+    // Unknown identity requires escalation and must not release maintenance.
+    file_put_contents($root.'/child-invalid.stat.tmp','partial');
+    foreach(['ours','foreign-owner'] as $contents) {
+        file_put_contents($marker,$contents);
+        $code=orgavela_capture_watchdog($root,$marker,$hash,getmypid(),$self['start'],1,false);
+        $watch=proc_open([PHP_BINARY,'-r',substr($code,6)],[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['pipe','w']],$watchPipes);
+        $diagnostic=stream_get_contents($watchPipes[2]);fclose($watchPipes[2]);
+        check(proc_close($watch)===71 && $diagnostic==='');
+        clearstatcache(true,$marker);
+        check(file_get_contents($marker)===$contents);
+        check(json_decode(file_get_contents($root.'/escalation.json'),true)['status']==='unknown');
+    }
+    unlink($root.'/child-invalid.stat.tmp');unlink($root.'/ready');
+    // Deterministic failed-delivery seam: a real verified session remains alive
+    // although the signal sender claims success. This is not a real unkillable process.
+    $childPipes=[];$child=orgavela_process_open(['/bin/sleep','30'],[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']],$childPipes,$root);
+    foreach(['ours','foreign-owner'] as $contents) {
+        file_put_contents($marker,$contents);
+        $code=orgavela_capture_watchdog($root,$marker,$hash,getmypid(),$self['start'],1,false);
+        $code=str_replace('orgavela_process_stop_groups_result($w)','orgavela_process_stop_groups_result($w,static fn($pid,$signal)=>true,0.05)',$code);
+        $watch=proc_open([PHP_BINARY,'-r',substr($code,6)],[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['pipe','w']],$watchPipes);
+        $diagnostic=stream_get_contents($watchPipes[2]);fclose($watchPipes[2]);
+        check(proc_close($watch)===72 && $diagnostic==='');
+        check(file_get_contents($marker)===$contents);
+        check(json_decode(file_get_contents($root.'/escalation.json'),true)['status']==='survivors');
+        check(proc_get_status($child)['running']);
+    }
+    check(orgavela_process_stop_groups($root));proc_close($child);
+    foreach(glob($root.'/child-*.stat') as $file)unlink($file);
+
     echo "ORGAVELA_CAPTURE_HELPERS_SYNTHETIC=PASS\n";
 } finally { remove_fixture($root); }

@@ -53,25 +53,33 @@ function orgavela_process_members(array $owned): array {
 }
 
 /** Kill whole sessions, including gzip grandchildren; never a caller's inherited group. */
-function orgavela_process_stop_groups(string $work): bool {
-    try {
-        if(glob($work.'/child-*.stat.tmp'))return false;
-        $records=glob($work.'/child-*.stat');
-        if(count($records)>32)return false;
-        foreach($records as $record) {
-            if(is_link($record)||filesize($record)>4096)return false;
-            $owned=orgavela_process_stat(file_get_contents($record));
+function orgavela_process_stop_groups_result(string $work, ?callable $signal=null, float $wait=1.0): array {
+    $signal=$signal??static fn($pid,$number)=>posix_kill($pid,$number);
+    $unknown=false;$survivors=false;
+    // A temporary registration is not a veto on already committed sessions.
+    // Complete temporary identities use the same session/start/UID validation.
+    $records=array_merge(glob($work.'/child-*.stat'),glob($work.'/child-*.stat.tmp'));
+    if(count($records)>64)$unknown=true;
+    foreach($records as $record) {
+        try {
+            if(is_link($record)||filesize($record)>4096)throw new RuntimeException('process record');
+            $raw=file_get_contents($record);
+            // Incomplete identities never authorize signals; report failure after other groups.
+            $owned=orgavela_process_stat($raw);
             if(orgavela_process_members($owned)) {
-                // Freeze the whole group before KILL so it cannot add descendants.
-                if(!posix_kill(-$owned['pid'],19)&&orgavela_process_members($owned))return false;
-                if(orgavela_process_members($owned)&&!posix_kill(-$owned['pid'],9)&&orgavela_process_members($owned))return false;
+                $signal(-$owned['pid'],19);
+                $signal(-$owned['pid'],9);
             }
-            $end=microtime(true)+1;
+            $end=microtime(true)+$wait;
             while(orgavela_process_members($owned)&&microtime(true)<$end)usleep(10000);
-            if(orgavela_process_members($owned))return false;
-        }
-        return true;
-    }catch(Throwable $failure){return false;}
+            if(orgavela_process_members($owned))$survivors=true;
+        }catch(Throwable $failure){$unknown=true;}
+    }
+    return ['status'=>$survivors?'survivors':($unknown?'unknown':'complete')];
+}
+
+function orgavela_process_stop_groups(string $work): bool {
+    return orgavela_process_stop_groups_result($work)['status']==='complete';
 }
 
 function orgavela_process_helper_source(): string {
