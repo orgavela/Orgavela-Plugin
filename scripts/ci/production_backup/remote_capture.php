@@ -180,12 +180,14 @@ try {
     $host=$config['DB_HOST']; $port=3306;
     if (preg_match('/^([^:]+):([0-9]{1,5})$/D',$host,$m)) { $host=$m[1];$port=(int)$m[2]; }
     if($unverifiedTls && !$abortOnly){
-        if(!is_executable('/usr/bin/openssl') || !is_executable('/usr/bin/timeout'))throw new RuntimeException('TLS peer reader unavailable');
-        $peer=$run(['/usr/bin/timeout','-k','2','10','/usr/bin/openssl','s_client','-starttls','mysql','-connect',$host.':'.$port,'-showcerts','-no_ign_eof'],null,false,10);
-        if(!preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s',$peer,$match))throw new RuntimeException('TLS peer missing');
+        if(!is_executable('/usr/bin/openssl') || !is_executable('/usr/bin/timeout')){$phase('database_tls_peer_reader_unavailable');throw new RuntimeException('TLS peer reader unavailable');}
+        if(!function_exists('openssl_x509_fingerprint')){$phase('database_tls_peer_extension_unavailable');throw new RuntimeException('TLS peer extension unavailable');}
+        try{$peer=$run(['/usr/bin/timeout','-k','2','10','/usr/bin/openssl','s_client','-starttls','mysql','-connect',$host.':'.$port,'-showcerts','-no_ign_eof'],null,false,10);}catch(Throwable $e){$phase('database_tls_peer_read_failed');throw $e;}
+        $phase('database_tls_peer_read_complete');
+        if(!preg_match('/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/s',$peer,$match)){$phase('database_tls_peer_certificate_missing');throw new RuntimeException('TLS peer missing');}
         $peerFingerprint=strtoupper((string)openssl_x509_fingerprint($match[0],'sha1'));
-        unset($peer,$match);
-        $dumpArgs=orgavela_dump_client_args($dumpHelp,$dry,$peerFingerprint);unset($dumpHelp);$phase('dump_client_validated');
+        unset($peer,$match);$phase('database_tls_peer_fingerprint_read');
+        try{$dumpArgs=orgavela_dump_client_args($dumpHelp,$dry,$peerFingerprint);}catch(OrgaVelaTrustRejection $e){$phase($e->getMessage());throw $e;}catch(Throwable $e){$phase('dump_option_unsupported');throw $e;}unset($dumpHelp);$phase('dump_client_validated');
         $db=mysqli_init();$db->options(MYSQLI_OPT_CONNECT_TIMEOUT,10);$db->options(MYSQLI_OPT_READ_TIMEOUT,10);$db->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,false);
         $db->ssl_set(null,null,null,null,null);
         if(!@$db->real_connect($host,$config['DB_USER'],$config['DB_PASSWORD'],$config['DB_NAME'],$port,null,MYSQLI_CLIENT_SSL|MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT))throw new RuntimeException('encrypted control session required');
