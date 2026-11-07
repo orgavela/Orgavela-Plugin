@@ -1,6 +1,8 @@
 """Disposable TLS CA/name/dump fixture; no source, source credentials or public ports."""
 from datetime import datetime,timedelta,timezone
 import io
+import base64
+import shutil
 import json
 from pathlib import Path
 import re
@@ -43,6 +45,7 @@ def run():
             except RuntimeError:time.sleep(1)
         else:raise RuntimeError('TLS fixture unavailable')
         docker('run','-d','--name',name,'--network',name,'--user','0:0','--entrypoint','sh',WP_IMAGE,'-c','sleep 240');made.append(('container',name))
+        docker('exec','-i',name,'sh','-c','cat >> /etc/passwd',data=b'fixture:x:33:33::/tmp:/bin/sh\n')
         lib=Path(__file__).with_name('lib')
         helper=(lib/'backup_process_safety.php').read_bytes()+b'\n'+(lib/'backup_capture_safety.php').read_bytes().removeprefix(b'<?php')
         php=helper+b'\necho json_encode(["tls"=>orgavela_database_tls_args(),"dump"=>orgavela_dump_client_args(shell_exec("mariadb-dump --no-defaults --help"),false)],JSON_THROW_ON_ERROR);'
@@ -69,6 +72,56 @@ def run():
         try:client(query)
         except RuntimeError:pass
         else:raise RuntimeError('untrusted fixture CA accepted')
+        # Approved mode still requires encrypted per-session continuity; the peer is unauthenticated.
+        from database_tls_policy import APPROVAL,MODE,EXTRA
+        fp=x509.load_pem_x509_certificate(certs['server.pem']).fingerprint(hashes.SHA1()).hex().upper()
+        unverified_php=php.replace(b'<?php',b"<?php\nconst ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL = '"+APPROVAL.encode()+b"';",1).replace(b'orgavela_database_tls_args()',('orgavela_database_tls_args("'+fp+'")').encode()).replace(b'--help"),false)',('--help"),false,"'+fp+'")').encode())
+        for denied in (unverified_php.replace(("const ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL = '"+APPROVAL+"';").encode(),b"const ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL = '"+b'0'*40+b"';"),unverified_php.replace(('orgavela_database_tls_args("'+fp+'")').encode(),b'orgavela_database_tls_args()')):
+            try:docker('exec','-i','--user','33:33',name,'php',data=denied)
+            except RuntimeError:pass
+            else:raise RuntimeError('unapproved or unbound exception accepted')
+        unverified=json.loads(docker('exec','-i','--user','33:33',name,'php',data=unverified_php))
+        uq=['mariadb','--defaults-file=/proc/self/fd/3',*unverified['tls'],'--batch','--skip-column-names','--execute',"SHOW SESSION STATUS LIKE 'Ssl_cipher'",'--','fixture']
+        if not re.fullmatch(rb'Ssl_cipher\t[A-Za-z0-9_-]+\n',client(uq)):raise RuntimeError('unverified TLS missing cipher')
+        if not re.fullmatch(rb'Ssl_cipher\t[A-Za-z0-9_-]+\n',client(uq,target=wrong)):raise RuntimeError('exception unexpectedly authenticated hostname')
+        wrong_fp=[('--ssl-fp='+'0'*40) if a.startswith('--ssl-fp=') else a for a in uq]
+        try:client(wrong_fp)
+        except RuntimeError:pass
+        else:raise RuntimeError('peer continuity not enforced')
+        # Full actual assembled resource branch: no production source and no simulated TLS flags.
+        from collector import build_remote_candidate
+        from unittest.mock import patch
+        import transport
+        names=['options','posts','users','usermeta','comments','uop_organizations','uop_persons','uop_consent_records','uop_registrations','uop_waitlist_entries','only']
+        names+=['synthetic_'+str(i) for i in range(len(names),52)]
+        sql=''.join('CREATE TABLE fixture_'+n+'(id INT PRIMARY KEY,option_name VARCHAR(40),option_value VARCHAR(100)) ENGINE=InnoDB;' for n in names)
+        sql+="INSERT INTO fixture_options VALUES(1,'siteurl','https://orgavela.com'),(2,'home','https://orgavela.com');"
+        client(['mariadb','--defaults-file=/proc/self/fd/3',*unverified['tls'],'--execute',sql,'--','fixture'])
+        setup=("<?php mkdir('/tmp/o03-tls-source',0700);mkdir('/tmp/o03-tls-source/wp',0700);mkdir('/tmp/o03-tls-source/wp/wp-content',0700);mkdir('/tmp/o03-tls-source/wp/wp-content/uploads',0700);"
+               "file_put_contents('/tmp/o03-tls-source/wp/wp-config.php',"+"base64_decode('"+base64.b64encode(("<?php define('DB_NAME','fixture');define('DB_USER','fixture');define('DB_PASSWORD',"+repr(password)+");define('DB_HOST',"+repr(host)+");$table_prefix='fixture_';").encode()).decode()+"')"+");"
+               "foreach(['index.php','wp-load.php']as$f)file_put_contents('/tmp/o03-tls-source/wp/'.$f,'<?php // inert');")
+        docker('exec','-i','--user','33:33',name,'php',data=setup.encode())
+        program=build_remote_candidate('/tmp/o03-tls-source/wp','fixture').replace(b'ENTRYPOINT_ENABLED = false;',b'ENTRYPOINT_ENABLED = true;',1)
+        program=program.replace(b'<?php',b"<?php\nconst ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL = '"+APPROVAL.encode()+b"';",1)
+        class Binding:
+            def argv(self):return [shutil.which('docker'),'--host=unix:///var/run/docker.sock','exec','-i','--user','33:33',name,'php']
+        with patch.object(transport,'live_program',return_value=program),patch.dict('os.environ',{'ORGAVELA_DATABASE_TLS_MODE':MODE}):
+            phases=[]
+            try:receipt=transport.resource_probe(Binding(),'database',password='fixture',maintenance_approved=True,phase_callback=phases.append)
+            except ValueError:raise RuntimeError('synthetic unverified resource refused: '+str(phases)) from None
+        if receipt['server_certificate_verified'] is not False or receipt['database_tls_exception_authorization']!=APPROVAL:raise RuntimeError('false verification evidence')
+        plain=host+'-plain'
+        docker('run','-d','--name',plain,'--network',name,'-e','MARIADB_DATABASE=fixture','-e','MARIADB_USER=fixture','-e','MARIADB_PASSWORD='+password,'-e','MARIADB_RANDOM_ROOT_PASSWORD=1','--tmpfs','/var/lib/mysql:rw,nosuid,nodev,size=256m',DB_IMAGE,'--skip-ssl');made.append(('container',plain))
+        for _ in range(60):
+            try:docker('exec',plain,'healthcheck.sh','--connect','--innodb_initialized');break
+            except RuntimeError:time.sleep(1)
+        else:raise RuntimeError('plaintext fixture unavailable')
+        php_plain=("<?php mysqli_report(MYSQLI_REPORT_OFF);$db=mysqli_init();$db->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT,false);$db->ssl_set(null,null,null,null,null);$ok=@$db->real_connect("+repr(plain)+",'fixture',"+repr(password)+",'fixture',3306,null,MYSQLI_CLIENT_SSL|MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT);echo json_encode(['connected'=>$ok]);")
+        if json.loads(docker('exec','-i',name,'php',data=php_plain.encode()))['connected']:raise RuntimeError('control client plaintext fallback accepted')
+        for command in (uq,[*unverified['dump'],'--','fixture']):
+            try:client(command,target=plain)
+            except RuntimeError:pass
+            else:raise RuntimeError('plaintext fallback accepted')
         # Only this disposable client container trust store is extended; never host/Source.
         docker('exec','-i',name,'sh','-c','cat >> /etc/ssl/certs/ca-certificates.crt',data=certs['ca.pem'])
         cipher=client(query)
@@ -76,10 +129,10 @@ def run():
         try:client(query,target=wrong)
         except RuntimeError:pass
         else:raise RuntimeError('wrong TLS hostname accepted')
-        client(['mariadb','--defaults-file=/proc/self/fd/3',*args['tls'],'--execute',"CREATE TABLE fixture_only(id INT PRIMARY KEY, marker VARCHAR(20)); INSERT INTO fixture_only VALUES(1,'synthetic-only');",'--','fixture'])
+        client(['mariadb','--defaults-file=/proc/self/fd/3',*args['tls'],'--execute',"INSERT INTO fixture_only VALUES(1,'marker','synthetic-only');",'--','fixture'])
         dump=client([*args['dump'],'--','fixture'])
         if b'CREATE TABLE `fixture_only`' not in dump or b'synthetic-only' not in dump:raise RuntimeError('verified TLS dump incomplete')
-        return {'synthetic_tls_and_dump':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
+        return {'synthetic_tls_and_dump':True,'approved_unverified_tls_and_actual_dump':True,'assembled_unverified_evidence_false':True,'unverified_plaintext_client_and_dump_refused':True,'unverified_wrong_peer_refused':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
     finally:
         for kind,resource in reversed(made):
             if kind=='container':docker('rm','-f',resource)

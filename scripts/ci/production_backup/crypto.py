@@ -109,6 +109,9 @@ def package(components,output,backup_id,*,key_file=KEY_FILE,primary=PRIMARY_FPR,
             if restore_record is not None:
                 internal['schema']='orgavela-backup-package/v2'
                 internal['encryption']['restore_recipient']=restore_record
+            from database_tls_policy import transport_summary
+            transport=transport_summary(evidence)
+            if transport is not None:internal.update(schema='orgavela-backup-package/v3',database_transport=transport)
             manifest=stage/'manifest.json';manifest.write_text(json.dumps(internal,sort_keys=True))
             plain=stage/'private.tar'
             with tarfile.open(plain,'x:') as tar:
@@ -125,6 +128,7 @@ def package(components,output,backup_id,*,key_file=KEY_FILE,primary=PRIMARY_FPR,
             if restore_record is not None:
                 public['schema']='orgavela-github-release-backup-public-manifest/v2'
                 public['restore_recipient']=restore_record
+            if transport is not None:public.update(schema='orgavela-github-release-backup-public-manifest/v3',database_transport=transport)
             side=stage/(archive+'.sha256');side.write_text(sha+'  '+archive+'\n')
             pub=stage/'public.json';pub.write_text(json.dumps(public,sort_keys=True)+'\n')
             for source,name in [(cipher,archive),(side,archive+'.sha256'),(pub,'manifest.json')]:

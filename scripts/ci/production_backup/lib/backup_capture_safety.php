@@ -97,7 +97,18 @@ function orgavela_lock_capture_tables(mysqli $db, array $tables): bool {
 
 /** Verify immutable OS paths independent of numeric provider system UIDs. */
 final class OrgaVelaTrustRejection extends RuntimeException {}
-function orgavela_database_tls_args(): array {
+function orgavela_database_tls_unverified(): bool {
+    if(!defined('ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL'))return false;
+    if(ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL!=='bd622f9fa9e926d7af866676af1a0224cb9d92c0')throw new OrgaVelaTrustRejection('database_tls_exception_refused');
+    return true;
+}
+
+function orgavela_database_tls_args(?string $peerFingerprint=null): array {
+    $unverified=orgavela_database_tls_unverified();
+    if($unverified){
+        if($peerFingerprint===null || !preg_match('/^[A-F0-9]{40}$/D',$peerFingerprint))throw new OrgaVelaTrustRejection('database_tls_peer_unbound');
+        // Unauthenticated in-memory continuity only. --ssl alone can fall back to plaintext.
+    }
     $ca='/etc/ssl/certs/ca-certificates.crt';$binary=realpath(PHP_BINARY);$uid=posix_geteuid();
     $owner=$binary?@fileowner($binary):false;$binaryMode=$binary?@fileperms($binary):false;
     if(!$binary || !is_file($binary) || !is_int($owner) || !is_int($binaryMode) || $owner===$uid || ($binaryMode&0022)!==0 || is_writable($binary))throw new OrgaVelaTrustRejection('system_trust_runtime_unverified');
@@ -112,12 +123,14 @@ function orgavela_database_tls_args(): array {
             if($parent==='/')break;
         }
     }
+    if($unverified)return ['--protocol=tcp','--ssl','--skip-ssl-verify-server-cert','--ssl-fp='.$peerFingerprint];
     return ['--protocol=tcp','--ssl','--ssl-verify-server-cert','--ssl-ca='.$ca];
 }
 
-function orgavela_dump_client_args(string $help, bool $schema): array {
+function orgavela_dump_client_args(string $help, bool $schema, ?string $peerFingerprint=null): array {
+    if(orgavela_database_tls_unverified() && !str_contains($help,'--ssl-fp'))throw new OrgaVelaTrustRejection('database_tls_peer_unbound');
     if (!str_contains($help,'--defaults-file') || !str_contains($help,'--ssl-verify-server-cert') || !str_contains($help,'--protocol') || !str_contains($help,'--ssl-ca')) throw new RuntimeException('controlled defaults unsupported');
-    $args=array_merge(['mariadb-dump','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args(),['--single-transaction','--skip-lock-tables']);
+    $args=array_merge(['mariadb-dump','--defaults-file=/proc/self/fd/3'],orgavela_database_tls_args($peerFingerprint),['--single-transaction','--skip-lock-tables']);
     if (str_contains($help,'--max-statement-time')) $args[]='--max-statement-time='.($schema?'2':'15');
     return array_merge($args,$schema ? ['--skip-triggers','--no-data'] : ['--quick','--hex-blob','--default-character-set=utf8mb4','--skip-comments']);
 }
