@@ -372,7 +372,7 @@
     "o03_database_tls_exception_20261107": {
       "approval_sha": "bd622f9fa9e926d7af866676af1a0224cb9d92c0",
       "scope": "OrgaVela database backup/probes only",
-      "status": "implemented_pending_integration_and_live_attempt",
+      "status": "integrated_ionos_dump_blocked_missing_ssl_fp_option",
       "tls_required": true,
       "server_certificate_verified": false,
       "ssh_host_key_verification_enabled": true,
@@ -381,9 +381,88 @@
       "untrusted_peer_continuity_is_not_server_authentication": true,
       "capture_schema": "orgavela-ssh-capture-evidence/v4",
       "release_manifest_schema": "orgavela-github-release-backup-public-manifest/v3",
-      "new_hosting_attempt_on_this_code": false,
+      "new_hosting_attempt_on_this_code": true,
       "formal_o03_accepted": false,
-      "report": "docs/operations/O03_DATABASE_TLS_EXCEPTION_2026-11-07.md"
+      "report": "docs/operations/O03_DATABASE_TLS_EXCEPTION_2026-11-07.md",
+      "engine_sha": "42c1f9523d397a3cee3fe9fd179f73b3af35b65b",
+      "implementation_engine_sha": "2beb5d7c71c39e44142797a5a3e74d41f5b80cf7",
+      "controller_sha": "da0df3bc7a59f92f21f0e15dd7ae9a456e4ab477",
+      "implementation_engine_exact_main_ci": [
+        42398497413,
+        42398497465,
+        42398497478
+      ],
+      "implementation_controller_exact_main_ci": 42398667415,
+      "implementation_pr": 74,
+      "diagnostic_pr": 75,
+      "first_recovery_run": 42398844277,
+      "first_preflight_run": 42399143440,
+      "first_database_probe": {
+        "run": 42399235057,
+        "result": "failure",
+        "last_phase": "database_tls_peer_started",
+        "before_maintenance_and_dump": true,
+        "snapshot_created": false
+      },
+      "independent_https_after_refusal": 200,
+      "diagnostic_engine_exact_main_ci": [
+        42399909293,
+        42399909335,
+        42399909314
+      ],
+      "diagnostic_engine_circleci": "success",
+      "diagnostic_controller_exact_main_ci": 42400003839,
+      "latest_recovery_run": 42401850165,
+      "latest_preflight_run": 42401981757,
+      "latest_database_probe": {
+        "run": 42402105567,
+        "result": "failure",
+        "completed_phases": [
+          "scope_validated",
+          "database_tls_peer_started",
+          "database_tls_peer_read_complete",
+          "database_tls_peer_fingerprint_read"
+        ],
+        "rejection_phase": "dump_tls_peer_option_unsupported",
+        "dump_client_ssl_fp_option_present": false,
+        "ionos_client_version_observed": false,
+        "alternative_clients_inventoried": false,
+        "rejected_before_control_connection_maintenance_and_dump": true,
+        "client_tls_enforcement_capability_proven": false,
+        "tls_dump_proven": false,
+        "snapshot_created": false
+      },
+      "filesystem_probe_started": false,
+      "production_backup_release_created": false,
+      "production_snapshot_restored": false,
+      "next_required_evidence": "Inventory installed client capabilities without maintenance and establish a compatible fail-closed encrypted dump path; then refresh same-controller gates and complete resource/capture/private release/full-download/exact restore.",
+      "diagnostic_prs": [
+        75,
+        76
+      ],
+      "engine_exact_main_ci": [
+        42401486061,
+        42401486086,
+        42401485996
+      ],
+      "engine_circleci": "success",
+      "controller_exact_main_ci": 42401581759,
+      "previous_database_probe": {
+        "run": 42400555502,
+        "result": "failure",
+        "completed_phases": [
+          "scope_validated",
+          "database_tls_peer_started",
+          "database_tls_peer_read_complete",
+          "database_tls_peer_fingerprint_read"
+        ],
+        "rejection_phase": "database_tls_peer_unbound",
+        "rejected_before_control_connection_maintenance_and_dump": true,
+        "client_tls_enforcement_capability_proven": false,
+        "invalid_fingerprint_vs_missing_client_option_not_disambiguated": true,
+        "tls_dump_proven": false,
+        "snapshot_created": false
+      }
     }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
