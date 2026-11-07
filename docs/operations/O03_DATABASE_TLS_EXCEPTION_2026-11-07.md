@@ -59,8 +59,25 @@ unbekannter CA und ehrlicher False-Quittung, Ablehnung von Klartextservern durch
 Client/Dump und Kontrollverbindung, fehlender Freigabe und wechselndem Peer.
 Der verschlüsselte Rückdownload-/Entschlüsselungsrundlauf bewahrt die False-Angabe.
 
-Zum Zeitpunkt der Implementierung: noch kein neuer IONOS-Lauf auf diesem Code.
-Erst reguläre Integration und exakte Engine-/Controller-CI, dann neue unabhängige
-Recovery/Preflight, TLS-Dump-/Dateisystemgrenzen, echter Capture, private
-Veröffentlichung, vollständiger Release-Rückdownload und isolierter Restore
-genau dieses Snapshots. V1 und die Backup-Gesamtabnahme bleiben offen.
+## Integrierter Stand und tatsächliche IONOS-Versuche
+
+Die freigegebene Ausnahme ist über PR #74–#76 regulär integriert: Engine `42c1f95`, privater Controller `da0df3b` (PR #10–#12), exakte Main-CI einschließlich CircleCI grün.46 Pythonregressionen, PHP-Hilfstests und synthetische TLS-/Dump-Positiv-/Negativfälle bestanden. Frische IONOS-Recovery `42401850165` und Preflight `42401981757` erfolgreich. Die gezielte Dump-Ressourcenprobe `42402105567` bestätigt nach erfolgreichem Peerlesen eindeutig `dump_tls_peer_option_unsupported`: Der ausgewählte IONOS-Dumpclient bietet `--ssl-fp` nicht an. Abbruch vor Kontrollverbindung, Wartung und Dump; kein Snapshot, Produktionsrelease oder echter Restore. Die IONOS-Clientversion und andere installierte Clients wurden nicht erhoben. Nächster O03-Block: vorhandene Clientfähigkeiten ohne Wartung inventarisieren und einen kompatiblen, TLS zwingend erzwingenden Dumppfad bereitstellen; anschließend frische Vorprüfungen, Dump-/Archivgrenzen und vollständige Release-/Restorekette. `--ssl` allein ist wegen synthetisch bestätigtem Klartextfallback ungeeignet. Ausnahmequittungen weisen ausdrücklich `server_certificate_verified=false` aus, SSH/HTTPS bleiben geprüft. Unabhängiges HTTPS nach der Ablehnung200. V1/O03-Abnahme und formale Zähler bleiben offen.
+
+| Nachweis | Exakter Stand / Lauf | Ergebnis |
+| --- | --- | --- |
+| Reguläre Engineintegration | PR74/75/76, `42c1f9523d397a3cee3fe9fd179f73b3af35b65b` | In main |
+| Exakte Engine-Main-CI | Foundation42401486061, O0342401486086, Truth42401485996, echter CircleCI | SUCCESS |
+| Privater Controller | PR10/11/12, `da0df3bc7a59f92f21f0e15dd7ae9a456e4ab477` | In main, exakte CI42401581759 SUCCESS |
+| Unabhängiger Recoveryzugriff | 42401850165 | Zweite Sitzung entfernt nur eigene Canary, keine Wartung |
+| IONOS-Preflight | 42401981757 | Runtime, Watchdog, Prozessidentität, Hardlinks, Tabellen-/WRITE-Lockpfad und Origin PASS; kein Snapshot |
+| Tatsächliche Dump-Ressourcenprobe | [42402105567](https://github.com/orgavela/orgavela-backups/actions/runs/42402105567) | FAILED18:37:06UTC: fehlendes `--ssl-fp`, vor DB-Kontrollverbindung/Wartung/Dump |
+| HTTPS danach | Unabhängige öffentliche Abfrage, Zertifikat geprüft | 200 |
+| Echter Capture / Release / exakter Restore | Nicht gestartet | Offen |
+
+Frühere Versuche42399235057 und42400555502 gehören zur dokumentierten Eingrenzung; ihre gröberen Phasen werden nicht als Dump-TLS-Erfolg ausgegeben. Der dritte Lauf bestätigt die fehlende Option direkt am ausgewählten Client. Eine andere vorhandene kompatible Clientinstallation ist weder bestätigt noch ausgeschlossen. Keine tatsächliche IONOS-Version aus einem Container abgeleitet.
+
+Hostingzugangsdaten bleiben auf Source-Schritte begrenzt; Veröffentlichung hat eine getrennte Schreibrolle und Receiver nur Leserechte. Der zusätzliche Restore-Schlüssel bleibt wie freigegeben ausschließlich im RAM. In diesen abgewiesenen Ressourcenproben wurde noch kein Restore-Empfänger benötigt.
+
+Die Peer-Leseprobe allein ersetzt keinen Nachweis der tatsächlich datenführenden Verbindung. Es wurde kein erfolgreicher Produktionsdump und kein Backupmanifest mit Produktionsmetriken erzeugt. Das False-Profil ist synthetisch bis zum verschlüsselten Paket, vollständigen simulierten Releaseasset-Rückdownload, Entschlüsselung und Restore-Paketvalidator geprüft; dies ersetzt keinen neuen realen Release-/Datenbankvollrestore. Der ältere isolierte synthetische Gesamtrestore42362945948 bleibt ein gesonderter historischer Beleg.
+
+Keine Source-Clientinstallation, keine Provider-/DB-/Trustkonfiguration verändert, keine CA aus dem unauthentisierten Peer importiert. Der nächste Pfad muss eigene Laufzeit-/Klartext-/Cleanupprüfungen bestehen und regulär integriert/exakt CI-geprüft werden; danach neue gleiche-Controller-Vorprüfungen vor einem echten Backup. Keine Zeitpläne, Retention-Löschung oder formale Abnahme aus diesem Befund.

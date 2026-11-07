@@ -1,6 +1,6 @@
 {
   "schema": "orgavela-operations-closeout-v1",
-  "observed_as_of": "2026-11-05",
+  "observed_as_of": "2026-11-07",
   "project": "orgavela/Orgavela-Plugin",
   "authority": "docs/operations/V1_PROGRESS.json",
   "purpose": "Separate technical evidence from operator/legal signoff; no automatic go-live",
@@ -41,7 +41,7 @@
       "status": "partial",
       "accepted": false,
       "owner": "Betreiber / Backup-Verantwortliche",
-      "observation": "Engine0f0676d/Controller3655abf regulär integriert und exakte CI grün. Synthetischer exakter Release-Restore bestanden; finale IONOS-Recovery/Preflight erfolgreich. Probe42368432293 besteht Systemtrust-/Runtime-/Vorfahrenprüfung und scheitert danach an Zertifikatsvertrauen(ERROR2026), vor Wartung/Dump/Snapshot. Offizielle CA-/prüfbare Endpunktangabe fehlt; kein echter Snapshot/Restore.",
+      "observation": "Die freigegebene Ausnahme ist über PR #74–#76 regulär integriert: Engine 42c1f95, privater Controller da0df3b (PR #10–#12), exakte Main-CI einschließlich CircleCI grün.46 Pythonregressionen, PHP-Hilfstests und synthetische TLS-/Dump-Positiv-/Negativfälle bestanden. Frische IONOS-Recovery 42401850165 und Preflight 42401981757 erfolgreich. Die gezielte Dump-Ressourcenprobe 42402105567 bestätigt nach erfolgreichem Peerlesen eindeutig dump_tls_peer_option_unsupported: Der ausgewählte IONOS-Dumpclient bietet --ssl-fp nicht an. Abbruch vor Kontrollverbindung, Wartung und Dump; kein Snapshot, Produktionsrelease oder echter Restore. Die IONOS-Clientversion und andere installierte Clients wurden nicht erhoben. Nächster O03-Block: vorhandene Clientfähigkeiten ohne Wartung inventarisieren und einen kompatiblen, TLS zwingend erzwingenden Dumppfad bereitstellen; anschließend frische Vorprüfungen, Dump-/Archivgrenzen und vollständige Release-/Restorekette. --ssl allein ist wegen synthetisch bestätigtem Klartextfallback ungeeignet. Ausnahmequittungen weisen ausdrücklich server_certificate_verified=false aus, SSH/HTTPS bleiben geprüft. Unabhängiges HTTPS nach der Ablehnung200. V1/O03-Abnahme und formale Zähler bleiben offen.",
       "technical_evidence": [
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42042772320",
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42038116880",
@@ -54,10 +54,22 @@
         "https://github.com/orgavela/orgavela-backups/actions/runs/42366729353",
         "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42367959597",
         "https://github.com/orgavela/orgavela-backups/actions/runs/42368432293",
-        "https://github.com/orgavela/Orgavela-Plugin/blob/main/docs/operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md"
+        "https://github.com/orgavela/Orgavela-Plugin/blob/main/docs/operations/O03_BACKUP_ACCEPTANCE_TLS_BLOCKER_2026-11-07.md",
+        "https://github.com/orgavela/Orgavela-Plugin/pull/74",
+        "https://github.com/orgavela/Orgavela-Plugin/pull/75",
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42399909335",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42399235057",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42400313849",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42400456827",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42400555502",
+        "https://github.com/orgavela/Orgavela-Plugin/pull/76",
+        "https://github.com/orgavela/Orgavela-Plugin/actions/runs/42401486086",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42401850165",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42401981757",
+        "https://github.com/orgavela/orgavela-backups/actions/runs/42402105567"
       ],
       "missing_exit_evidence": [
-        "Unabhängig bestätigte IONOS-CA/Kette oder prüfbarer TLS-Endpunkt für bestehende Datenbank; echte TLS-Zertifikatsprüfung erfolgreich wiederholen",
+        "Vorhandene IONOS-Clientfähigkeiten ohne Wartung inventarisieren und einen TLS zwingend erzwingenden Dumppfad belegen: derzeit fehlt --ssl-fp im ausgewählten Dumpclient; ehrliche server_certificate_verified=false-Quittung erforderlich",
         "Echtes vollständiges, konsistentes DB+Dateien-Backup verschlüsselt privat und mit Readback verifizieren",
         "Abgeschotteten Restore echter Backupdaten sowie Recovery-Time und Retention unabhängig bestätigen",
         "IONOS-Provider-Backupinventar mit Rücksicherungsstand prüfen"
