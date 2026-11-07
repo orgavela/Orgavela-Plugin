@@ -247,7 +247,7 @@
       "filesystem_resource_probe_completed": false,
       "formal_o03_accepted": false,
       "automatic_schedule_authorized": false,
-      "next": "Integrate provider-system-owner validation anchored to the protected PHP runtime and immutable ancestor paths; fresh same-controller recovery/preflight and real TLS/resource probes before any actual snapshot.",
+      "next": "Integrate protected OS truststore/runtime validation independent of provider numeric UIDs, with immutable ancestor paths; fresh same-controller recovery/preflight and real TLS/resource probes before any actual snapshot.",
       "tls_diagnostic_engine": {
         "sha": "dc9e3cadb9b9bf1e5496aed9129e31b7baa2390a",
         "public_pr_integrated": 70,
