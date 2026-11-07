@@ -124,5 +124,15 @@ try {
     check(orgavela_process_stop_groups($root));proc_close($child);
     foreach(glob($root.'/child-*.stat') as $file)unlink($file);
 
+    // Distinguish absent client support from an invalid peer value before transfer.
+    define('ORGAVELA_DATABASE_TLS_UNVERIFIED_BACKUP_APPROVAL','bd622f9fa9e926d7af866676af1a0224cb9d92c0');
+    foreach([
+        [static fn()=>orgavela_dump_client_args('--defaults-file --ssl-verify-server-cert --protocol --ssl-ca',false,str_repeat('A',40)),'dump_tls_peer_option_unsupported'],
+        [static fn()=>orgavela_database_tls_args('invalid-peer'),'database_tls_peer_fingerprint_invalid'],
+    ] as [$operation,$expected]) {
+        $rejected=false;
+        try {$operation();}catch(OrgaVelaTrustRejection $e){$rejected=$e->getMessage()===$expected;}
+        check($rejected);
+    }
     echo "ORGAVELA_CAPTURE_HELPERS_SYNTHETIC=PASS\n";
 } finally { remove_fixture($root); }
