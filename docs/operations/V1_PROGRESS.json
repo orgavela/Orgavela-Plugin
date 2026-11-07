@@ -39,7 +39,11 @@
     "backup_storage_check": {
       "repository": "orgavela/orgavela-backups",
       "repository_visibility": "private",
-      "synthetic_release_tags_verified": ["backup-orgavela-synthetic-circleci-3", "backup-orgavela-age-synthetic-ci-10", "pgp04-synthetic-32"],
+      "synthetic_release_tags_verified": [
+        "backup-orgavela-synthetic-circleci-3",
+        "backup-orgavela-age-synthetic-ci-10",
+        "pgp04-synthetic-32"
+      ],
       "active_operator_encryption_preference": "OpenPGP / PGPony; historical age test releases not active backup proof",
       "verified_live_orgavela_full_backup": false,
       "verified_isolated_real_restore": false,
@@ -86,7 +90,14 @@
         "wordpress_files_size_bucket": "100-500MiB",
         "wordpress_database_size_bucket": "under-25MiB",
         "hosting_free_space_bucket": "over-5GiB",
-        "tools_available": ["mysqldump", "mariadb-dump", "mysql", "tar", "gzip", "sha256sum"],
+        "tools_available": [
+          "mysqldump",
+          "mariadb-dump",
+          "mysql",
+          "tar",
+          "gzip",
+          "sha256sum"
+        ],
         "ionos_provider_snapshot_inventory_verified": false,
         "actual_backup_exported": false,
         "actual_isolated_restore_executed": false
@@ -124,7 +135,22 @@
         "final_release_go_decision_verified": false
       }
     },
-    "v1_formal_signoffs_changed": false
+    "v1_formal_signoffs_changed": false,
+    "o03_abort_integration_20261107": {
+      "checked_date": "2026-11-07",
+      "work_review": "7041789",
+      "reviewed_engine_sha": "5c395148bd395a5688e9d5ef240433d63c48a351",
+      "provider_run": 42311225902,
+      "parent_stack_merged_through_pr": 29,
+      "parent_stack_sha": "c991fde47da41f23e003172e89f40d0f9544a86e",
+      "archival_pr28_merge": "blocked: GitHub405 locked branch; frozen target unchanged",
+      "main_integration": "separate regular PR candidate; pending checks",
+      "private_controller": "draft PR1; no hosting execution",
+      "recovery_access_verified": false,
+      "ionos_abort_verified": false,
+      "snapshot_created": false,
+      "formal_gates_changed": false
+    }
   },
   "snapshot_basis": "2026-10-13 explicit operator backup strategy switch: no Google Drive, only existing IONOS contract backup plus separate private GitHub repository GitHub Releases ciphertext. Google-Drive workflow removed; existing secure private Google Drive folder unused, not deleted. Desired janjrre/orgavela-backups repository not yet confirmed/created; connection cannot create repositories or secrets. No real backup or isolated restore.",
   "plan_path": "docs/operations/V1_ACCEPTANCE_PLAN.md",

@@ -1160,3 +1160,1234 @@ Die Ergebniskommunikation an die GitHub-Issues wurde ausgeführt: [W0 #16 Kommen
 **CI-Implementierung:** In `.github/workflows/orgavela-readonly-audit.yml` die lange eingebettete Fixture durch Aufruf desselben Skripts ersetzt, `shellcheck -S error` und Bash-Parserprüfung für beide ausführbaren Dateien erhalten. In `.circleci/config.yml` den identischen Offline-Test als separaten echten `source-integrity`-Jobschritt ergänzt, neben und unabhängig von PHP-/Composerprüfungen. Kein GitHub-Environment für PR-Tests, keine weitere App-Berechtigung und keine externen Kosten beauftragt. Die betroffenen Betriebsunterlagen wurden um die genaue Unterscheidung Offline-Proof vs. echten geplanten Live-Audit erweitert.
 
 **Abnahmebedingung:** Echte GHA-`static-safety`, die unabhängige O04-Premerge-Prüfung sowie `ci/circleci: source-integrity` **auf demselben aktuellen SHA** grün; erst dann GitHub-PR regulär integrieren. Der tägliche 07:17-UTC-Lauf, Host-Cron, Notification-, Worker-/Retry- und rechtliche Gate-Abnahmen bleiben unabhängig davon zu erfüllen. Kein künstlicher Fortschritt in O/M/P4/R-Zahlen.
+
+
+## 2026-10-22 — PGP-05 Checkpoint 5: Cloud-SSH readiness and review handoff (#27 / Draft #32)
+
+**Auftrag:** Selbstständig kostenfreie, ausschließlich lesende SSH-Identitäts-/Hostkey-/Root-/Domainprüfungen prüfen, unabhängiges Sicherheitsreview und nicht bootstrappenden Live-Metadatencheck vorbereiten, Ergebnisse dokumentieren. Zuordnung W0/O01/O03. Geprüfter PR32-Code-HEAD `80eda724f2339afe1804fff91c3c10c27d694852`; main `0adacb427bd95dd87594e358ec9c6f2f5b38aae8`, laut GitHub protected=true (kein vollständiges Admin-Protection-Audit). Issue #27, PR32 und normative Plan-/Status-/JSON-/Matrix-/Freeze-Dokumente gelesen. Issue/PR-Nachträge sind aktueller als zahlreiche historische Baseline-Abschnitte; diese bleiben unverändert.
+
+**Ansatz/Entscheidung:** Vor einem Login lokale Transportfähigkeit, offizielle unabhängige Vertrauensreferenz und vorhandenen Zugang prüfen. Keine Übernahme von Secrets aus CI und kein alter WP-CLI-/Deployment-Probe als Ersatz. Aktuelle Betreiberfreigabe deckt kostenfreie begrenzte Read-only-Prüfungen; keine erneute pauschale Freigabefrage. Vorbereitung ist keine Sicherheitsabnahme.
+
+**Tatsächliche Befunde:** SSH/ssh-keyscan/Git/Python sind in dieser neuen Laufzeit vorhanden; alte Tool-Mangel-Aussage gilt hier nicht. DNS für öffentliche Provider-/Projekt-Hosts schlägt fehl; keine SSH-Konfiguration, known_hosts oder Agent, erforderliche IONOS-Konfigurationsvariablen fehlen (nur Präsenz geprüft, keine Secretwerte ausgelesen). PCjan erneut über verbundenes Tool als offline gemeldet, last seen 132h. Exakter privater SSH-Endpunkt/Authentisierung hier nicht verfügbar. Kein SSH-Verbindungsversuch/Keyscan zum tatsächlichen Ziel; keine IP-/Netzwerkpolicy-Umgehung.
+
+**Offizielle Referenz:** IONOS-ED25519-SHA256 am 22.10.2026 frisch über offizielle Hilfeseite gelesen, identisch zum PR32-Sollwert. Das ist kein präsentierter Hostkey und kein authentisierter Vertragsbeweis.
+
+**Offline-Tests:** Neun PGP05-Code-/Testdateien an exakter SHA über GitHub geladen. Lokale Materialisierung fügte zunächst eine Endleerzeile hinzu; vor endgültigem Test korrigiert und alle neun Git-Blob-Hashes gegen GitHub erfolgreich abgeglichen. Danach 93 Unittests OK (0,198 s). Bash-Syntax PASS; alter Collector verweigert mit Exit 78. GitHub bestätigt CircleCI #40 success auf Code-SHA. Kein neuer CI-Lauf angefordert. Dokumentationscommit mit [skip ci]/[ci skip]; Quellcode/Workflows unverändert.
+
+**Umsetzung:** Neues [Review-/Ausführungspaket](PGP05_CLOUD_SSH_READINESS_AND_REVIEW_PACKET_20261022.md) mit Trust-/Zielbindung, SSH-Optionsentwurf, erlaubten Metadaten, Startup-Hook-Grenzen, vHost-Nachweis, Redaction/Receipt und unabhängiger Reviewer-Abnahmevorlage. Autorenseitige Reviewpunkte R1–R7 ausdrücklich offen für Live-Fähigkeit: synthetische CLI/Receipt nicht umgehen, Ressourcenlimit vor Subprozess-Pufferung, vertrauenswürdiger Binary-Pfad/Umgebung, keine Eigentümer-/vHost-/Snapshot-Überbehauptung, breites schreibfähiges Konto, SSH-Startup-Hooks, alter WP-CLI-Audit nicht verwenden. Unabhängiges Review nicht behauptet oder eingereicht. Review-Runbook und Status erhalten append-only Verweise. Plan-Scope, Prioritäten und formale Gates unverändert; daher keine künstliche Masterplan-/V1-Zähleränderung.
+
+**Ergebnis/Grenzen:** Keine remote Dateien gelesen/geändert, kein PHP/WordPress/SQL, kein Backup/Restore/Release/Deployment/Merge, keine kostenpflichtige Leistung. Die SSH-/Verzeichnis-/Domain-Liveprüfungen sind NOT RUN. Nächste tatsächliche Betreiberabhängigkeit: vorhandenen PCjan online und autorisierten privaten Zugang verfügbar machen; anschließend sichere Zugangsfähigkeit prüfen, keine Passwörter/Keys an Chat/GitHub übermitteln. Unabhängiges Review und tatsächlich livefähige Implementierung bleiben zusätzlich Pflicht vor Metadatenlauf.
+
+**Fortschritt:** Checkpoint 5 unverändert **7/10 (70 %)**, offen #6 unabhängige Live-Sicherheitsabnahme, #8 authentisierte Host/Konto/Namespace/vHost-Bindung, #10 begrenzter echter Metadatenlauf + Abnahme. #9 nur owner-attested UI-Abgleich. V1 offen: historisch 62/71, M0–M7 0/8, P4 0/4, R01–R18 0/18; PR32 Draft/unmerged; zuletzt belegte Live-Version alpha.2 unverändert, in dieser Sitzung nicht neu abgefragt.
+
+
+## 2026-10-22 — PGP05: explicitly authorized one-step Cloud Browser alternative (#27 / Draft #32)
+
+**Auftrag/Entscheidung:** Betreiber kann PCjan nicht online bringen und autorisiert Cloud Browser gezielt für diesen Schritt. Die zuvor genannte PCjan-Abhängigkeit ist keine allgemeine technische Voraussetzung; benötigt wird ein zulässiger erreichbarer SSH-Client. Vorherige Aussage präzisiert: Cloud Browser kann IONOS-Kontoansichten bedienen, stellt auf der hier dokumentierten Oberfläche keinen nativen SSH-/Terminalzugriff bereit.
+
+**Ausführung:** Cloud Browser initial ohne Tabs; offizielle IONOS-Loginseite geöffnet, optionale Cookies abgelehnt, browserAuth für sichere Anmeldung verwendet. Rückgabe user_took_over; danach frische positive Anmeldung direkt im OrgaVela-Projekt bestätigt. Keine Credentials modellseitig eingegeben, ausgelesen oder veröffentlicht. Projekt/Einstellungen und bestehende SFTP+SSH-Kontoübersicht/-details lesend geöffnet. Ein Konto, Vertragswebspace-Scope / und Port 22; konkrete Konto-/Host-/Vertragskennungen bewusst nicht in GitHub übernommen. Sichtbare Verbindungsseite verweist auf externes FTP-Programm bzw. Konsole; **kein Webterminal auf den geprüften Projekt-/Kontoseiten gefunden**. Das ist keine Behauptung, alle IONOS-Produkte hätten generell kein Webterminal.
+
+**Fehler/Prüfgrenzen:** Zweimal verzögerte IONOS-Routennavigation mit DOMSnapshot-Timeout/leerem Inhaltsbereich; jeweiliges einmaliges Reload stellte Einstellungen bzw. Kontoliste wieder her. Webspace Explorer geöffnet, aber Dateiliste blieb beim geprüften Zustand noch im Lademodus; kein neuer Dateistruktur-/Rootnachweis daraus behauptet. Kein Bot-Block festgestellt. Exakter aus IONOS-UI bekannter SSH-Hostname einmal ausschließlich per lokaler DNS-Auflösung geprüft: **UNAVAILABLE**. Keine IP-/Netzwerkumgehung und kein tatsächlicher SSH-Keyscan/Login. Keine WordPress-/PHP-/SQL-Ausführung, keine Dateiinhalte oder Downloads, keine Konfigurationsänderung, Passwortänderung, Kontoanlage, Backup, Deployment, Restore, Merge oder kostenpflichtige Leistung.
+
+**Ergebnis/Nächster Weg:** Browser kann die IONOS-UI-Evidenz direkt bestätigen, aber aktuell den gepinnten authentisierten SSH-Nachweis nicht liefern. PCjan-online nicht erneut als einzig möglichen Weg verlangen; alternative kostenfreie Ausführungsumgebung oder Betreiber-SSH-Client mit sicherer bestehender Authentisierung erforderlich. Vor tatsächlichem Live-Metadatenlauf weiterhin unabhängige Design-/Codeabnahme. Kein zusätzlicher CI-Lauf ausgelöst. Dieser rein dokumentarische Nachtrag nutzt [skip ci]/[ci skip].
+
+**Zähler:** Checkpoint 5 unverändert 7/10 (70 %), offen #6 unabhängiges Live-Sicherheitsreview, #8 aktuelle authentisierte SSH-/Namespace-/Domainroot-Bindung, #10 tatsächlicher begrenzter No-Bootstrap-Metadatenlauf und Abnahme. #9 bleibt owner-attested. Normativer Scope/Plan und V1-Zähler unverändert: 62/71 historische Codingpakete, M0–M7 0/8, P4 0/4, R 0/18; PR32 Draft/unmerged, zuletzt belegte Live-Version alpha.2, in dieser Sitzung nicht via WordPress neu geprüft.
+
+
+## 2026-10-22 — W0/O01/O03 PGP05: kostenfreien CircleCI SSH-Prüfjob erstellt (#27 / Draft #32)
+
+**Auftrag:** Nach fehlendem SSH-Terminal im Cloud Browser den vorgeschlagenen abgesicherten CircleCI-Prüfjob erstellen. Kostenfreie Umsetzung freigegeben; keine produktiven Backups/Deployments/Merges ohne erfüllte Gates. Basis PR32 `5f4bbc96cf70528b52b262a5270a58e606161c4c`, weiter Draft/ungemergt. AGENTS, Worklog, Plan/JSON/Status/Matrix, Reviewpaket und CircleCI-Konfiguration geprüft. CircleCI-Config-Skill samt Approval/Branch-Patterns gelesen und angewandt. Offizielle CircleCI-/OpenSSH-Dokumentation zu Pipelinewerten, vor Secret-Injektion geprüften Context-Restrictions und SSH-Optionen überprüft.
+
+**Entscheidung:** Ein neues Live-Review-Kandidatenprogramm statt Umgehung des alten synthetischen Scanners. Standard off: nur Offline-Tests. Getrennte explizite Modi hostkey (ohne Authentisierung) und metadata (erst nach unabhängigem Review), jeweils Offline-Test → eigener manueller Approval → neuer, separater Context. Projekt-/Repository-/Branch-/vollständiges SHA-Pinning in Context-Expression ist zwingend vor Secret-Injektion; Shell/SHA-Prüfung allein schützt nicht vor bösartigem Kontextkonsumenten. Keine bestehenden Backup-/Deploy-Secrets wiederverwenden oder ändern. PCjan ist keine Voraussetzung.
+
+**Implementierung:** Neue Dateien `orgavela_pgp05_circleci_ssh_probe.py` und `test_orgavela_pgp05_circleci_ssh_probe.py` unter scripts/ci. Begrenzter Subprozess-Reader für stdout/stderr (je 16 KiB während des Lesens), Keyscan 9s/SSH 30s, Prozessgruppen-Abbruch/Reaping. Nur vertrauenswürdige absolute Systembinärpfade, frische Child-Umgebung; Hostkey muss offizieller ED25519-Referenz entsprechen. metadata verwendet strict known_hosts-Pinning, keine Weiterleitung/Proxy-/Agent-/Publickey-Fallbacks, einen Passwortversuch über lokalen askpass-Helper ohne Passwortliteral und statisches Shellskript über stdin. Nur id/pwd/test/stat/Glob/printf für erwartetes Konto, Root, ausgewählte Dateitypen/Ownership/private Config-Mode/MU-Bestand; keine Dateiinhalte/PHP/WordPress/SQL. Ergebnis hält Domain-/DB-/Read-only-ACL-/Capture-/Restore-Beweis ausdrücklich false. Shell-/SSH-Startup-Hooks liegen vor dem Skript und verlangen separate Prüfung.
+
+**Tests/Korrekturen:** Erste neue Suite mit 111 Tests OK; weitere lokale OpenSSH -G-, askpass-, Symlink-, PHP-Nichtausführungs- und Receipt-SHA-Tests ergänzt, final **116/116 OK (0,746 s; 93 bestehende + 23 neue Methoden)**. Alle Prozess-/Shelltests ausschließlich synthetisch/lokal, kein IONOS-Login. Remote-Shellsyntax und YAML-Struktur/Default-off/getrennte Contexts/Approval/Branchfilter PASS. Initiale textuelle YAML-Sperrwortprüfung traf den Kommentar "schedules" und wurde durch Prüfung tatsächlicher YAML-Schlüssel ersetzt; off explizit als String quotiert. Bestehende synthetische Source-Dateien und Exit-78-Collector unverändert. **Keine CircleCI-Providerkompilierung oder CI auf neuer SHA behauptet**; kein CLI/Docker hier verfügbar. Commit [skip ci]/[ci skip] verhindert absichtlichen neuen Providerlauf. Alte CircleCI #40 belegt nur ältere Code-SHA, nicht diesen Kandidaten.
+
+**Dokumentation:** [Operator-/Reviewer-Anleitung](PGP05_CIRCLECI_SSH_PROBE_OPERATOR_GUIDE_20261022.md) mit tatsächlichen Grenzen, zwei Contexts, exakter serverseitiger SHA-Expression, Kostenattestation, sicherer Erstkonfiguration ohne Passwort, Live-Reviewvoraussetzungen, temporärer Secrets-Bereinigung und Rollback. Plan erhält datierten Entwurfsnachtrag, JSON gezielte O03-Evidenz ohne Änderung V1-Messwerte, Status/Matrix verweisen auf denselben Kandidaten.
+
+**Nicht ausgeführt:** Keine Context-Erstellung/Restriktionsänderung, kein Passwort/Private Key/PAT eingegeben oder gelesen, kein Live-Keyscan/SSH/Metadatenzugriff, keine DB/Site-Mutation, kein Backup/Restore/Deploy/Release/Merge, keine neue kostenpflichtige Leistung. Zero-cost-Flag ist Betreiberattestation, kein eigener Billingnachweis. Kein unabhängiges Review behauptet.
+
+**Nächste tatsächliche Benutzeraktion:** CircleCI Organization Settings → Contexts → `orgavela-pgp05-hostkey-only` neu und getrennt einrichten; zuerst Projekt-/Mitglieder-/exakte Revisionsbeschränkung prüfen, anschließend nur Host, genehmigte SHA und Zero-cost-Attestation hinterlegen. **Kein SSH-Passwort im Hostkey-Context.** Vollständige endgültige SHA/Expression wird im Trackingkommentar nach dem Commit angegeben. Erst danach hostkey-Pipeline auf exakt dieser SHA und Approval prüfen; metadata-Context vor unabhängigem Live-/Startup-Review nicht einrichten.
+
+**Zähler:** Checkpoint 5 weiter 7/10 (70 %), #6/#8/#10 offen. Job erstellt/örtlich getestet ≠ CI-grün ≠ unabhängig geprüft ≠ live ausgeführt. V1 offen, historisch 62/71, M0–M7 0/8, P4 0/4, R 0/18; letzte belegte Live-Version alpha.2 unverändert, nicht neu abgefragt; PR32 Draft/unmerged.
+
+
+## 2026-10-22 — PGP05 Hostkey-Context erstellt: Betreiberbestätigung, Einschränkungsprüfung ausstehend
+
+**Auftrag/Rückmeldung:** Betreiber meldet »ist erstellt« nach Anleitung zum neuen CircleCI-Context orgavela-pgp05-hostkey-only. Das wird ausschließlich als Betreiberbestätigung der Context-Erstellung erfasst; weder gespeicherte Projekt-/Mitglieder-/Revisionsbeschränkung noch Variablen oder Free-Kostenrahmen wurden damit unabhängig nachgewiesen.
+
+**Geprüft:** GitHub PR32 weiterhin Draft/ungemergt auf exakt 392053bb0e3f24ef79cc66a5142a6558b3fa5ee5. Kein CircleCI-Connector verfügbar; Cloud-Browser aktuell nicht verfügbar. Kein neuer Test-, Pipeline-, Approval-, SSH- oder Site-Lauf. Kein Zugangswert angefordert/ausgelesen. Lokale 116/116-Tests aus dem vorherigen Abschnitt nicht erneut als neue Tests behauptet.
+
+**Entscheidung/Umsetzung:** Zuerst Project restriction ausschließlich Projekt-Wordpress-Plugin und serverseitige Expression mit vollständiger genehmigter SHA prüfen; noch keine Variablen oder SSH-Passwort anfordern und keine Approval auslösen. Screenshot nur vom Restriktionsbereich, ohne Secretwerte/Kontokennungen. Codebranch bewusst unverändert lassen, damit das bestehende SHA-Pinning nicht durch einen Dokumentationscommit ungültig wird. Dieser append-only Journalnachtrag liegt deshalb auf separatem Dokumentationsbranch docs/pgp05-context-created-attestation-20261022, mit [skip ci]/[ci skip]. GitHub-Trackingkommentar referenziert diesen Nachweis; kein Merge.
+
+**Nächster Schritt:** Betreiber zeigt gespeicherte Project-/Expression-Restrictions. Erst danach drei Hostkey-only-Felder (Host privat, genehmigte SHA, bestätigter Null-Zusatzkostenrahmen) und exakt zugeordnete Hostkey-Pipeline vorbereiten. Metadatenmodus und Passwort weiterhin nicht konfigurieren. Unabhängiges Live-Review bleibt offen.
+
+**Fortschritt:** Checkpoint5 unverändert 7/10 (70 %), offen #6 unabhängige Live-Sicherheitsabnahme, #8 authentisierte SSH-/Namespace-/vHost-Bindung, #10 echter akzeptierter Metadatenlauf. V1 unverändert offen: 62/71 Codinghistorie, M0–M7 0/8, P4 0/4, R 0/18, PR32 Draft/unmerged, letzte belegte Live-Version alpha.2. Plan-/Prioritäten-/Abnahmestatus unverändert, daher keine künstliche Plan-/JSON-Zähleränderung.
+
+
+## 2026-10-22 — PGP05 Hostkey-only Context: Screenshot der gespeicherten Restrictions geprüft
+
+**Auftrag/Eingang:** Betreiber liefert Screenshot der Context-Detailseite. Anhang zuerst als nicht lesbar gemeldet; Datei war anschließend im angegebenen Scratch-Pfad vorhanden und wurde ausschließlich lokal visuell gelesen. Kein Library-Zugriff und keine Veränderung des Anhangs.
+
+**Sichtbarer Nachweis:** Contextname orgavela-pgp05-hostkey-only; Environment variables leer; Project restrictions genau Projekt-Wordpress-Plugin; Group restrictions All members (Mitgliederbestand nicht unabhängig geprüft). Gespeicherte Expression zeigt erwartete Repo-Owner-/Repo-Name-/Featurebranch-Bindung, vollständige Revision 392053bb0e3f24ef79cc66a5142a6558b3fa5ee5 sowie Ausschluss von job.ssh.enabled und api-Konfigurationsquellen. Alle sichtbaren Werte entsprechen der Einrichtungsliste. Kontext-ID nicht in dieses öffentliche Journal übernommen.
+
+**GitHub-Abgleich:** PR32 weiterhin Draft/ungemergt, aktueller HEAD exakt 392053bb0e3f24ef79cc66a5142a6558b3fa5ee5. Keine Codeänderung; Journaleintrag auf separatem Dokumentationsbranch, damit Revisions-Pinning erhalten bleibt.
+
+**Bewertung:** Gespeicherte UI-Projekt-/Expression-Restrictions als Screenshot-Teilnachweis akzeptiert, keine CircleCI-API-Prüfung, keine runtimeseitige Positiv-/Negativprüfung der Zugriffswirkung. Leere Variablen passen zum bisherigen Haltepunkt. Gruppe All members nicht als unabhängiger Sole-Owner-Beweis darstellen. Keine Kennungen/Secrets aus Screenshot veröffentlichen.
+
+**Nächste tatsächliche Betreiberaktion:** Genau drei Hostkey-only-Felder direkt in CircleCI hinzufügen: PGP05_SSH_HOST mit dem vorhandenen OrgaVela-access-Host privat, PGP05_APPROVED_SHA mit obiger vollständiger Revision und PGP05_ZERO_COST_CONFIRMED=yes ausschließlich nach Bestätigung ausreichender Free-Credits ohne Zusatzkosten. Kein Benutzername, Passwort, Private Key, DB-Wert oder Token. Screenshot nur der Variablennamen bei verdeckten Werten. Pipeline/Approval noch nicht gestartet.
+
+**Fortschritt/Grenzen:** Keine neuen Tests, Providerläufe, Hostkey-Keyscans, SSH-Logins oder Site-/DB-/Backup-/Deploy-/Merge-Aktionen. Context-UI-Unterbeleg abgeschlossen, Checkpoint5 weiter 7/10 (70 %), #6/#8/#10 offen. V1 unverändert 62/71 Codinghistorie, M0–M7 0/8, P4 0/4, R 0/18; letzte belegte Live-Version alpha.2, PR32 Draft. Plan/JSON-Abnahmezähler unverändert; nur append-only Evidenzprotokoll.
+
+
+## 2026-10-22 — PGP05: drei Hostkey-only-Variablen sichtbar, Startformular als nächster Prüfpunkt
+
+**Auftrag/Eingang:** Betreiber liefert zwei Screenshots und bestätigt privat den eingetragenen SSH-Host. Beide angehängten Dateien waren trotz anfänglicher Fehlermeldung lokal vorhanden und wurden visuell gelesen, ohne Library-Zugriff oder Bildänderung. Host stimmt mit der sichtbaren IONOS-Verbindungsanzeige und dem bereits zuvor direkt im Providerkonto geprüften Ziel überein. Exakte Host-/Konto-/Contextkennungen werden mangels Erforderlichkeit nicht in dieses öffentliche Journal übertragen; das Teilen im Chat wurde vom Betreiber ausdrücklich akzeptiert.
+
+**Context-Befund:** Screenshot zeigt genau PGP05_APPROVED_SHA, PGP05_SSH_HOST und PGP05_ZERO_COST_CONFIRMED. Werte sind maskiert, sichtbare Suffixe passen zur Vorgabe; vollständige SHA und exakter Kostenflag sind dadurch nicht unabhängig lesbar. Hostwert ist durch explizite Betreiberangabe und IONOS-Screenshot belegt. Kein SSH-Passwort/Private Key wurde gezeigt. Vorherige UI-Projekt-/Expression-Restrictions bleiben Teilnachweis, keine API-/Runtime-Erzwingungsprüfung.
+
+**GitHub:** PR32 weiterhin Draft/ungemergt auf 392053bb0e3f24ef79cc66a5142a6558b3fa5ee5. Keine Code-/SHA-Änderung und keine Pipeline/Approval ausgelöst. Worklog auf getrenntem Dokumentationsbranch fortgeführt.
+
+**Neue technische Startprüfung:** Offizielle CircleCI-Dokumentation https://circleci.com/docs/guides/orchestrate/skip-build/ beschreibt, dass Commit-Skip-Tags bei GitHub OAuth auch manuelle Web-/API-Starts überspringen können, während bestimmte GitHub-App-Trigger anders behandelt werden. Unser Codecommit enthält [skip ci]/[ci skip]; dies wurde zuvor nur als automatische Startunterdrückung geplant. Nicht ohne Beleg behaupten, derselbe Commit könne bei jeder Integration manuell starten. Aktuelle Anbindungsart über vorhandene Connectoren nicht verfügbar. Deshalb zunächst Trigger-Pipeline-Formular auf dem OrgaVela-Projekt ansehen, Branch und Parameter hostkey vorbereiten, **noch nicht Run Pipeline/Approval drücken**. Screenshot des Formulars ohne Secrets erlaubt, daraus Config-/Checkout-/Integration prüfen. Erst dann entscheiden, ob unveränderte SHA startbar ist oder ein kontrollierter gleichinhaltiger Nachfolgecommit mit erneuter exakter Context-/SHA-Bindung notwendig wird. Kein Umgehen des SHA-Pinnings, keine Änderung von Sicherheits-/Kostenoptionen.
+
+**Nächste Benutzeraktion:** CircleCI Projekt-Wordpress-Plugin → Trigger Pipeline/Run Pipeline öffnen; Featurebranch feat/pgp05-readonly-ssh-metadata-check-20261021 und Parameter pgp05_ssh_probe=hostkey auswählen, Formular vor Absenden zeigen. Keine Login-Secrets erforderlich.
+
+**Status:** Checkpoint5 unverändert 7/10, #6 unabhängige Live-Sicherheitsabnahme, #8 authentisierte SSH-/Namespace-/vHost-Bindung und #10 echter akzeptierter Metadatenlauf offen. Keine neuen Tests/CI-/SSH-/Site-/Backup-/Deploy-/Merge-Aktionen. V1 offen und unverändert 62/71 historisch, M0–M7 0/8, P4 0/4, R 0/18, letzte belegte Live-alpha.2. Plan/JSON-Gatezähler unverändert.
+
+
+## 2026-10-22 — PGP05 pipeline #537: provider offline check GREEN, hostkey approval ready
+
+**Eingang/Befund:** Zwei Betreiber-Screenshots zeigen tatsächlich gestartete Pipeline #537 mit Commitpräfix 392053b, Workflow pgp05-hostkey-one-shot, pgp05-offline-security grün (16s), approve-pgp05-hostkey wartend und pgp05-hostkey-candidate noch nicht ausgeführt. Formular wurde vom Betreiber bereits abgesendet; keine erneute Auslösung erforderlich. Bilder lokal gelesen, nicht verändert/öffentlich kopiert.
+
+**Unabhängiger GitHub-Abgleich:** PR32 Draft/unmerged, HEAD vollständig 392053bb0e3f24ef79cc66a5142a6558b3fa5ee5. GitHub Commitstatus ci/circleci: pgp05-offline-security=success, https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/41 ; Approvalstatus pending mit Workflow-ID 9e8eb44c-16a1-413b-9713-1c19b9383ac5. Damit sind Provider-Configverarbeitung/Offline-Job auf neuer SHA belegt. Test-Einzelzählung im Providerlog nicht unabhängig gelesen; lokale 116/116 bleibt früherer lokaler Nachweis.
+
+**Skip-CI-Klärung:** Für diesen konkreten API-gestarteten Lauf wurde die Skip-markierte SHA tatsächlich verarbeitet; der zuvor bedingt beschriebene Startblock ist hier nicht eingetreten. Keine pauschale Behauptung zur Integrationstype aus dieser Beobachtung ableiten, kein Commit-/Revisionswechsel nötig.
+
+**Nächste Betreiberaktion:** Ausschließlich Approve job bei approve-pgp05-hostkey in dieser Pipeline freigeben. Nachfolgender Job prüft einmal den ED25519-Hostkeykandidaten gegen offiziellen Pin; keine Benutzeranmeldung, kein Passwort, keine Dateien/WordPress/PHP/SQL/Backups/Deploys. Bestehende allgemeine kostenfreie Freigabe und konkrete Hostkey-Context-Einrichtung decken diesen Schritt. Approval wurde vom Assistenten nicht geklickt. Danach Screenshot der Ausgabe von pgp05-hostkey-candidate auswerten, bei REFUSED nicht erneut starten oder Restriktionen abschwächen.
+
+**Dokumentation/Status:** Journal separat vom gepinnten Codebranch fortgeführt. Noch kein tatsächlicher Hostkeybeleg; Checkpoint5 bleibt 7/10, #6/#8/#10 offen. Provider-Offline-Sicherheit ist kein unabhängiges Live-Review. V1 unverändert offen, 62/71 historisch, M0–M7 0/8, P4 0/4, R 0/18, PR32 Draft und zuletzt belegte Live-alpha.2. Keine Live-/Site-/Credentialänderung durch den Assistenten.
+
+
+## Arbeitsauftrag und Umsetzung — Hostkey-Ergebnisprüfung, 22.10.2026
+
+Drei bereitgestellte Anhänge lokal visuell gelesen; vorangehende Dateifehlermeldung war nicht mehr zutreffend. Keine Library-Abfrage, Bildänderung oder Veröffentlichung der Rohscreenshots/Host-/Konto-/Contextkennungen. GitHub-Statuses für exakte Code-SHA und Dokumentationsbranch-HEAD geprüft. Ergebnis und bewusste Begrenzung der Beweisbehauptung siehe unten. Codebranch unverändert, damit SHA-Pinning nicht ungültig wird. JSON-O03-Evidenz, Status, Matrix und Plan erhalten konsistenten datierten Beleg auf separatem Dokumentationsbranch. Keine neuen Tests/Providerjobs durch den Assistenten ausgelöst. Lauf wurde durch Betreiber genehmigt; Roh-Joblogs nicht unabhängig heruntergeladen.
+
+## 2026-10-22 — PGP05 Hostkeykandidat tatsächlich PASS (Pipeline #537 / CircleCI #43)
+
+Betreiber-Screenshots zeigen genehmigten Hostkey-Approval und erfolgreichen Job pgp05-hostkey-candidate (3s). Sichtbare Ausgabe: PGP05_CIRCLECI_SSH_PROBE=PASS; mode=hostkey, hostkey_candidate_matches_provider=true, authenticated_ssh=false, production_capture_allowed=false. source_revision im Log durch CircleCI-Secretmaskierung verdeckt; kein eigenständiger vollständiger SHA-Readback aus dem Screenshot behauptet. GitHub-Commitstatus bestätigt unabhängig success für [Candidate #43](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/43) auf **392053bb0e3f24ef79cc66a5142a6558b3fa5ee5**, ebenso [Offline #41](https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/41) und [Approval](https://circleci.com/workflow-run/9e8eb44c-16a1-413b-9713-1c19b9383ac5). Exact source + provider status + redacted receipt are combined evidence, not a direct assistant read of raw SSH packets.
+
+**Akzeptierter Teilnachweis:** Der vom festgelegten Endpunkt erhaltene ED25519-Keyscan-Kandidat stimmt gemäß geprüftem Code mit dem offiziell veröffentlichten IONOS-Pin überein. Provider-only Keyscan **beweist keine abgeschlossene authentisierte SSH-Sitzung oder Schlüsselbesitzprüfung im angemeldeten Transport**, kein bestimmtes Kundenkonto, Shell-Namespace oder aktive Domain/vHost-Zuordnung. Diese Grenzen sind im Receipt korrekt erhalten. Keine Login-Credentials, Site-Dateien, PHP/WordPress/SQL, Backup/Deploy/Restore/Release/Merge durch diesen Hostkeymodus.
+
+**Nächste Betreiberaktion:** Die drei temporären Variablen im ausschließlich für diesen Versuch eingerichteten Context orgavela-pgp05-hostkey-only entfernen (PGP05_SSH_HOST, PGP05_APPROVED_SHA, PGP05_ZERO_COST_CONFIRMED); Projekt-/Expression-Restrictions stehen lassen. Nur diesen Context bearbeiten, keine Backup-/Deploy-Zugänge. Kein Rerun. Entfernen sperrt die weitere Nutzung durch fehlende Pflichtfelder; vorherige Logs werden dadurch nicht gelöscht. Ausführung der Bereinigung noch nicht bestätigt. Vor Metadata-Context/Passworteingabe bleibt unabhängige Code-/Transport-/Startup-Sicherheitsabnahme zwingend. Neue autorenseitige Tests wären kein Ersatz.
+
+**Checkpoint5 unverändert 7/10 (70 %):** #8 hat jetzt zusätzlich den echten Hostkey-Kandidatenteil bestanden; vollständige authentisierte Konto/Namespace/vHost-Bindung bleibt offen, ebenso #6 unabhängiges Live-Review und #10 akzeptierter echter Metadatenlauf. Keine künstliche Erhöhung auf 8/10. Aktueller Fortschritt zeigt abgeschlossene Vorprüfung, nicht vollständige PGP05-/V1-Abnahme. Historische Abschnitte mit 'Hostkey nicht ausgeführt' sind durch diesen datierten Nachtrag im Kandidatenumfang überholt.
+
+V1 unverändert offen: 62/71 Codinghistorie, M0–M7 0/8, P4 0/4, R 0/18; PR32 Draft/unmerged, zuletzt belegte Live-alpha.2, hier nicht neu via WordPress abgefragt. Keine Kosten/Vertrags-/Security-Settings-Änderung durch den Assistenten.
+
+
+## 2026-10-22 — Auftrag Checkpoint5 abschließen, Hostkey-Context bereinigt, Reviewer-Auftrag konkretisiert
+
+**Auftrag:** Betreiber korrigiert ausdrücklich »schließe Checkpoint 5 ab«. Vorherige Erwähnung Checkpoint7 war ein Missverständnis; Issue27 enthält keinen eigenständigen Checkpoint7. Keine Änderung am fachlichen Umfang oder an Pflichtkriterien.
+
+**Screenshot:** Context orgavela-pgp05-hostkey-only hat jetzt sichtbar keine Environment variables. Project restriction und erwartete Revisions-/Branch-/Owner-/Repo-/SSH-/Config-Expression bestehen weiter. Bereinigung der drei temporären Felder als Screenshot-Beleg akzeptiert; Context-/Account-IDs nicht veröffentlicht. Kein Library-Zugriff oder Anhang geändert.
+
+**Ausführung:** Aktuellen PR32-HEAD 392053bb0e3f24ef79cc66a5142a6558b3fa5ee5 und Diskussion geprüft. GitHub list_pull_request_reviews liefert leere Reviewliste; außerhalb GitHubs vorgelegte unabhängige Abnahme ist ebenfalls nicht vorhanden. Neue lokale Git-Blob-Hashes von Konfiguration/Probe/Parser entsprechen dem unveränderten publizierten Code. Keine neuen Tests oder Providerjobs ausgelöst; 116/116 bleibt der frühere lokale Testbeleg. Verbundene Tools bieten GitHub-Reviewverwaltung, aber keinen unabhängig ausgeführten Security-Reviewer; eigener Review-POST wäre keine unabhängige Prüfung.
+
+**Ergebnis/konkrete Vorbereitung:** Neuer [unabhängiger Reviewauftrag](PGP05_CHECKPOINT5_INDEPENDENT_REVIEW_REQUEST_20261022.md) mit exakter SHA/Dateien/Hashes, zehn Prüffeldern, Berichtsvorlage und klaren Grenzen. Autorenseitige Durchsicht bestätigt weiterhin ungelöste providerseitige Startup-/vHost-Fragen; grüne Hostkey-Vorprüfung ersetzt sie nicht. Es wird weder ein zweiter Prüfer noch dessen Zustimmung erfunden. Nach akzeptiertem Review sind zusätzlich sichere private Metadata-Context-Einrichtung und tatsächlicher freigegebener Lauf nötig, die ohne Betreibereingabe/Belege nicht ausgeführt werden können. Kein Passwort oder Private Key im Chat angefordert.
+
+**Nächster notwendiger Schritt:** Separaten unabhängigen technischen Reviewer bestimmen. Falls der Betreiber dafür ausdrücklich einen separaten Prüfagenten beauftragt, kann dessen Einschätzung als unabhängige KI-Zweitprüfung dokumentiert werden (nicht als menschliches/externes Audit); eine pauschale Approval-Zusage ist unzulässig. Reviewer muss insbesondere echte Startup-Evidenz von bloßer Context-Attestation unterscheiden. Codebranch bleibt gepinnt und unverändert. Journal und gezielte JSON-O03-Evidenz auf separatem Docsbranch; keine automatischen Pipelines, Merges, Deploys, Backups oder Kosten.
+
+**Fortschritt:** Cleanup-Unteraufgabe erledigt; vollständiger Checkpoint5 unverändert 7/10 (70 %), #6 unabhängiges Review, #8 authentisierte Konto/Namespace/vHost-Zuordnung und #10 tatsächlicher akzeptierter Metadatenlauf offen. V1 unverändert offen: 62/71 Codinghistorie, M0–M7 0/8, P4 0/4, R 0/18; PR32 Draft/unmerged, zuletzt belegte Live-alpha.2.
+
+
+## 2026-10-22 — explizit beauftragtes separates Sicherheitsreview ausgeführt und nachgeprüft
+
+**Auftrag/Scope:** Betreiber »ja mache das« zum separaten unabhängigen Prüfagenten.
+W0/O01/O03, #27/DraftPR32. Separater Agent prüfte Code/Config/Tests/Guides und R1–R7,
+keine Produktionsverbindungen oder GitHub-Mutationen durch Reviewer. Zweitprüfung
+als KI-Assessment benannt, nicht menschliches externes Audit.
+
+**Nachweise:** Originalcode392053... unverändert mit GitHub-Statuses offline41,
+approval und hostkey43 success. Reviewer bestätigte veröffentlichte Blob-Hashes,
+116/116 lokale Tests und reproduzierte stderr-PASS-Fehler. Autor korrigierte
+metadatenseitiges stderr-Verhalten und fügte drei adversarielle Subfälle hinzu;
+historische Password-env-/Batchmode-Planung ausdrücklich superseded.
+Commit4d7b257ae398d663cf35668777e7b5bbea95b17c im bestehenden PR32 veröffentlicht,
+mit Skip-CI und erwarteter alter Ref als Lease. Kein Contextpin oder Secret geändert.
+Reviewer las neue exakte SHA, bestätigte Fix und Dokumentation und 117/117 erneut.
+Vollbericht: PGP05_INDEPENDENT_SECURITY_REVIEW_20261022.md.
+
+**Entscheidung:** Unerwartetes SSH-stderr und Dokuwiderspruch RESOLVED. Floatendes
+Executorimage P2 weiter offen, Startup-/vHost-Beweise nicht aus Code erfindbar;
+Liveentscheidung BLOCKED, Criterion6 offen. Produktionscapture=false.
+Keine Provider-CI auf neuerSHA behauptet. Bestehende #41-Image-Spinausgabe kann
+vollständigen Manifestdigest als Kandidaten liefern; Konfig-ID/Layerhash genügt
+nicht. Verbundene Tools haben keinen CircleCI-Logzugriff; kein Cloudbrowser benutzt,
+kein neuer geheimnisfreier Job nur zur Digestbeschaffung nötig.
+
+**Nächste Benutzeraktion:** #41 → Spin-up environment vollständig aufklappen,
+Image-Repository + ungekürzten Registry-Manifestdigest zeigen, Secrets verdecken.
+Dann prüfen/pinnen/reviewen/kontextfreieCI. Credentials erst nach erfüllten Gates.
+Docsbranch separat fortgeführt; V1-Zähler unverändert, CP5 exakt7/10 mit6/8/10offen.
+
+
+## 2026-10-22 — Build41-Log geprüft; neues offizielles Executorimage immutable gepinnt
+
+**Auftrag/Eingang:** Betreiber liefert Build41 Spin-up-Textlog. Datei lokal gelesen,
+nicht geändert oder öffentlich hochgeladen. W0/O01/O03 #27/Draft32. VorherigerHEAD
+4d7b257ae398d663cf35668777e7b5bbea95b17c Draft bestätigt.
+
+**Beleggrenze/Recherche:** Log zeigt cimg/python:3.12 und amd64, aber keinen vollen
+Manifestdigest. Kurze Layerkennungen erlauben keinen historischen Identitätsbeweis.
+Offizielle CircleCI-Imagebeschreibung bestätigt Publisher/Tagmodell. Webtool konnte
+DockerHub-API nicht öffnen; normaler direkter HTTPS-Read über urllib gelang.
+DockerHub-TagAPI + Registryindex + linux/amd64-Manifest unabhängig abgerufen;
+beide rohen Manifest-Hashes reproduziert. Anonymous Pull-Bearer nur in Speicher,
+kein Secret/Token geloggt. Aktueller legitimer Kandidat, nicht exakt Job41 behauptet.
+Details in PGP05_IMMUTABLE_EXECUTOR_PROVENANCE_20261022.md.
+
+**Umsetzung:** Beide Jobs auf docker.io/cimg/python@sha256:793ca7ea5a2fc27fa5b379fd077bf571c456d103992c7b3098cfc885f46cfa08
+gepinnt. Kontextfreier Runtimecheck im Offlinejob vor synthetischen Tests prüft
+Architektur/Pfade/Toolversionen/trusted binaries, ohne Netzwerklogin/Installation.
+Kein Context oder SHA-Pin bei CircleCI verändert. Keine Credentials oder Livejobs.
+
+**Validierung:** YAML strukturell korrekt, beide Pins identisch/defaultoff ohne
+Context; 117/117 lokale synthetische Tests PASS. Erster lokaler Patchaufruf wegen
+doppeltem Ziel im Patch verworfen; danach Updatepatch korrekt, kein Zwischenstand
+publiziert. Providerlauf/aktuell gezogenes Image/Tools auf neuerSHA noch unbestätigt.
+Separate Agentennachprüfung folgt auf exakter veröffentlichter SHA.
+Commit mit SkipCI; Betreiber startet anschließend ausschließlich off.
+
+**Grenzen:** Immutable Referenz löst nur veränderlichen Tag; keine Sicherheits-
+Signatur/Vulnerability-Abnahme behauptet. Startup-/Domain-/authentisierter
+Metadatenbeleg fehlen. CP5 weiter7/10; #6/#8/#10 offen. V1 unverändert62/71 historisch,
+M0–M7 0/8,P4 0/4,R0/18; alpha.2 zuletzt belegt, kein Livezugriff/Backup/Deploy/Merge/Kauf.
+
+**Dokumentationsnachtrag:** Separater Prüfer las genaue Config c952645..., Blob2085eb8..., bestätigte beide Pins/default-off ohne Context und ungefährlichen lokalen Runtimecheck. Eigener erneuter Suite-Lauf117/117 OK. Livegates bleiben offen; kein Providerlauf durch Assistent gestartet.
+
+**Registry-Nachprüfung:** Separater Reviewer reproduzierte unabhängig Index-/Manifesthash per direktem HTTPS; nur Metadaten, keine Layer. Immutable-Sourcebefund behoben. Freigabe ausschließlich default-off kontextfreier Provider-Test, keine Live-Metadata-Abnahme. NeueSHA hat noch keine GitHub-Commitstatuses.
+
+
+## 2026-10-22 — sechs Build44-Logs geprüft, Provider-Runtime unabhängig bestätigt
+
+**Auftrag/Eingang:** Betreiber liefert sechs Build44-Textlogs nach vereinbartem
+default-off-Lauf. Lokal gelesen, keine Library-Abfrage/Anhangänderung oder
+Rohlogveröffentlichung. W0/O01/O03 #27/Draft32. Aktueller PRHEADc952645...,
+DocsHEAD046f5a66... frisch geprüft; Code unverändert.
+
+**Nachweise:** GitHub Commitstatus exactc952645000b2954c04f1c0446c333392048065e6
+offline-securitysuccess, CircleCI44. Operatorlogs0/99/101/102/103/104 zeigen
+gepinnte amd64-Runtime aus Cache, vollständige QuellSHA/Checkout, IsolationPASS,
+OpenSSH8.9p1 Ubuntu-3ubuntu0.17/OpenSSL3.0.2 und SystemhelperPython3.10.12,
+RuntimePASS und117/117 TestsOK (0.524s). Negative REFUSED-Meldungen erwartete
+Tests. Kein frischer Imagepull behauptet. Checkout erzeugt standardmäßig
+CI-lokale GitHub-Checkoutschlüssel; deren Inhalt ist nicht im Log, nicht ein
+IONOS-Login. Generierte maskierte CircleCI-OIDC-Variablen sind keine vom
+Betreiber hinterlegten IONOS-Secrets. Identifikatoren/Rohenv nicht publiziert.
+
+**Zweitprüfung:** Bereits beauftragter separater Reviewer las alle Logs und
+queried exactSHAStatus selbst. Immutable-/Runtime-Teilblock für genauSHA
+RESOLVED; vollständiges Criterion6 nicht erfüllt. Kein neuer lokaler Testlauf
+nötig, weil keine Codeänderung und echte117Providerergebnisse vorhanden.
+
+**Offener Nachweis:** tatsächliche Shell/Home/SSH-/Shell-Startupkette bei IONOS.
+Primärquellen recherchiert: IONOS-Hilfe beschreibt SSH/Webspace, kein tatsächliches
+Kontostartverhalten daraus belegbar. GNU-Startupmanual-Webabruf Timeout;
+OpenSSH-sshd-Primärdoku bestätigt mögliche Vorab-RC/Login-Shell-Mechanismen,
+nicht konkrete IONOS-Policy. SFTP nicht als pauschal hookfrei unterstellt.
+Vorbereitete Supportfrage + private lesende Providerdateimanager-Prüfung nur
+wirklich relevanter Dateien als sicherster nächster Nachweisweg dokumentiert.
+Keine Supportnachricht gesendet (nicht beauftragt), kein Login/Hookausführung,
+keine Secrets/Contextpinänderung oder Website-/DB-/Backup-/Deploy-/Merge/Kostenaktion.
+
+**Dokumentation:** Review-/Provenienz-Addendum, neue IONOS-Anfragevorlage,
+Plan/Status/Matrix/JSON und append-only Worklog auf Docsbranch. CodeHEAD behält
+seine bestandene Provider-CI. CP5 unverändert7/10, Kriterien6/8/10offen;
+V1 offen62/71 historisch,M0–M7 0/8,P4 0/4,R0/18,Livealpha.2 zuletzt belegt.
+
+**Log-Integritätswerte (keine Rohlogs):**
+step0 24c1c4f4f6fad13f0566e523ea2124a791c76cf0dac6492b6dffc1ae8a445d3c;
+step99 30433ab769b5fb9bab91808aec2dafe3c66dd37137778828a1a4f819382eb4f8;
+step101 6210e2c8b90e5052788c06cf76b5984fc90c5242f3b10cc179e59231f7c82ec0;
+step102 f32b8543bc9c7234aa822c0c31c8e4d3142329ddf0842541030759ac8294887f;
+step103 9b295bd9285c282f634de02652fb1b1e541623552c374e5bd37d522a7629b4a6;
+step104 f05c41aa331c720c000c74048d4434da7719da1692017ab3e270dcf965f80565.
+
+
+## 2026-10-22 — Betreiber hinterfragt Aufwand; Dreamloud-Vergleich und verhältnismäßige Reviewkorrektur
+
+**Auftrag:** Warum so viele Backupprüfungen, können sie entfallen bzw. Dreamloud
+einszu eins übernommen werden? OrgaVela-Fokus; Dreamloud ausdrücklich als
+read-only Vorlage konsultiert, nicht geändert/als Testumgebung benutzt.
+
+**Untersuchung:** Dreamloud-main3e1b7dc.../Backupbranch07d4ffb... geprüft.
+Main-CircleCI enthält Offlinepilot, echter Capture liegt im separaten Backupbranch.
+Aktuelle Capture/SSH/RemotePHP/staticDBconfig-Dateien gelesen; Handoff belegt
+historisch echten Ciphertext-Writer/Readbacks/isolationFullRestore, hier keine
+neuen Dreamloud-Betriebs-/Tageslaufprüfungen behauptet. Ein erratener Dateiname
+probe_password_source.py nicht vorhanden; korrekter Import
+probe_circleci_password_source.py danach gelesen. Kein Credentialwert benutzt,
+keine Zugänge/Schlüssel/Vertragskennungen in OrgaVela kopiert.
+
+**Sachliche Neubewertung:** pauschale Forderung nach vollständigem Beweis jeder
+internen IONOS-Startupfunktion war für begrenzte beobachtende Befehle überzogen.
+Separater Reviewer erneut beauftragt, ohne gewünschtes Approval vorzugeben.
+Er revidiert selbst seine Vorbedingung und erteilt APPROVED für festen
+Metadatenbefehl/c952645.../Script7d8e383c... unter normalem transparentem
+Managed-IONOS-Infrastrukturvertrauen. Kein Hookinspektionsnachweis erfunden,
+keine Garantie absolut nebenwirkungsfreier Server. Konkrete Hinweise auf
+Sitecode/Writes/abweichendes Verhalten bleiben Stopgrund.
+Erforderliche Klarstellung zu PGP05_STARTUP_REVIEWED ausdrücklich dokumentiert;
+Sicherheitsgrenzen wie exakter Hostpin, Source-SHA, getrennte Contexts/Secrets,
+begrenzteAusgabe/Zeit, keinrequestedPHP/SQL/WP/Writes bleiben unverändert.
+Keine zusätzliche pauschale Benutzerfreigabe nötig.
+
+**Ergebnis/Änderung:** Neue Entscheidung
+PGP05_DREAMLOUD_REUSE_AND_BOUNDED_METADATA_DECISION_20261022.md, exakter neuer
+Scope PGP05-SSH-20261022.2. Guide/Review/Plan/Status/Matrix/JSON supersedieren
+zwingende Startup-Supportpflicht, alte Supportvorlage als optionale Diagnose
+gekennzeichnet. Damit formal CP5-Kriterium6 erfüllt und CP5 **8/10**, #8/#10 offen.
+CodeSHA mit117ProviderTests unverändert, keine sinnlose Wiederholungs-CI.
+Die technisch proportionale Reviewrevision wird offen von echter neuer
+Serverevidenz unterschieden.
+
+**Weiterer Plan:** Dreamloud-Architektur wiederverwenden (Source→Publickey-
+Encryption→getrennterWriter→Readbacks→isolierterRestore), nur OrgaVela-
+Werte/Quelle/Schlüssel/Repository/Tabellenregeln. Dreamloud-PHP-/Wartungscapture
+überschreitet derzeitigen statischen Checkscope und wird nicht vorgezogen.
+Nächste echte Betreiberaktion: leeren eigenen Metadata-Context auf genauSHA/
+Projekt beschränken und Restrictions zeigen, noch keine Credentials/Approval.
+Supportanfrage entfällt als normaler Haltepunkt. Kein Produktionsbackup,
+Kontaktversand, Login, Contextänderung, Merge, Deployment oder Kauf ausgeführt.
+V1 unverändert offen62/71 historisch,M0–M7 0/8,P4 0/4,R0/18,alpha.2 zuletzt belegt.
+
+
+## 2026-10-22 — Fortsetzung: leeren Metadata-Context konkret vorbereiten
+
+**Auftrag:** Betreiber »okay mache das« zur vereinfachten Dreamloud-Vorlage und
+zum nächsten eigenen Metadaten-Context. Scope W0/O01/O03,#27/Draft32.
+GitHub erneut: CodeHEADc952645000b2954c04f1c0446c333392048065e6 unverändert,
+CircleCIoffline-security44success; DocsHEAD8cadf3aa8ba4ebec48118adace5c19fc15a7f634.
+Reviewrevision PGP05-SSH-20261022.2 bleibt maßgeblich; keine IONOS-Supportpflicht.
+
+**Ausführung/Ergebnis:** Vorhandene Werkzeugfähigkeiten geprüft: kein direkter
+CircleCI-Context-Verwaltungszugriff. Keine Credentials/Token angefordert oder
+alternative Browserautomatisierung benutzt. Vorbereitete exakte Anleitung
+im Entscheidungsdokument gilt: neuer separater orgavela-pgp05-reviewed-metadata,
+Projectrestriction ausschließlich Projekt-Wordpress-Plugin, Owner/Repo/
+Featurebranch/exakte c952645SHA gebunden, SSH-Rerun/API-Config ausgeschlossen.
+Betreiber erstellt/speichert zunächst leer und zeigt nur Restrictions, damit
+Zugangsweg vor Credentialinjektion konkret überprüfbar ist.
+Kein Context tatsächlich vom Assistenten angelegt, keine Variablen/Passwords
+eingetragen, kein Pipeline-/Approval-/SSH-/Backup-/Deploy-/Merge-/Kaufstart.
+
+**Validierung/Grenzen:** Dokumentationsfortsetzung, keine Codeänderung; vorhandene
+117/117 ProviderTests ausreichend, keine Wiederholungsprüfung erfunden.
+CP5 unverändert8/10 (80%), Kriterium8 authentisierte Konto/Namespace/Domainbindung
+und10 akzeptierter tatsächlicher Metadatenlauf offen.
+V1 unverändert offen62/71 historisch,M0–M7 0/8,P4 0/4,R0/18,Livealpha.2 zuletzt
+belegt; PR32 Draft/ungemergt. Nächster realer Schritt benötigt Betreiber-UI.
+
+
+## 2026-10-22 — leerer Metadata-Context mit exakter Restriction per Screenshot bestätigt
+
+**Eingang:** Betreiberanhang image(20261022-090441).png trotz vorgeschalteter
+Dateifehlermeldung lokal erfolgreich visuell gelesen. Keine Library-Abfrage,
+keine Bildänderung/öffentliche Rohaufnahme oder Context-ID übernommen.
+W0/O01/O03,#27/Draft32; freigegebene Scopekorrektur PGP05-SSH-20261022.2 gilt.
+
+**Screenshot:** orgavela-pgp05-reviewed-metadata vorhanden, Environment variables
+leer; Group All members (Mitgliederbestand nicht unabhängig geprüft),
+Projectrestriction nur Projekt-Wordpress-Plugin. Gespeicherte Expression:
+Owner/Repo korrekt, feat/pgp05-readonly-ssh-metadata-check-20261021 und vollständige
+c952645000b2954c04f1c0446c333392048065e6, notjob.ssh.enabled und Ausschluss
+api-Konfigurationsquelle. Erwartete UI-Konfiguration bestanden, keine technische
+Negativ-/API-Erzwingungsprüfung behauptet.
+
+**GitHub:** PRHEAD weiterhin exaktc952645..., Draft; OfflineCircleCI44success.
+DocsHEADa7ad41d2... frisch bestätigt. Code unverändert, kein Test/Rerun nötig.
+
+**Nächster Betreiberpunkt:** genau9 Felder direkt in geprüftem Context eingeben:
+PGP05_SSH_HOST, PGP05_APPROVED_SHA, PGP05_ZERO_COST_CONFIRMED,
+PGP05_SSH_USER, PGP05_SSH_PASSWORD, PGP05_WP_ROOT,
+PGP05_REMOTE_SHA256, PGP05_STARTUP_REVIEWED, PGP05_METADATA_REVIEW_REF.
+Private Host/User/Passwort/Rootwerte werden nicht in öffentliches Journal kopiert;
+keine private Keys oder DBwerte. SHA/Script-Hash/Revisionsentscheidung konkret
+vorgegeben, Reviewreferenz #27 issuecomment6336878589 dokumentiert das tatsächlich
+revidierte unabhängige Approval. STARTUP_REVIEWED verweist ausdrücklich auf
+akzeptiertes Scope-/Infrastrukturtrustmodell, keine erfundene Hookinspektion.
+Zero-costyes nur im vorhandenen Freekontingent ohne Zusatzkosten.
+Danach ausschließlich Variablennamen/maskierte Werte zeigen; noch keine Pipeline
+oder Approval starten. Assistent trägt keinerlei Credentialwerte ein.
+
+**Stand:** Konfiguration vorbereitender Unterbeleg akzeptiert; CP5 unverändert8/10,
+#8/#10offen. Keine SSHsitzung/Metadata/WordPress/PHP/SQL/Backup/Deploy/Merge/Kauf.
+V1 offen62/71 historisch,M0–M7 0/8,P4 0/4,R0/18,Livealpha.2 zuletztbelegt.
+
+
+## 2026-10-23, Europe/Berlin — neun Metadaten-Contextfelder hinterlegt; Pipelinevorbereitung
+
+**Auftrag/Eingang:** Betreiber »sind alle hinterlegt« plus Screenshot
+image(20261023-062158).png. Lokal visuell gelesen, nicht geändert/öffentlich
+kopiert, kein Libraryzugriff. ContextID/private Wertteile nicht übernommen.
+W0/O01/O03,#27/Draft32; bisherige read-only Freigabe und Reviewrevision
+PGP05-SSH-20261022.2 gelten unverändert.
+
+**UI-Nachweis:** Richtiger Metadata-Context zeigt genau9 erwartete Variablennamen
+(SHA, Reviewref, ScriptHash, Host, Passwort, User, StartupReview, Root, Kostenflag).
+Werte maskiert, sichtbare Konstantensuffixe passend, keine vollständige
+unabhängige Werteverifikation. Betreiber bestätigt Hinterlegung. Projekt-/
+Expression-Restrictions weiterhin sichtbar/konsistent mit vorherigem Vollbeleg.
+Group Allmembers unverändert, keine API-/Mitgliederprüfung behauptet.
+
+**GitHub/Config:** PR32 Draft und HEAD exakt
+c952645000b2954c04f1c0446c333392048065e6. ExaktSHAStatus offline-securitysuccess
+CircleCI44. Configblob2085eb8e2296df0fa97908564de1faffe0931a1c erneut gelesen:
+metadata→offline→approve-pgp05-metadata→pgp05-reviewed-ssh-metadata,
+ausschließlich eigenerMetadataContext und festerFeaturebranch. Kein Codepin/
+Kontext geändert oder Wiederholungstest ohne Anlass.
+
+**Nächste Betreiberaktion:** EINE neue Pipeline im bestehenden OrgaVela-Projekt,
+Config/CheckoutFeaturebranch feat/pgp05-readonly-ssh-metadata-check-20261021,
+Parameter pgp05_ssh_probe=metadata. Commit c952645 muss erscheinen.
+Zuerst Offlinejob, danach wartendes approve-pgp05-metadata zeigen; noch keine
+Freigabe und kein neuerRerun/Contextwechsel. Erst bei gezeigter korrekter
+Pipeline/SHA/Graph folgt explizite Approvalanweisung. TatsächlicherMetadatenjob
+führt ausschließlich festes überprüftes Script unter dokumentiertemProvidertrust
+aus; kein PHP/WP/SQL/Inhaltslesen/Schreiben/Backup/Deployment. Bei REFUSED stoppen,
+keine unreviewte Berechtigungs-/Pfadänderung. Maskierte Passwörter nicht zeigen.
+
+**Status:** Credentials lautBetreiber konfiguriert, keine Werte vomAssistent
+erfasst. Keine neuePipeline/Approval/Login/Backup/Deploy/Merge/Kauf durchAssistent.
+CP5 unverändert8/10 (80%), #8 authentisierte Account/Namespace/Domainbindung und
+#10 tatsächlicher akzeptierterMetadatenlauf offen. V1 offen unverändert62/71
+historisch,M0–M7 0/8,P4 0/4,R0/18; alpha.2 zuletztbelegt, heute nicht neuabgefragt.
+
+
+## 2026-10-23, Europe/Berlin — Metadatenworkflow bereit; konkrete Approvalanweisung
+
+**Eingang:** Betreiber liefert CircleCI-Link zu Workflow
+fdf4dbd8-1501-40fa-94f7-41cdabfa0075 sowie Screenshot. Bild zeigt Dreamloud-
+GitHub-Rulesets, nicht OrgaVela-Pipeline. Keine Dreamloud-Aktion/Regeländerung
+daraus abgeleitet; Bild nicht veröffentlicht oder geändert.
+
+**Unabhängige Verifikation:** GitHub CombinedStatus für
+c952645000b2954c04f1c0446c333392048065e6 zeigt ci/circleci:pgp05-offline-security
+success→https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/45 und
+ci/circleci:pgp05-metadata-one-shot/approve-pgp05-metadata pending,
+targetWorkflowID exakt wie Betreiberlink. PR32HEAD weiterhin c952645...,Draft.
+Damit tatsächlicher neuer Offlineerfolg und wartender geeigneter Approval
+belegt; kein zusätzlicherScreenshot nötig. VollständigerJobGraph nicht über
+CircleCI-API gelesen, Abfolge aus exakt geprüftemConfigblob+GitHubStatuses.
+DocsHEAD77d4df9... unverändert.
+
+**Konkrete zulässige Benutzeraktion:** Nur wartendes approve-pgp05-metadata
+dieses Workflows über Approve job freigeben. Folgender
+pgp05-reviewed-ssh-metadata führt festes freigegebenes stdin-Skript/Hostpin/
+AccountRootMetadaten aus; keine angeforderten PHP/WP/SQL/Inhaltsreads/Writes/
+Backups/Deploys. Vorliegende ausdrückliche Readonly-Freigabe, neun privat
+hinterlegteFelder und Reviewrevision decken genau diesen Schritt.
+Assistent hat Approval nicht geklickt, keine Pipeline gestartet oder Secrets
+gelesen. Ergebnis aus folgendemMetadatenjob senden; beiREFUSED stoppen und
+keine Wiederholung/Scope-/Permissionänderung zum Grünmachen.
+
+**Status:** Noch kein erfolgreicher authentisierter Lauf/Receipt. CP5 bleibt8/10,
+#8 KontoNamespaceDomain und #10 tatsächlicher akzeptierterMetadatenlauf offen;
+productioncapture=false. V1 unverändert offen62/71 historisch,M0–M7 0/8,
+P4 0/4,R0/18,PR32Draft/ungemergt,Livealpha.2 zuletztbelegt. KeineKosten/
+Produktionsbackup-/Deploy-/Merge-/Dreamloud-Aktion durchAssistent.
+
+
+## 2026-10-23, Europe/Berlin — Metadatenjob47 REFUSED; feste Diagnose statt Blindretry
+
+**Auftrag/Eingang:** BetreiberScreenshot image(20261023-062818).png zeigt
+Pipeline539, Offlinegrün/Approvalgrün/Metadatenjobrot, REFUSEDexit78.
+GitHub exactc952645000b2954c04f1c0446c333392048065e6 bestätigt offline45success,
+approvalsuccess und metadata47failure. Keine unmittelbare Ursache/Authentisierung
+oder fehlenderSiteeffekt aus generischerMeldung abgeleitet. Originalbild/Logs/
+Zugangsdaten nicht veröffentlicht, keinRerun/SSH/Contextzugriff ausgeführt.
+
+**Umsetzung:** RefusalJSON mit strikt allowlisted Stages/Reasons, niemals
+Exceptionmessages/argv/env/Rohoutput/Identifier/beliebigeReturncodes.
+Settingsfehler bekommen festeKlassen; Stage ist lokale Versuchsstufe, kein
+Loginbeweis. Transport255 bleibt generischerExit. VorhandeneRemoteprüfungen
+melden stattdessen festeExits81–90; nurbei leerenbeidenStreams auf
+REMOTE_REPORTED_Kategorien abgebildet, nicht als unabhängigeUrsachen gewertet.
+Keine Guards/Commands/Pin-/Deadline-/Output-/Cleanup-/Credentialgrenzen gelockert.
+Keine Pfadsuche oder /home/www/public als SSHnamespace bewiesen.
+Remotehash nun1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58.
+
+**Tests:**121/121 lokale synthetischeTestsPASS(4neueGruppen), shellsyntaxPASS.
+FiktiverPythonprozess stattSSH prüft Remotecodes/255/Unknown/Streamkontamination,
+falscheSettings stoppenvorRunner, Stage-/Secret-/Exceptioncodeleckabwehr.
+Alte Erfolgspfad/Hostpin/strictstderr/Bounds/Timeout/Askpass/NoPHP unverändert.
+SeparaterReviewer zur tatsächlichenDiffnachprüfung beauftragt; kein Approval
+vorweggenommen. Implementierung/Dokukandidat mit SkipCI auf PR32 publiziert,
+neueSHA muss eigensreviewt/Contextgepinnt werden. Keine automatischeProvider-CI.
+
+**Nächste:** nach akzeptiertemReview nur Contextrevision/ApprovedSHA/ScriptHash/
+echteReviewreferenz anpassen, Secrets/Root unverändert; dann EINENEUE metadata-
+Pipeline mit verpflichtender aktueller kontextfreier Offlineprüfung vorApproval.
+Kein alterJob47Retry, keine Sicherheitsregeln zumGrünmachen ändern.
+CP5 unverändert8/10, #8/#10offen; kein tatsächlichererfolgreicherMetadatenbeleg.
+V1 offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,PR32Draft,alpha.2zuletztbelegt;
+keineBackup/Deploy/Merge/Kauf/Dreamloud-Aktion.
+
+**Nachprüfung:** SeparaterPrüfer bestätigte lokalenDiff/121Tests, danach tatsächliche publizierteSHA b31e6cc... und identischeSource/Test/Configblobs; APPROVED im exaktgleichenScope. RealerReviewbeleg #27 issuecomment6358998616, keine menschlicheApprovalbehauptung. AlteContextpins nicht geändert, geplanter neuerVersuch benötigt Betreiberupdate+neueProviderOfflineprüfung. Kein Ereignis aus neuenDiagnosecodes rückwirkendJob47 zugeschrieben.
+
+
+## 2026-10-23, Europe/Berlin — Diagnosekandidat im Metadata-Context nachgepinnt
+
+**Eingang:** BetreiberScreenshot image(20261023-063748).png lokal gelesen,
+nicht verändert/öffentlich kopiert; ContextID/privateSuffixe nicht dokumentiert.
+W0/O01/O03,#27/Draft32. Richtiger separaterMetadataContext mit9Feldern,
+Projectrestriction unverändertnurProjekt-Wordpress-Plugin. Gespeicherte
+Expression bindet vollständige neueSHA b31e6cc0684593cca63d493ba0f56dd562e11f53,
+richtigenOwner/Repo/Featurebranch, notSSH und notapi-Konfig. Drei geänderte
+Variablen(APPROVED_SHA,REMOTE_SHA256,REVIEW_REF) haben passende sichtbare
+Konstantensuffixe und neue Änderungszeit; volle Werte bleiben maskiert.
+Keine unabhängige vollständigeWerte-/Mitglieder-/APIprüfung behauptet.
+
+**GitHub:** PRHEAD exaktb31e6cc..., Draft. NeueSHAStatuspending/0Statuses,
+also nochkeine ProviderCI oder neue Live-/Diagnoseausführung. DocsHEAD
+af72e7d8fe7db38a3be56dbd3f5cc5e82f34612b unverändert. AkzeptiertesReview
+#27/6358998616 und121lokaleTests weiter gültig.
+
+**Nächste tatsächliche Benutzeraktion:** eine NEUE Pipeline auf Featurebranch
+feat/pgp05-readonly-ssh-metadata-check-20261021, pgp05_ssh_probe=metadata.
+NeueSHA mussb31e6cc...sein. Auf aktuellen Offlineerfolg und wartendes
+approve-pgp05-metadata warten, Überblick/Link vorApproval zeigen.
+KeinRerun47/keinaltesSHA/nichtvorabapproven. Danach nurfesterDiagnosticScope
+gemäßReview; privateQuelle bleibtunverändert.
+
+**Stand:** Repin-UI-Unterbeleg erledigt, Code unverändert/keine neuenlokalenTests
+oder Provideraktionen durchAssistent. CP5weiter8/10,#8/#10offen.
+KeineSecrets gelesen, keinSSH/Backup/Deploy/Merge/Kauf; productioncapturefalse.
+V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,Livealpha.2zuletztbelegt.
+
+
+## 2026-10-23, Europe/Berlin — neue DiagnoseSHA: Offline48 PASS, Approval wartet
+
+**Eingang:** BetreiberScreenshot image(20261023-064222).png lokal visuell
+gelesen. Zeigt b31e6cc-Commit, richtigenMetadata-Workflow, Offlinejobgrün,
+Approvalwartend, Metadatenjobnochgesperrt. Detailkopf nochRunning (UI-Refresh-
+Zwischenstand); maßgeblicher unabhängigerGitHubStatus auf vollerSHA
+b31e6cc0684593cca63d493ba0f56dd562e11f53 bestätigt Offline48success und
+approve-pgp05-metadata pending→Workflowc2e5132f-384e-4afa-a17f-621eb3024890.
+PRHEADgleich/Draft. KeinEchtmetadatenerfolgbehauptet; neuerProviderOfflinejob
+belegt geändertenCandidate. Einzeltestzählung nicht ausScreenshotgelesen,
+121lokal/inunabhängigerReviewprüfung nachgewiesen.
+
+**Konkrete Benutzeraktion:** ausschließlich approve-pgp05-metadata im NEUEN
+Workflowfreigeben. Danach Ergebnis aus pgp05-reviewed-ssh-metadata senden;
+beiREFUSED nur feste Stage/Reason auswerten, keinRerun47/keinBlindRetry.
+Bisheriger Scope/approved script1906f7c.../genaueSHA/Contextbindings bestehen.
+Assistent hat nichts approvt/gestartet und keineCredentials gelesen.
+
+**Dokumentation/Status:** append-onlyLog/JSON auf separatemDocsbranch,
+Source unverändert. CP5weiter8/10,#8/#10offen,productioncapturefalse.
+V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,PR32Draft,Livealpha.2zuletztbelegt.
+KeinePHP/WP/SQL/Site-/Backup-/Deploy-/Merge-/Kosten-/Dreamloud-Aktion.
+
+
+## 2026-10-23, Europe/Berlin — Job50 SSH-Abbruch; private Diagnostik verfeinert
+
+**Auftrag/Eingang:** PGP05 CP5 selbstständig weiterführen; Betreiberbild mit
+REFUSED/stage SSH/reason PROCESS_EXIT ausgewertet. W0/O01/O03, #27/Draft32.
+Unabhängiger GitHub-Status auf b31e6cc0684593cca63d493ba0f56dd562e11f53:
+Offline48 und Approval erfolgreich, Metadata50 failure
+https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/50 .
+Das neue Resultat lokalisiert den Abbruch im SSH-Prozess; Settings und der
+Hostschlüsselkandidat wurden akzeptiert. Authentisierung und Fehlerursache
+bleiben unbekannt. Weder falsches Passwort noch falscher Root bewiesen.
+
+**Änderung:** Nur bounded stderr -> feste SSH_REPORTED_* Diagnosekategorie:
+eng begrenzte vollständige kanonische Bytezeilen, bekannte Exitklassen,
+leeres stdout erforderlich; mehrdeutig/unbekannt bleibt PROCESS_EXIT.
+Keine Rohdiagnose, Matched-Werte oder beliebige Returncodes veröffentlicht.
+AUTH_REFUSED beschreibt eine Meldung, kein bewiesenes Passwortproblem.
+126/127 beweisen weder Login noch Remoteausführung. Erfolg verlangt weiter
+exaktes stdout/leeres stderr. Payload/Befehle/SSHargs/Hostpin/Limits/Einversuch
+unverändert; Remote-SHA256 weiter1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58.
+Keine automatische Wiederholung und keine Änderung an Zugang/Pfad/Rechten.
+
+**Validierung:** 125/125 lokale synthetische Tests PASS; vier zusätzliche Tests
+für feste Kategorien, Mehrdeutigkeit/falscheExitklasse/Übergröße, kanonische
+Zeilen und Geheimnisredaktion. Kein IONOS-Login. Separater beauftragter
+Prüfer prüft tatsächliche Quelldateien unabhängig; Freigabe und Providerlauf
+werden nicht vorweggenommen. Veröffentlichung mit SkipCI, danach Review der
+exakten publizierten SHA und Context-Neupin durch Betreiber erforderlich.
+
+**Status:** CP5 8/10, #8 Account/Namespace/Domainbindung und #10 akzeptierter
+realer Metadatenlauf offen. production_capture_allowed=false. V1 offen,
+62/71 historische Codingpakete, M0–M7 0/8, P4 0/4, R0/18; PR32 Draft,
+alpha.2 zuletzt belegt. Kein Backup/Deploy/Merge/Kauf/Dreamloud-Zugriff.
+
+
+## 2026-10-23 — Job50 eingegrenzt; SSH-Diagnostik unabhängig freigegeben
+Job50 auf b31e6cc0684593cca63d493ba0f56dd562e11f53 meldet
+SSH / PROCESS_EXIT; Offline48 und Approval unabhängig als success bestätigt.
+Settings und Hostkeypin passiert, aber Authentisierung/Ursache unbekannt.
+Kein Passwort-/Pfad-/Rechtewechsel auf Verdacht, kein alter Job-Rerun.
+
+Neuer exakter Code **f5e35ea36b192288920558b783fee2c46c854c18**:
+125/125 lokale synthetische Tests PASS, separat unabhängig wiederholt;
+Prüfer hat publizierte Probe3fd7610d53978f722485f27c2a337beb88deac7d,
+Testsbf4064608f5613d372d41b5dd1e2e1320f0ed8e8 und unveränderte
+Config2085eb8e2296df0fa97908564de1faffe0931a1c nachgeprüft. **APPROVED**
+im unveränderten PGP05-SSH-20261022.2 Scope, keine externe menschliche
+Auditbehauptung. [Exakter Reviewbeleg](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6359237075).
+Nur vollständige kanonische bounded stderr-Zeilen werden festen
+SSH_REPORTED_* Kategorien zugeordnet; leeres stdout/zulässige Exitklasse
+nötig, mehrdeutig/unbekannt generic. Keine Rohtexte/Identifiers/Returncodes.
+Die Kategorie beschreibt gemeldeten Text, keinen bewiesenen Fehlergrund.
+Remote-Skript/SSHargs/Config/Guards unverändert, ScriptSHA256 weiter
+1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58.
+NeueSHA hat noch keine Provider-CI; VorgängerOffline48 ist kein solcher Beleg.
+
+Nächste tatsächliche Betreiberaktion: im vorhandenen MetadataContext nur
+Expressionrevision und PGP05_APPROVED_SHA auf f5e35ea36b192288920558b783fee2c46c854c18,
+PGP05_METADATA_REVIEW_REF auf https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6359237075 setzen.
+ScriptHash und private Settings bleiben unverändert. Dann eine NEUE Pipeline
+auf exakt dem Featurebranch mit pgp05_ssh_probe=metadata; aktueller
+kontextfreier Offlinejob muss vor manueller Approval erfolgreich sein.
+Keine Contextmutation/Liveausführung durch Assistent; keine Secrets gelesen.
+
+**CP5 unverändert8/10 (80%)**, #8 authentisierte Account-/Namespace-/Domainbindung
+und #10 akzeptierter echter Metadatenlauf offen. production_capture_allowed=false.
+V1 offen:62/71 historische Codingpakete, M0–M7 0/8,P4 0/4,R0/18;
+PR32 Draft/unmerged, alpha.2 zuletzt belegt. Kein Backup/Deploy/Merge/Kauf.
+
+
+### 2026-10-23 — abschließender Evidenzabgleich
+Dokumentation30b7c6a331c582c72a4bd7fc8fe5b5da9a6a2784 veröffentlicht und
+JSON bytegleich zurückgelesen. PR32 Beschreibung aktualisiert, Verweiscomment
+6359252123; exakter Reviewbeleg6359237075. Kein neuer Sourcecommit nötig.
+Präzisierung im JSON: zuletzt einzeln gelesene Provider-Testzahl bleibt117
+(Build44); Job48 success belegt, dessen Einzelzahl nicht nachgelesen.
+121 sind Vorgänger-Lokal-/Reviewtests,125 aktuelle unabhängige Lokaltests.
+Keine neue Provider-CI behauptet. Nächste Benutzeraktion drei Contextstellen
+wie Operatorguide, CP5 unverändert8/10; alle übrigen V1-Zähler unverändert.
+
+
+## 2026-10-23, Europe/Berlin — Betreiber benötigt konkrete Context-Schritte
+**Auftrag:** genaue nächste Handlung erklären. Keine neue technische Ausführung.
+Aktueller Sourcekandidat f5e35ea36b192288920558b783fee2c46c854c18,
+125 lokale/unabhängige Tests, Review #27/6359237075, neue Providerprüfung offen.
+Anweisung präzisiert: vorhandenen MetadataContext öffnen, vollständige bisherige
+Expression durch gleich restriktive neue VollSHA-Expression ersetzen;
+PGP05_APPROVED_SHA und PGP05_METADATA_REVIEW_REF aktualisieren. Keine neuen
+Credentials, keine Remotehashänderung. Danach maskierte Übersicht/Expression
+zur Prüfung zeigen; noch kein vorgezogenes Approval. Keine Context-/Liveaktion
+durch Assistenten. CP5 unverändert8/10,#8/#10offen; V1 offen62/71historisch,
+M0–M7 0/8,P4 0/4,R0/18,PR32Draft,alpha.2zuletztbelegt. Kein Backup/Deploy/Merge/Kauf.
+
+
+## 2026-10-23, Europe/Berlin — aktualisierter Metadata-Context screenshotgeprüft
+**Auftrag:** Betreiberbild image(20261023-070934).png prüfen und fortsetzen.
+W0/O01/O03,#27/Draft32. Lokales Bild gelesen, nicht verändert/publiziert.
+Richtiger Context,9maskierte Variablen vorhanden; APPROVED_SHA/REVIEW_REF
+sichtbare Suffixe und Änderungszeiten passen zum neuen freigegebenen Code
+f5e35ea36b192288920558b783fee2c46c854c18 und Review#27/6359237075.
+ScriptHash bleibt unverändert1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58.
+Vollständige gespeicherte Expression bindet richtigenOwner/Repo/Featurebranch/
+VollSHA mit notSSH/notapi-Konfig; Projectrestriction nur diesesRepository.
+Keine unabhängige Readbackprüfung vollständigermaskierterWerte/Mitglieder
+behauptet. KeineSecrets öffentlich protokolliert.
+
+**GitHub-Abgleich:** PR32HEAD exaktf5e35ea...,Draft; aktuelleSHApending/0Statuses.
+Also noch keineProviderprüfung/Metadatenausführung auf neuerSHA.125lokale und
+unabhängigeTests plus exakteSourcefreigabe bleiben separateNachweise.
+**Nächste echteBenutzeraktion:** NEUEPipeline auf
+feat/pgp05-readonly-ssh-metadata-check-20261021, pgp05_ssh_probe=metadata.
+Danach Workflowübersicht/Link zeigen; erstaktuellerOfflineerfolg/exakteSHA
+vor manualapprove-pgp05-metadata. KeinRerun50/keinVorabapproval.
+
+**Umsetzung:** append-onlyArbeitslog und JSON aufDokubranche aktualisiert;
+Source/Context/Website nicht durchAssistent verändert. CP5 unverändert8/10,
+#8/#10offen,productioncapturefalse. V1offen62/71historisch,M0–M7 0/8,P4 0/4,
+R0/18,PR32Draft,Livealpha.2zuletztbelegt. KeinBackup/Deploy/Merge/Kauf.
+
+
+## 2026-10-23, Europe/Berlin — Pipeline541/Offline51 PASS, Freigabe wartet
+**Auftrag/Eingang:** BetreiberScreenshot image(20261023-071616).png auswerten.
+Lokales Bild zeigt richtigePipeline541/f5e35ea,pgp05-metadata-one-shot,
+Offlinejobgrün26s,approve-pgp05-metadata wartet,SSHjobnachgelagert blockiert.
+UnabhängigerGitHub-Abgleich bestätigt exakte volleSourceSHA
+f5e35ea36b192288920558b783fee2c46c854c18,PR32Draft/HEADgleich,
+Offline51success https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/51
+und Approvalpending im Workflow19ed1187-0f2c-46cf-849e-a2782daa1716.
+EinzelneProviderTestzahl nichtausScreenshotnachgelesen;125lokale/unabhängige
+Tests bleiben separaterBeleg. NeuerSourceProviderOfflinegate jetztbestanden.
+
+**NächsteBenutzeraktion:** ausschließlichapprove-pgp05-metadata in dieser
+neuenPipeline541 freigeben; danach Ergebnisvonpgp05-reviewed-ssh-metadata
+zeigen. BeiREFUSED nurfeste stage/reason auswerten, keineRohlogs/Credentials.
+Ein begrenzter freigegebenerVersuch mit gleichemScriptHash/Contextscope;
+keinRerun50,keineZugang-/Root-/Rechteänderung. KeinLiveerfolgvorweggenommen.
+Assistent hat nichts gestarten/approvt,keineSecrets gelesen oderSitegeändert.
+
+**Dokumentation:** Log/JSON fortgeführt; Source unverändert. CP5weiter8/10,
+#8Account-/Namespace-/Domainbindung und#10 akzeptierterMetadatenlauf offen;
+productioncapturefalse. V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,
+PR32Draft,alpha.2zuletztbelegt. KeinBackup/Deploy/Merge/Kauf/Dreamloud.
+
+
+## 2026-10-23, Europe/Berlin — Zielklärung; Job53 weiterhin unspezifisch verweigert
+**Auftrag:** Betreiber fragt nach aktuellem Ziel, neuerScreenshot
+image(20261023-071756).png. Zielverständlich erklärt: eigenständige zuverlässige
+verschlüsselte/offsite/wiederherstellbareOrgaVelaBackups, später automatisiert
+ohne lokalenPC. Aktueller engbegrenzterZwischenschritt ist ausschließlich
+bestehendenSSH-Zugang und richtigenAccount/Webroot an OrgaVela binden,
+mit Hostpin und festen Dateisystem-Metadatenprüfungen ohne WP/PHP/SQL/
+Dateiinhalte. Noch keineSicherung/Produktivfreigabe.
+
+**Beleg:** ScreenshotPipeline541 zeigt MetadataREFUSED/stageSSH/reasonPROCESS_EXIT.
+GitHub bestätigt auf vollerSHAf5e35ea36b192288920558b783fee2c46c854c18
+Offline51success,Approvalsuccess,Metadata53failure:
+https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/53 .
+Die neueengereDiagnose liefert hier keine zusätzlicheFehlerkategorie;
+Ursache/Login/erreichteRemoteprüfung bleiben unbekannt. Nichtalsfalsches
+Passwort/falscherPfad darstellen. Kein weitererBlindretry/neuerSHAwechsel
+oderneueBetreiberarbeit alleinfürkosmetischeDiagnosen. Zuerst verbleibenden
+SSH-Prozessfehler gezielt eingrenzen, Sicherheitsgrenzen beibehalten.
+
+**Umsetzung:** nurLog/JSONfortgeführt,keineCode-/Context-/Liveänderung.
+CP5weiter8/10,#8authentisierteAccount/Namespace/Domainbindung,#10erfolgreicher
+akzeptierterMetadatenlauf offen;productioncapturefalse. V1offen62/71historisch,
+M0–M7 0/8,P4 0/4,R0/18,PR32Draft,alpha.2zuletztbelegt.
+KeinBackup/Deploy/Merge/Kauf/Dreamloudzugriff; keineCredentialsveröffentlicht.
+
+
+## 2026-10-23, Europe/Berlin — Betreiber verlangt tatsächliche Dreamloud-Übernahme
+**Auftrag:** SSH-Zweck erklären, unnötigen Sonderweg beenden, funktionierende
+Dreamloud-Backupimplementierung für OrgaVela verwenden. W0/O01/O03,#27/Draft32.
+Bisherige reineArchitekturentscheidung vom22.10. nicht als vollständigePortierung
+ausgeben. Keine neuenprivatenWerte/Liveaktionen/Käufe autorisationsfrei erfinden.
+
+**Verifizierte Vorlage:** Dreamloud backup/production-circleci weiterhin exakt
+07d4ffbcc3c6d70f0716fda070050d6532a69df6. Issue434 aktuell8/8abgenommen,
+Tagescapture1139/writer1141/immutableRelease421379530 dort dokumentiert;
+kein neuerDownload/Restore/Dreamloud-Serverzugriff durch diesen Auftrag.
+Tatsächlich gelesen .circleci/config.yml, scripts/probe_circleci_password_source.py,
+scripts/capture_quiesced_circleci.py. Dreamloud nutzt bereits Passwort-Askpass,
+Hostpin, getrennteCapture-/Writercontexts, Verschlüsselung/Readback/Restore.
+SSH ist der dort verwendete Servertransport, kein zusätzlichesOrgaVelaProdukt.
+Der OrgaVela-Sonderwrapper/env+stdin ist keine allgemeineBackupvorbedingung.
+
+**Tatsächliche Änderung:** InitialeSSH-Metadatenübertragung folgt jetzt Dreamlouds
+festem direktemSSH-command statt extraabsolutemenv-/bin/sh-Wrapper+stdin.
+Nur validierte/gequoteteRoot/Userparameter vor unverändertem festemMetadataBody;
+kein beliebigerBefehl,keinePfadsuche/PHP/SQL/Writes. PrivateArgumente nichtloggen.
+ProviderverwaltetePOSIX-Shell und Umgebungsverhalten sind dabei ausdrücklich
+Teil desselbenInfrastrukturvertrauens; inkompatibleShell verweigert,keinFallback.
+Passwortisolation/Pin/Context-/Sourcebindung/Einversuch/Bounds/strikterErfolg
+bleiben. BodySHA1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58
+unverändert. KeineBehauptung,Wrapper sei bewieseneUrsache derJobs50/53.
+
+**Tests:**127/127lokaleSynthetikPASS. NeueTests führen den tatsächlichen
+konstruiertenBefehl mitfiktiverWPForm lokal aus; korrekterErfolg,Configmode,
+zusätzlichesMUfile/fehlendeDatei verweigert; Shellfragmentinjektion abgelehnt.
+SeparatesReview der realenImplementierung vorFreigabe; keinProviderlauf behauptet.
+
+**Grenze:** Dies portiert dasTransportmuster, nichtschon den gesamtenProducer.
+WeitereArbeit soll bestehendeDreamloud-Capture/Writer/Restorekomponenten mit
+eigenemOrgaVelaKey/Quellscope/Tabellenerwartung/Zielrepo adaptieren; keine
+Neuerfindung/WeitergabevonDreamloud-Zugängen. Ein spätererProduktionscollector
+mitWartung/DBsperren gehört nichtinaktuellenReadonly-Metadatenlauf.
+CP5weiter8/10,#8/#10offen,productioncapturefalse. V1offen62/71historisch,
+M0–M7 0/8,P4 0/4,R0/18,PR32Draft,alpha.2zuletztbelegt. KeinBackup/Deploy/Merge.
+
+
+## 2026-10-23 — tatsächliche Dreamloud-Transportübernahme statt weiterer Sonderdiagnose
+Der Betreiber verlangt erneut die vorhandene funktionierendeDreamloud-Lösung.
+Die frühere reineÜbernahmeplanung wird nicht als fertigePortierung gewertet.
+AktuelleVorlage backup/production-circleci07d4ffbcc3c6d70f0716fda070050d6532a69df6;
+DreamloudIssue434 weist jetzt8/8Abnahme und Tagescapture1139/writer1141 aus.
+DortigerSSH-Transport wird benötigt, um QuellDateien/DB aufIONOSzu sichern.
+EigeneOrgaVelaStartup-/Wrapper-/Diagnosekonstruktion ist keineallgemeinePflicht.
+
+**Umgesetzt auf Source 8c4b445ea5dced969f63b0f30e0e371342f64680:** initiale festeMetadata-Anweisung direkt als
+SSH-command wieDreamloudsprobe_circleci_password_source.py; kein extraabsolutes
+env-/bin/sh-Wrapper, kein stdinInterpreter. Validierte/gequoteteParameter vor
+identischemMetadataBody. TatsächlicheSammlung/Guards/SSHoptionen unverändert.
+PrivateSSHargv/Root/User undRohoutput nichtloggen. ManagedPOSIX-Shell/Environment
+explizitvertrauenswürdigangenommen; inkompatibleShell verweigert ohneFallback.
+Dies ist keineBeobachtungallerStartuphooks und keinBeweis fürhistorischeFehlerursache.
+BodyHash1906f7c716d32983f2f0e412449c929f4d92ccedd27cb8716c485e5483d12c58
+bleibt; gesamteBuilder/Transportidentität ist durch neueSourceSHA gebunden.
+
+**127/127lokaleTests PASS, separatwiederholt; exaktepublizierteBlobs geprüft,
+APPROVED.** [Review](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6359766814),
+[Implementierung/Abgrenzung](PGP05_DREAMLOUD_TRANSPORT_REUSE_20261023.md).
+NeueSourcehatnochkeineProviderCI und keinenLiveerfolg. Die historischgrüne
+Offline51prüfung gilt fürf5e35ea, nichtfürneueSHA. KeineautomatischePipeline.
+
+**WeitererÜbernahmepfad:** vorhandeneCapture/PublicKeyVerschlüsselung/separater
+CiphertextWriter/ImmutableReadbacks/isolierterWPMariaDBRestore ausDreamloud
+adaptieren; bestehendeOrgaVelaPGP04-Nachweise weiterverwenden. EigeneQuellidentität,
+Tabellenerwartungen,PGPonyEmpfänger und orgavela-backups bleiben getrennt.
+VollständigerProduktionscollector ist nochNICHTportiert/ausgeführt. PHP/DBlocks/
+Wartung erst in späterer getrenntgegateterCapturephase, nicht im aktuellen
+readonlyCheck. KeineneuenpauschalenStartup-Anforderungen/Blindrerruns.
+
+NächsterkonkreterTest benötigtContextrevision+PGP05_APPROVED_SHA auf neueSHA
+und PGP05_METADATA_REVIEW_REF aufobigesReview; RemoteBodyHash/privateWertegleich.
+Dann neueexakteFeaturebranch-MetadataPipeline, aktuelleOfflineprüfung vorApproval.
+CP5unverändert8/10,#8/#10offen,productioncapturefalse. V1offen62/71historisch,
+M0–M7 0/8,P4 0/4,R0/18;PR32Draft,alpha.2zuletztbelegt. KeineDreamloudÄnderung,
+keineSite-/Backup-/Deploy-/Merge-/Kostenaktion.
+
+
+## 2026-10-23, Europe/Berlin — Fortsetzung mit übernommenem Dreamloud-Transport
+**Auftrag:** weiterarbeiten. GitHub bestätigt PR32Draft/HEAD
+8c4b445ea5dced969f63b0f30e0e371342f64680; tatsächliches akzeptiertesReview
+#27/6359766814 vorhanden. AktuelleSHAhat0Providerstatuses/pending, keinLivebeleg.
+KeineSourceänderung/neuenTests nötig;127lokale/unabhängigeTests sind dokumentiert.
+
+**Tatsächlich nötige Benutzeraktion:** bestehenderMetadataContext benötigt
+neueVollSHA inExpression und PGP05_APPROVED_SHA sowieReviewRef6359766814.
+GleicherRemoteBodyHash/privateCredentials,keinneuerContext/Passwortwechsel.
+KopierfertigeExpression/Variablenwerte erläutert; danach gespeicherteExpression
+und maskierteÜbersicht zeigen, nochkeinePipeline/manuelleApproval. DieseBindung
+ist fürdenneuenCode nötig; alteJobsnichtwiederholen. KeineerneuteAllgemeinfreigabe
+gefordert. AssistentkannContext nichtüberGitHubändern,keinCloudbrowser genutzt.
+
+**Stand:** CP5weiter8/10,#8/#10offen,productioncapturefalse. V1offen62/71historisch,
+M0–M7 0/8,P4 0/4,R0/18; PR32Draft,alpha.2zuletztbelegt. NächsterSchritt:
+Contextabgleich,dannneuekontextfreieProviderprüfungvorGatefreigabe.
+KeinBackup/Deploy/Merge/Kauf/Dreamloudzugriff.
+
+
+## 2026-10-23, Europe/Berlin — Dreamloud-Transport-Context nachgepinnt
+**Auftrag/Eingang:** Screenshotimage(20261023-073308).png prüfen/fortsetzen.
+Lokal gelesen,keineVeröffentlichung. RichtigerMetadataContext mit9maskierten
+Variablen; APPROVED_SHA/REVIEW_REF sichtbareSuffixe/Änderungszeiten passen
+zuSource8c4b445ea5dced969f63b0f30e0e371342f64680/Review6359766814.
+GespeichertevolleExpression bindet richtigenOwner/Repo/Featurebranch/neueSHA,
+notSSH/notapi-Konfig;Projectrestriction ausschließlichProjekt-Wordpress-Plugin.
+ScriptHash/privateWerte unverändert. VollständigeMaskierteWerte/Mitglieder
+nichtunabhängigverifiziert; keineSecrets/privateKennungen protokolliert.
+
+**GitHub:** PR32exakteHEADgleich/Draft; neueSHApending/0Statuses, also nochkeine
+Providerprüfung/Liveausführung.127lokale/separatwiederholteTests undexakte
+Sourcefreigabe weiterhinbelegt. Kein neuerSourcecommit/unnötigeTests.
+**NächsteBetreiberaktion:** NEUEPipeline aufFeaturebranch mit
+pgp05_ssh_probe=metadata starten. RichtigeSHA8c4b445...,aktuellerOfflineerfolg
+undwartendesapprove-pgp05-metadata zeigen, nochkeineFreigabe. KeinRerun53.
+
+**Umsetzung/Status:** append-onlyLog/JSON aktualisiert,keineContext-/Siteaktion
+durchAssistent. CP5weiter8/10,#8/#10offen,productioncapturefalse. V1offen
+62/71historisch,M0–M7 0/8,P4 0/4,R0/18;PR32Draft,alpha.2zuletztbelegt.
+KeineSSH-/PHP-/SQL-/Backup-/Deploy-/Merge-/Kosten-/Dreamloudaktion.
+
+
+## 2026-10-23, Europe/Berlin — Dreamloud-Transport Pipeline542/Offline54 PASS
+**Auftrag/Eingang:** Screenshotimage(20261023-073732).png prüfen/fortsetzen.
+Zeigt neuePipeline542,Source8c4b445,richtigenmetadata-one-shotWorkflow,
+Offlinejobgrün4s,approve-pgp05-metadata wartet,SSHjobnachgelagert gesperrt.
+GitHub unabhängig: PR32Draft/volleHEAD8c4b445ea5dced969f63b0f30e0e371342f64680;
+Offline54success https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/54 ;
+Approvalpending Workflowb97d93e3-802e-466d-9124-89a73a553314.
+AktuelleSourceProviderOfflinegatebestanden; EinzeltestzahlnichtimBildgelesen,
+127lokale/separatwiederholteTests bleiben gesonderterBeleg. KeineLivebehauptung.
+
+**Nächste tatsächlicheBenutzeraktion:** ausschließlichapprove-pgp05-metadata
+in dieserneuenPipeline542 freigeben; danachResultatvonpgp05-reviewed-ssh-metadata
+zeigen. BeiREFUSEDnur festeStage/Reason,nichtRohlogs/Credentials. Einbestehender
+begrenztfreigegebenerVersuch,keinalterJob53rerun/keinZugang-/Root-/Rechtewechsel.
+AssistenthatkeinenWorkflowgestartet/approvt undkeineSecretsgelesen.
+
+**Dokumentation/Stand:** append-onlyLog/JSON,Sourcegleich. CP5weiter8/10,
+#8authentisierteAccount/Namespace/Domainbindung/#10akzeptierterMetadatenlauf
+offen,productioncapturefalse. V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,
+PR32Draft,Livealpha.2zuletztbelegt. KeinBackup/Deploy/Merge/Kauf/Dreamloudaktion.
+
+
+## 2026-10-23, Europe/Berlin — Betreiber meldet grünen SSH-Metadatenlauf
+Auftrag: Ergebnisimage(20261023-074040).png prüfen und CP5 fortführen.
+Bild lokal gelesen, GitHubstatus unabhängig abgeglichen, NormativeGatekriterien
+undvorhandeneDomain-/Pfadnachweise erneut ausgewertet. KeinCode-/Livezugriff.
+
+
+## 2026-10-23 — tatsächlicher Metadatenlauf PASS; CP5 9/10
+**Neue verbindlicheEvidenz:** Pipeline542,Source8c4b445ea5dced969f63b0f30e0e371342f64680,
+Workflowb97d93e3-802e-466d-9124-89a73a553314. GitHub unabhängig bestätigt
+Offline54/Approval/Metadata56 alle success:
+https://circleci.com/gh/janjrre/Projekt-Wordpress-Plugin/56 .
+BetreiberScreenshotimage(20261023-074040).png lokal gelesen: PASS,
+authenticated_ssh=true,expected_user_and_root_shape_matched=true,
+hostkey_candidate_matches_provider=true. MaskierteSource/Hashwerte nicht
+"zurückgelesen"; Sourcebindung überGitHubStatus+geprüfteImplementierung/Context.
+GenauerErfolg benötigt erfolgreichenboundedSSH-Prozess,exaktesstdout/leeresstderr.
+Providerhostpin jetzt im authentisiertenHandshake genutzt, nichtnurKeyscan.
+
+**UnabhängigeResultatprüfung:** separatbeauftragterPrüfagent las Originalbild
+undexakteGitHubstatuses selbst. Kriterium#10 ausdrücklichACCEPTED im begrenzten
+MetadataScope,keineexterneHuman-Auditbehauptung.
+[Ergebnis-/Reviewbeleg](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6360036292).
+**Checkpoint5 jetzt9/10 (90%), genau#8 offen.** DessenAccount-/Namespace-Teil
+ist bestanden; nuraktuelleDomain->Installation/DocumentRootRelation muss durch
+expliziteProviderUI-Kette komplettiert werden. BisherigeWordPressTarget-/Pfad-
+undWP_HOME/SITEURL-Indizien allein ersetzen dievollständigeKette nicht.
+
+**Einzige verbleibende#8Beobachtung:** IONOS orgavela.com aktuelleVerwendung/Ziel
+ansehen; beiProjekt/Appziel dessenverknüpfteInstallationbiszumWebspacefolder
+verfolgen undprivatmitbereitsgeprüftemRoot vergleichen. ZusammenhängendeUI-Kette
+reicht,keineEinbild-LiteralRootpflicht/Providerbrief/neuerSSH-/PHP-/WP-Lauf.
+Nichtsverbinden/trennen/speichern/DomainoderDateienändern. Nurrelevante
+redigierteAnsichtteilen; keineCredentials/Kundendaten. OffizielleUI-Hilfe:
+https://www.ionos.de/hilfe/domains/mit-webspace-verbinden/domain-mit-einem-webspace-verzeichnis-verbinden/
+und https://www.ionos.de/hilfe/wordpress/administration-von-wordpress/verbinden-einer-domain-mit-wordpress/ .
+DomainvhostFeldimProbeReceipt bleibtfalse; externeEvidenzkann#8erfüllen,ohne
+historischesReceipt umzudeuten. NachAbschluss temporärenMetadata-Credentialpfad
+bereinigen; nochkeineBereinigungbehauptet.
+
+**Grenzen:** database_connected/php_requested/wordpress_bootstrap_requested,
+server_enforced_readonly_account,startup_hooks_independently_observed_by_probe,
+production_capture_allowed,isolated_restore_proven bleibenfalse.
+FrühereFehlerursache nichtbewiesen; keinweitererRerun nötig. KeinBackup,
+DB-Dump,Restore,Deploy,Merge,ScheduleroderKauf. Dreamloudunverändert.
+V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,PR32Draft,
+alpha.2zuletztbelegt. NachCP5: tatsächlicheCapture-/Writer-/Restoreübernahme
+mitgetrenntenGatesweiterbearbeiten; keinProductionCollectorportvorgegeben.
+
+
+## 2026-10-23, Europe/Berlin — aktuelle Domain zeigt WordPress-Service, Installationskette offen
+**Auftrag/Eingang:** Betreiberbilderimage(20261023-074717).png und074753.png
+prüfen/fortsetzen. Beide lokal gelesen,unverändert/nichtöffentlichkopiert.
+ErstesBild zeigtorgavela.com,VerwendungsartIONOSverwaltet,ZielWordPress,
+passendenHostingprodukttyp. ZweitesBild zeigt@/wwwRecords demWordPressservice
+zugeordnet. KonkreteIP-/TXT-/Vertragskennungenöffentlichnichtnotiert.
+DasbelegtaktuelleDomain->WordPressserviceZuordnung,nichtausgewählteInstallation
+oderFilesystemroot. DNS kann fehlendePfadrelationnichtbeweisen.
+
+**Unabhängig:** beauftragterseparaterPrüferhatbeideOriginalbilder selbstgelesen
+undbestätigtdieseGrenze. BereitsvorhandeneprojektbezogeneExplorer-/Root- und
+SiteHealthbelegeweiterverwenden,nichtnochmalSSHoderRootprüfungfordern.
+NurfehlenderVerknüpfungspunkt: IONOSWebsites/WordPress/OrgaVelaProjektdetails,
+woorgavela.com diesemkonkretenProjekt/Installationzugewiesenist. Dieselbe
+ProjektidentitätmitvorhandenerExplorerRootEvidenzverbinden. KeinDNS-/Domain-
+oderWPsettingändern,keinProviderbrief/Supportcase/neuerSSHlaufnötig.
+
+**GitHub-Abgleich:** volleSource8c4b445ea5dced969f63b0f30e0e371342f64680
+unverändertmitOffline54/Approval/Metadata56alle success. KeineerneutenTests,
+Code/Context/Dreamloud/SiteänderungenoderPipelineaktionen.
+**CP5weiter9/10(90%),genau#8teilweiseoffen**; #10bleibtakzeptiert,
+productioncapturefalse. V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,
+PR32Draft,alpha.2zuletztbelegt. NächsteBetreiberaktionnurProjektzuordnungzeigen.
+KeinBackup/Deploy/Merge/Kauf; CleanupMetadataContextnachCheckpointabschluss
+weiteroffen,nichtfälschlichalsgeschehenausgegeben.
+
+
+## 2026-10-23, Europe/Berlin — letzter Projektbeleg/Checkpointabschluss
+**Auftrag:** neueIONOSProjekteinstellungen075106/075109prüfen,CP5selbstständig
+abschließen. Bilderlokalunverändertgelesen,ursprünglicheKriterien/Belegkette
+abgeglichen,separatenbereitsbeauftragtenReviewerzurAbschlussprüfunghinzugezogen.
+
+
+## 2026-10-23 — PGP05 CHECKPOINT5 ABGESCHLOSSEN: 10/10 (100%)
+**Kriterium#8jetztACCEPTED:** Betreiberbildimage(20261023-075106).png zeigt
+IONOSWeb-ProjektOrgaVela,zugewieseneDomainorgavela.com unddenselbenprivat
+verglichenenHostingvertragwiedieaktuelleDomainansicht074717. ZweitesBild
+075109istnureinwinzigerAusschnitt,keinzusätzlicherNachweis. Separatebeauftragte
+PrüfinstanzhatdasvolleOriginalbild selbstgelesenunddieKombinationsketteabgenommen:
+aktuelleDomain->konkretesProjekt/Installation -> vorherakzeptierteprojektbezogene
+Explorer-/WordPressSiteHealthRootbelege -> authentisierterMetadatenlauf56.
+DasneueBildzeigtdenRootnichtselbst; keinefingierteEinbild-/ProviderAPIprüfung.
+KeineVertragskennungen/privatenPfade/Rohbilderöffentlichübernommen.
+
+[Abschluss-/Reviewbeleg](https://github.com/janjrre/Projekt-Wordpress-Plugin/issues/27#issuecomment-6360194115).
+PrüferistseparaterAgent,keinexternerMenschenaudit. Sourceweiterexakt
+8c4b445ea5dced969f63b0f30e0e371342f64680,PR32Draft/unmerged;
+GitHubbestätigtOffline54/Approval/Metadata56alle success.127lokale/separat
+wiederholteTestsbelegt,keinneuerProviderEinzeltestcountgelesen.
+Kriterium#10bereitsseparatalsausgeführterbegrenzterMetadataCheckakzeptiert.
+
+**Alle10festenKriterienerfüllt,keinoffenesCheckpoint5-Kriterium:**
+1. IONOSProjekt-/DomainUIbelege.
+2. WordPressStruktur/ConfigmodeUIbelege.
+3. 52/52InnoDBTabellen-Metadaten.
+4. MUPluginDateinameninventar.
+5. SynthetischerNoBootstrapScanner/Guards/Tests.
+6. UnabhängigertechnischerScope-/SourceReview.
+7. PR32Implementierung+aktuelleProviderOfflineCI(keinMerge).
+8. Hostpin/authentisiertesKonto/Namespace+separateDomain/Projekt/RootKette.
+9. PrivaterWP-/IONOSDBNamensvergleich(owner-attested).
+10. BetreiberfreigegebenerrealerMetadatenlauf+redigiertergebnis+separateAbnahme.
+
+**Evidenzgrenzen bleiben:** domain_vhost_binding_provenimProbeReceipt=false,
+daProviderrelationexternbelegt; Receiptwirdnichtrückwirkendumgeschrieben.
+server_enforced_readonly_account/startup_hooks_independently_observed_by_probe/
+database_connected/production_capture_allowed/isolated_restore_provenbleibenfalse.
+CP5AbschlussistwederVollbackupportnochBackup-/Deploy-/Merge-/Schedulerfreigabe.
+KeineweitereSSH-/PHP-/WordPress-/SQL-/DateioperationindiesemAbschnitt.
+
+**OperativerNachlauf(keinerfundenes11.Kriterium):** nurPGP05_SSH_PASSWORDaus
+orgavela-pgp05-reviewed-metadataentfernen. KeinIONOSPasswortreset/Keyrotation,
+keineÄnderungandererDeploy-/Backupcontexts. OhnePflichtfeldverweigertder
+Metadatentool-SettingscheckvorNetzwerk; Contextrestriktionenstehenlassen.
+Bereinigungistvorbereitet,nichtdurchgeführt/nichtbestätigt. Danachkeine
+weitereMetadataPipeline. ÜbergangzurvorhandenenDreamloudCapture-/Verschlüsselungs-/
+CiphertextWriter-/Readback-/RestoreübernahmefürOrgaVela,eigeneWerte/Gates.
+Gesamtissue27bleibtoffen,keinProduktivbackup/Restore/Deploy/Merge/Kauf.
+
+V1unverändertoffen:62/71historischeCodingpakete,M0–M7 0/8,P4 0/4,R0/18,
+alpha.2zuletztbelegt. CP5AbnahmeerhöhtkeinenanderenAbnahmezähler.
+
+
+## 2026-10-23, Europe/Berlin — temporäres Metadata-Passwort entfernt, CP5 fertig
+**Auftrag/Eingang:** Screenshotimage(20261023-081238).png alsBereinigungsnachweis
+prüfen. Bildlokalgelesen,nichtverändert/öffentlichkopiert. RichtigerContext
+orgavela-pgp05-reviewed-metadata enthältjetzt8maskierteVariablen;
+PGP05_SSH_PASSWORDfehltundIONOSunabhängigeCircleCI-UIMeldungbestätigt
+explizit"PGP05_SSH_PASSWORD was removed". Projekt-/exakteSourceExpression
+weiter8c4b445ea5dced969f63b0f30e0e371342f64680+SSHrerrun/APIconfigausschluss.
+DasbelegtUIBereinigungdiesesFeldes,nichtAPIprüfung/Accountrotationoder
+andereContexts. KeinePasswortwertegelesen/gespeichert/veröffentlicht.
+OhnePflichtfeldverweigertaktuellgeprüfterCodevorNetzwerk; keinNegativ-Livejob
+zumNachtesten gestartet. KeineweitereMetadataPipeline erforderlich.
+
+**Umsetzung:** append-onlyLog/Completionbericht/JSON aktualisiert; PR32
+Bereinigungsstatusvermerkt,Sourcegleich/Draft. KeineCodeänderung/neuenTests,
+127vorherlokal/separatPASS+ProviderOffline54/realMetadata56bleibenBelege.
+**Checkpoint5weiter10/10(100%),keinoffenesKriteriumundBereinigungsnachlauf
+jetzterledigt.** GesamtPGP05/O03nichtvollständigabgenommen; nochkeinrealer
+BackupCollector/Writer/RestorefürOrgaVelaausgeführt. NächstesPaket: vorhandene
+DreamloudCapture/Verschlüsselung/separaterWriter/Readback/Restore offline
+aufOrgaVelaadaptieren,danachseparateFolgegatesvordererstenRealdatensicherung.
+V1offenunverändert62/71historisch,M0–M7 0/8,P4 0/4,R0/18,PR32Draft,
+alpha.2zuletztbelegt,productioncapturefalse. KeineSite-/Dreamloud-/SSH-/PHP-/
+SQL-/Backup-/Deploy-/Merge-/Scheduler-/KostenaktiondurchAssistent.
+
+
+## 2026-10-23, Europe/Berlin — konkreter Weiterarbeitsplan angefragt
+**Auftrag:** PlanfürweitereArbeitnachCP5erklären. AktuelleGitHubDokubranche
+08b4090a31ea2743bc28d33a2a6937027a3e6ef4,PR32Draft/HEAD8c4b445ea5dced969f63b0f30e0e371342f64680,
+CP510/10undtemporärePasswortbereinigungausJSON/Completionberichtgeprüft.
+KeinenbereitsabgeschlossenenSSH-/Domainnachweiserneutfordern. Bestehende
+DreamloudÜbernahmerichtungbeibehalten; klareErgebnisseundBetreibereingriffe
+aufeinenkonkretengeprüftenEinrichtungspunktbündeln. KeineImplementierung/
+LiveausführungimreinenPlanabschnittbehauptet. Masterplananhang/JSONnext/
+Arbeitsjournalfortgeführt,V1-Zählerunverändert.
+
+
+## 2026-10-23 — Weiterarbeitsplan nach CP5-Abschluss (W0/O03, #27)
+Checkpoint5bleibterledigt10/10inklusiveMetadata-Passwortbereinigung. Jetzt
+bestehendeDreamloudBackupimplementierungübernehmen,keineerneuteIdentitätsrunde.
+1. Offlineportierung: vorhandenenkonsistentenDreamloudWordPress/MariaDBCollector,
+PublicKey-OpenPGPVerschlüsselung,getrenntenCiphertextWriter/Readback/Restore
+aufOrgaVelaadaptieren. EigenerRoot/Tabellenscope/PGPonyPublicRecipient/privatesZiel;
+keineDreamloudCredentialsübernehmen. BereitsakzeptiertePGP04Synthetikverwenden.
+Ergebnis: zusammenhängenderprüfbarerDraftmitklarerCapture-/Writergrenze.
+2. Lokale/synthetischeIntegrationundunabhängigesSicherheitsreview: Snapshotkohärenz,
+Fehlerabbruch/Bereinigung,keineKlartextlogs/-Artifacts,korrekterEmpfänger,
+Ciphertext-onlyÜbergabeundvollständigeDigest-/ByteReadbacksprüfen. Aktuelle
+SourceCIbelegen; ÄnderungenzuerstbündelnvorneuemContextsetup,keineScheinabnahme.
+3. EinmaligeBetriebseinrichtung/ersterrealerTest: konkretgeprüfteSource-/Writer-
+ContextsmitminimalenRechtenfürOrgaVela,WertevomBetreiberdirekteingeben;
+Capture/WartungsfensterundCiphertextveröffentlichungalsseparateFolgegates
+vorersterEchtverarbeitungfreigeben. KeinebestehendenDeployzugängeändern.
+4. TatsächlicheSicherungabnehmen: WordPressDateien+MariaDBkonsistentaufnehmen,
+OpenPGPverschlüsseln,imprivatenorgavela-backupsimmutableveröffentlichen,
+vollständigzurücklesen/hashprüfen. EigeneBackupdatenisoliertinWordPress+MariaDB
+wiederherstellen,Funktions-/DatenintegritätundPGPonyRecoverybelegen; niemals
+ProduktivseiteüberschreibenoderprivatenSchlüsselöffentlichteilen.
+5. ErstnachBackup-/RestoreabnahmeBetriebaktivieren: kostenloserZeitplan,
+Fehlermeldung/unabhängigerFreshnesscheck,RetentionundQuota/Kostenkontrolle,
+Recovery-/Widerrufdokumentation. KeineautomatischeLöschungohnepassendeRegel.
+
+**Aufgabenteilung:** Schritte1/2übernimmtAssistentautonommitGitHubDoku/Code/
+Tests; BetreibermussfürdirekteSecretablageundCircleCIUI-FreigabenbzwOffline-
+PGPonyRecoveryerstbeimkonkretenfertiggeprüftenPunktmitwirken. Aktuellkeine
+BenutzeraktionausdiesemPlanerforderlich. PlanbenenntbereitsbestehendePGP05-
+Folgearbeiten,keineneuenMeilensteineoderunbelegtenFortschrittsprozente.
+Status: Collectorport/ersterrealerOrgaVelaBackup-/Restorelaufweiteroffen,
+production_capture_allowed=false,PR32Draft/unmerged. KeineAusführungdieser
+späterenLive-/Capture-/Writer-/Restore-/ScheduleaktionenbeimPlanauftrag.
+V1offen62/71historisch,M0–M7 0/8,P4 0/4,R0/18,alpha.2zuletztbelegt.
+
+
+## 2026-10-23, Europe/Berlin — Auftrag: DreamloudCollector undBackupkette offlineübernehmen
+**Auftrag:** Betreiber"okay dann mache damit weiter" bestätigt Weiterarbeitsplan
+Schritte1/2: tatsächlichePortierungbestehenderDreamloud-Komponenten, synthetische
+IntegrationundseparatesSicherheitsreview,selbstständigbisBetreiberaktionnötig.
+Ausgang: CP510/10undPasswortcleanupbelegt,PR32Source8c4b445,Draft.
+NeueArbeitW0/O03/#27,keinCP5Wiederaufrollen. BasiskandidatOrgaPR31
+3ca6be16f4c9d8d17ebb8265bbc8e05bb3952c95enthältbereitsakzeptiertePGP04/05-
+Synthetik;metadatenspezifischerPR32bleibtunverändert. Plan: isolierten
+nachgelagertenDraftmitneuenportiertenKomponentenundaktuellerDokumentation.
+DreamloudQuellebackup/production-circleci07d4ffbcc3c6d70f0716fda070050d6532a69df6
+nurlesen,niealsTestumgebungverwenden. EigeneOrgaVelaQuell-/Empfänger-/Zielwerte;
+keineCredentialslesen/kopieren/setzen. KeineLive-/Backup-/Deploy-/Merge-/Schedule-
+oderKostenaktion. PrüfagentfürvombetreiberbestätigtesunabhängigesReview
+fortgesetztbeauftragt. Ergebnisse/FehlerwerdenvorEndecommittet,keineAbnahme
+vorweggenommen. V1-Zählerunverändert62/71historisch,M0–M7 0/8,P4 0/4,R0/18.
+
+
+## 2026-10-23, Europe/Berlin — Weiterarbeit und Chatfortsetzung: Offline-Collector-Draft geprüft
+**Auftrag:** Die bestätigte Dreamloud-Übernahme Schritte 1/2 fortsetzen; neueste
+Nachricht "Continue this chat" als Fortsetzung desselben Auftrags behandelt.
+AGENTS, kanonische Planung/JSON/Status/Matrix/Journal und Issue27 erneut gelesen.
+Ausgang Doku792986ee72b14a6f3737078ea8d7cbbe2a0b1aaf; PR31 weiterhin3ca6be16,
+PR32 weiterhin8c4b445/Draft. Keine abgeschlossenen CP5-Gates wiedereröffnet.
+**Umsetzung:** Neues Paket scripts/ci/production_backup/, contextloser opt-in
+CircleCI-Test und Portierungsbericht. Dreamloud-Referenz07d4ffb ausschließlich
+read-only; eigene OrgaVela-Bindungen/Public-Empfänger/Ziel, keine Credentials.
+Produktive CLIs/PHP/Tokenloader hartdeaktiviert; voller SSH-Snapshottransport
+noch nicht aktiviert/komplettiert. Keine Liveaktion oder vertraulichen Rohdaten.
+**Prüfung:** 16/16 Python, vier PHP-Lints, PHP-Hilfstest, GPG-Public-Integration
+und temporäre In-Memory-Testschlüssel-Decrypt/3-Komponenten-Bytehashprüfung PASS;
+unabhängig separat wiederholt. Assembled PHP exit78/leeresstdout/exaktDisabled.
+YAML lokal geparst; neuer Providerjob noch nicht gestartet/abgenommen.
+**Fehler/Entscheidungen:** apt-setuid/setgroups scheiterte; lokales extrahiertes
+PHP verwendet. GPG-Agent-Socket hier verboten, keine Umgehung: Public-only
+recipient-file/show-keys ohne Agent. PHP anfangs ohne Tokenizer gescheitert,
+explizites Laden korrigierte Laufzeit. Review fand drei P2-Defekte (API-Pfadausbruch,
+DB-/Passwort-Credentialgrenze, uploads-Typ/Ancestor-/Memberlimit), alle behoben
+und regressionsgetestet; separates Agentenurteil APPROVED für Offline-Draft.
+Kein externes Human-Audit/Produktivsignoff. Bericht enthält weitere Beweisgrenzen.
+**Nächster Schritt:** neue exakte Branchrevision einmal in CircleCI ohne
+Context/Secrets mit run_collector_port_tests=true prüfen; nur kostenlose Quote.
+Noch offene Folgegates: vollständiger boundedSSHTransport, Runtimepins, getrennte
+Source-/Writer-Einrichtung und konkrete Erst-Capture/Publish-Freigaben, echte
+Sicherung+immutableReadbacks+isolierterWordPress/MariaDB-Restore, erst dann Betrieb.
+CP5 unverändert10/10, kein fehlendes Kriterium. V1 offen62/71historisch,M0–M7 0/8,
+P4 0/4,R0/18; PR32Draft/unmerged,alpha.2zuletztbelegt. Kein Backup/Deploy/Merge/
+Schedule/Kauf. Veröffentlichungssource/PR/Reviewbelege im nachfolgenden Logeintrag.
+
+---
+
+## 2026-11-04 – W0/O03 PGP-05: Repo-Pin nach Organisationsmigration korrigiert
+
+**Auftrag:** OrgaVela-Entwicklungsarbeiten nach OV-00/W0 fortsetzen, kostenlos verfügbare Tools und Skills verwenden, keine Kosten und keine Sicherheits-/Abnahmeumgehung.
+
+**Ausgangsbeleg:** GitHub-Connector bestätigt `orgavela/orgavela-backups` als `private` mit `push/admin` und Branch `main`. Der `PGP-05`-Offline-Collector im Draft [PR #33](https://github.com/orgavela/Orgavela-Plugin/pull/33) steht auf `0d419c991d75999dd264aba2a912fedf663a1cf0`. `scripts/ci/production_backup/github_api.py` enthielt noch `janjrre/orgavela-backups`. Die Abweichung ist eine technische Fehlkonfiguration der fest eingebauten Writer-Zielbindung; sie rechtfertigt **keine** freie oder dynamische URL-Auswahl.
+
+**Umsetzung ausschließlich in einem gestapelten Fix-Zweig:** `fix/pgp05-backup-repo-pin-20261104` vom exakten PR-#33-HEAD erstellt; Konstante auf `orgavela/orgavela-backups` geändert (Commit `e4ac7e763ebd46c227689da124bce5c904670038`), Regressionstest ergänzt (Commit `d532633094eca2cae49ce6600f8231595190fe82`); separaten datensparsamen Bericht [PGP05_BACKUP_REPOSITORY_PIN_FIX_20261104.md](PGP05_BACKUP_REPOSITORY_PIN_FIX_20261104.md) angelegt (Commit `2e1d980368005f43c6341eaeb59465b669f6ad75`). Die Negativtests verlangen exaktes eigenes privates Repo und verweigern die alte bzw. öffentliche Source-URL **vor** jedem Netzwerkaufruf. Die produktiven Entry Points bleiben absichtlich gesperrt (`Exit 78`).
+
+**Prüfstatus:** Codebezug und harte Zielbindung statisch kontrolliert; **kein** neuer Provider-/Python-/PHP-End-to-End-Lauf auf dem frischen Fix-SHA bestätigt. Teststatus bis zu einem echten Lauf `unverified`, vorherige PR33-Tests nur historisch. Keine produktive SSH-/WP-/DB-Sitzung, keine Secrets, kein Recovery-Key, kein Backup, Upload, Restore, Merge oder kostenpflichtiger Lauf.
+
+**Nächster Nachweis:** synthetische Python/PHP/OpenPGP/Fixture-CI mit **genau** neuem Fix-HEAD und ohne Secrets/Contexts; dann Review und Integration als abhängiger PR in den PGP-05-Stack. W0/O03-/Release-Gates bleiben ausnahmslos offen. V1-Cockpit unverändert: implementiert historisch 62/71, M 0/8, P4 0/4, R 0/18.
+
+
+### 04.11.2026 – PGP-05-Nachtrag: Kostenloser synthetischer CI-Workflow und Draft PR #36
+
+Für den Repository-Pin-Fix wurde [Draft PR #36](https://github.com/orgavela/Orgavela-Plugin/pull/36) mit Basis `feat/pgp05-dreamloud-collector-port-20261023` erstellt. Neu ist die nichtproduktive `.github/workflows/pgp05-offline-regression.yml`: Commit `960520d258f73a6f8dedd0617a7a7b8da0000b71`, Branchfilter auch auf den Quellbranch erweitert per `1592bd6d03cf888c66b401005eb5bb1ecc99c048`. Scope: öffentliches Repository, kostenloser Standard-Ubuntu-Runner, nur `contents: read`, SHA-pinned Checkout ohne Credentials, keine Secrets, keine Artifacts, keine Releases oder Real-Site-Calls. 12-Minuten-Timeout, synthetische Python-, PHP-, Paket-, OpenPGP- und temporäre Schlüsseltests sowie fail-closed Repo-/Entry-Point-Prüfung.
+
+**CI-Abnahmegrenze:** Abfragen der verfügbaren GitHub-Integration liefern für die bisher beobachteten neuen Commit-SHAs keine PR-getriggerten Workflowläufe oder Commit-Statuskontexte; der API-Leseweg deckt Push-Workflowläufe nicht vollständig ab. **Deshalb kein neuer Provider-PASS behauptet.** Bericht [PGP05_BACKUP_REPOSITORY_PIN_FIX_20261104.md](PGP05_BACKUP_REPOSITORY_PIN_FIX_20261104.md) um die genaue Gating-Situation ergänzt, Commit `e380a3bf0b4ecca92a17595ad5c085f88ca14ca4`. Keine reale Backup-/Restore-, SSH-/DB-, GitHub-Release-, IONOS-/Dreamloud-Aktion. V1-Zähler unverändert.
+
+
+**GitHub-Abnahmehinweis / Projektkommunikation, 04.11.2026:** Im bestehenden [PGP-05-Master-Issue #27](https://github.com/orgavela/Orgavela-Plugin/issues/27#issuecomment-6625404763) wurde die Quellursache, der abhängige [Draft PR #36](https://github.com/orgavela/Orgavela-Plugin/pull/36), die weiterhin deaktivierten Produktionspfade und der **noch unbelegte** neue CI-Test ausdrücklich gemeldet. Keine formale Freigabe oder Merge damit behauptet.
+
+
+### 04.11.2026 – PGP-05: Erster echter Offline-GitHub-CI-Lauf auf fixiertem SHA bestanden
+
+[Actions #41793866237](https://github.com/orgavela/Orgavela-Plugin/actions/runs/41793866237) exakt auf Commit `3b123b612e1b51eb2b1c33611fb044becdada441`: Job `isolated-fixtures` (`126453253125`) **success**, alle Schritte erfolgreich. Joblog separat ausgelesen: 4 PHP-Syntaxprüfungen, PHP-Hilfstests, **17/17** Python-Tests inklusive neuer Repository-Pin-Regression, synthetisches verschlüsseltes 3-Asset-Handoff und temporärer Schlüssel-Roundtrip mit 3 Hash-/Byte-Gegenprüfungen PASS; Produktions-Capture/Writer bleiben **DISABLED**, `remote_calls=0`, `actual_site_restore_tested=false`. **Nur Offline-Evidenz**, keine W0/PGP05-/V1-Live-Abnahme. Einziger Wartungshinweis: Checkout@v4 (Node20) wird vom Runner auf Node24 erzwungen; die upstream-verifizierte Checkout-v7.0.1-SHA `3d3c42e5aac5ba805825da76410c181273ba90b1` wird im nächsten CI-Fix übernommen und erneut getesteten HEAD liefern. Nach der Dokumentationsänderung ist der erste PASS ein früherer SHA und wird nicht als finale Folge-HEAD-Abnahme ausgegeben.
+
+## 2026-11-06 – O03/PGP05: Codex implementiert bounded Capture und getrennten Restore
+
+Auftrag „ja mache das“ zur Vervollständigung von Sicherung/Restore vor dauerhaftem Testbetrieb angenommen. AGENTS, aktuelle OrgaVela-Freigabe/Inventur (4cd3a23), kanonische Planquellen und vorhandene PGP05-Code-/Reviewbelege geprüft. Neuer abhängiger Branch feat/o03-bounded-capture-restore-20261106 ab PR36-HEAD c3520433; dessen abhängige Parentkette bleibt bestehen. Feature-Development- und Cloud-Runtime-Skill angewandt; optionale Python-Sprachreferenz nicht verfügbar. Keine Dreamloud-Verbindung.
+
+Implementiert: transport.py (bounded tatsächlicher SSH-Prozess, private exklusive Snapshotdatei, Pin/Deadline/Diagnoselimit/Cleanup, explizite Wartung und PHP8.3.36-Gate), capture_cli.py (trusted-main/exakteSHA/Domain, Source-Credentials getrennt, privater Capture→Validierung→OpenPGP), publish_cli.py (getrennter Ciphertext-only privater Writer), recovery.py (unabhängige entpackte Paket-/Hash-/Empfängervalidierung), isolated_restore.py/restore_cli.py (separate lokale MariaDB-/WordPress-Wiederherstellung ohne Ports/Sourcezugriff, Originalkonfig/MU/Plugins nicht ausführen), synthetic_restore_rehearsal.py und zehn gezielte Regressionen. Writer-Proxies erhalten statt umgehen. Legacy-CLIs weiterhin gesperrt; keine Livepipeline automatisch aktiviert.
+
+Lokal27/27 Python-Tests erfolgreich, vier PHP-Lints/Helper und erzeugtes Live-PHP syntaktisch erfolgreich; vorhandene öffentliche Empfängerverschlüsselung/Handoff und temporärer Drei-Komponenten-Roundtrip erfolgreich. Echter synthetischer Docker-WordPress-/MariaDB-Restore nach ephemerer Verschlüsselung und Entschlüsselung PASS:52 Tabellen,28 uop_*, keine öffentlichen Ports, eigener Ziel-Cleanup. Tatsächlich Komponenten aus dem entschlüsselten Paket importiert; Produktionsquieszenzfelder im Test ausdrücklich simuliert und keine Liveevidenz. Erster Testfehler29-vs28 korrigiert, ohne Live-Auditzählung29 umzudeuten. Credentialboundary lehnte Runtime-Netzwerk-Guard wegen Namensbestandteil PRIVATE ab: exakte nichtgeheime Guardausnahme mit Regression, Guard unverändert geerbt; tatsächliche private Keys weiter verboten. Erste Docker-Lintprüfung ohne Leserecht verweigert; Read-only-Prüfung als Containerroot danach erfolgreich. Ausführlicher Bericht O03_BOUNDED_CAPTURE_RESTORE_2026-11-06.md.
+
+GitHub-Offlineworkflow erweitert auf neue Branch-/Parent-PR-Grenzen und alle test_*.py, ohne Secrets oder öffentliche Backup-Artefakte. Provider-CI auf neuem Commit wird benötigt; lokale Erfolge sind kein Provider-PASS. Keine produktiven Daten exportiert/hochgeladen, keine realen Snapshot-/Restorebelege behauptet. Source-/Writer-Runnerdefinition, private Ciphertextübergabe, Integration/Review der Parentkette und privater Betreiber-Restorehost sind noch nötig. Bestehender Betreiberauftrag autorisiert die Einrichtung; kein erneutes pauschales Einverständnis verlangt, kein privater Schlüssel angefordert. Als nächstes Review/CI dieses konkreten Changes, dann vertrauenswürdige Runneranbindung und echter Snapshot+Readback+Restore.
+
+orgavela.com unverändert, Live-alpha.2 zuletzt in vorherigem Audit bestätigt; PR62 bleibt Draft/ungemergt auf4fb50cb. V1 offen:62/71 historisch implementiert,M0–M7 0/8,P4 0/4,R0/18. Kein Zugangsschutz oder M3-Upload vor echtem Restore. Kostenfreie vorhandene Runtime und geheimnisfreie Standard-CI, keine neuen Verträge/Billingänderungen.
+
+
+## 2026-11-06 – O03/PGP05: Work-Befunde aus b382d0b korrigiert (Codex)
+
+Auftrag: drei Sicherheitsbefunde auf PR64-HEAD 2d031a4 vor echtem Snapshot beheben. PR64 ist OPEN/Draft, Basis fix/pgp05-backup-repo-pin-20261104; PR62 OPEN/Draft auf4fb50cb. Gelesen: AGENTS, kanonische Planquellen, neuestes Work-Protokoll b382d0b und konkrete Code-/Workflowgrenzen. Kein Sicherheits-Signoff von Work vorweggenommen.
+
+1. Restore trennt Dateidaten und ausführbaren Core: jedes Snapshotfile wird inert gehasht; ausschließlich separat von wordpress.org geladener SHA256-gepinnter Core wird in das ausführbare Ziel extrahiert. Neue Konfiguration und leeres wp-content, keine Source-Drop-ins/Auto-prepend/MU/Plugins. Fixierte Corearchive6.9 (synthetisch) und7.1.4 (aktueller Quellvertrag); 7.1.4 separat per HTTPS geladen und SHA256 881e53a4681ff2cd911651b11cccdede5ae477ddf0765af5d6a1a8b219a1d835 ermittelt. Kein vollständiger fachlicher Dateirestore behauptet: Dateien werden separat als Daten geprüft. Echter synthetischer Entschlüsselungs-/52-Tabellen-/WP-Restore trotz präpariertem wp-load/index/db.php/object-cache/advanced-cache/.user.ini PASS, Marker nicht ausgeführt.
+2. Fertiges GZIP/USTAR wird streaming gegen das stabile Inventar abgeglichen: exakte Mitglieder, Dateitypen, jeder Inhaltshash, Header/CRC/Ende/Limits; kein übersehenes A→B→A während TAR mehr. Capture-Evidenz jetzt strikt v2 mit archive_matches_inventory; ältere v1-Nachweise genügen nicht. Positiv-, temporärer Inhaltswechsel-, fehlende Mitglieder-, Trunkierungs- und Suffixnegativtests PASS.
+3. Live-Einstiege verlangen signiertes GitHub-OIDC (festes privates Controllerrepo/Workflow/main/manueller Aufruf/Environment/Rolle/Run), unabhängig exakten sauberen Checkout beider Repos sowie nachgewiesene Engine-Ancestry in öffentlichem main. GITHUB-Kontextwerte allein reichen nicht; keine Umdeklarierung. Source/Writer-Credentialgrenzen bleiben getrennt. Private Identity-Preflightdefinition wird ohne Hostingsecrets/Release-Schreibrechte geprüft. Live-Orchestrierung ist damit ausdrücklich noch nicht freigeschaltet: Engine/Parentstack sind unintegriert.
+
+Abbruch: Capture-CLI verlangt Wartungsbestätigung und führt vor jedem echten Capture eine kontrollierte Exception direkt nach echten Readlocks aus; frische DB-Verbindung muss danach konfliktierende Writelocks erlangen, eigener Marker weg und Origin200. Kein Dump/Archiv im Abbruchmodus. Gemeinsamer Watchdog jetzt getestet und an PID-Startidentität gebunden; harte Beendigung löst auch bei blockiertem Hauptprozess DB-Verbindung. Synthetische MariaDB/HTTP-Fixture: Exception, Timeout, Kanalverlust und fremder Wartungsmarker jeweils PASS; frische Writelocks, HTTP wieder200, Fremdmarker erhalten. Das ist kein IONOS-Abbruchbeleg.
+
+Lokal34/34 Python, fünf PHP-Lints und Helper PASS; synthetischer WP-/DB-Restore und vier Abbruchfälle PASS. Tatsächliche Testfehler: einmal rg im Minimalcontainer nicht vorhanden (Lint anschließend ohne rg erfolgreich); erste Abbruchprobe füllte durch bis zum Laufende gehaltene Docker-VFS-Testcontainer den Wegwerfspeicher. Fallweises Entfernen behoben, kompletter Wiederholungslauf PASS. Optionale Skillreferenz nicht verfügbar, kein Gate dadurch umgangen. Nur eigene Testressourcen bereinigt, kein globales Prune. Providerprüfung auf neuem Commit folgt; Ergebnis separat protokollieren.
+
+Offen/Übergabe: Work prüft konkrete Korrekturen und private Controllerdefinition unabhängig. Danach Parentkette regulär integrieren; erst auf integriertem, CI-geprüftem SHA echten IONOS-Abbruch/Watchdog/Origin belegen und private echte Capture→Ciphertext→Release-Readback→Restore-Orchestrierung freigeben. Kein echtes Website-Snapshot, Release, Restore, Sitechange oder M3-Upload in diesem Abschnitt. Bestehende Betreiberfreigabe für kostenfreie Standardrunner genutzt, keine Budget-/Vertragsänderung. V1 unverändert offen:62/71 historisch,M0–M7 0/8,P4 0/4,R0/18; alpha.2 letzter Livebeleg.
+
+
+O03-Providernachtrag: Erster Korrekturcommit564b6a3 hat zwei öffentliche Offline-Runs42267633555/42267641413 erfolgreich bestanden (34 Tests). Private synthetische Probe42267714118 scheiterte an Dateirechten: Container-root erzeugte 0700/0600-Testdateien, der reguläre GitHubrunner konnte den Fremdmarker nicht bearbeiten; Fixture jetzt mit tatsächlichem Runner-UID/GID. Restlichen wartenden Receiver zur Quotenersparnis abgebrochen, kein Liveprozess betroffen. Private Identityproben42267718623 und42267860258 verweigerten fail-closed den Subjectvergleich: GitHubrepo nutzt laut separater OIDC-Konfigurationsabfrage immutable Subjects mit numerischen Owner-/Repo-IDs. Verifikation und Negativtests jetzt auf exakt diese unveränderlichen IDs und den aktuellen Subjectprefix gebunden, keine gelockerte Repo-/Workflowprüfung. Keine Hostingsecrets gemappt; keine echte Operation trotz Fehlversuchen. Neue exakte Providerläufe folgen.
+
+
+## 2026-11-06 – O03: laufende TAR-/Dump-Kinder bei Abbruch beenden (Codex nach Work c4b6a37)
+
+Work-Nachprüfung auf317ce93 adressiert die drei ursprünglichen Befunde, ist ausdrücklich kein Live-Signoff. Neuer konkreter Auftrag: harte Abbrüche während tatsächlich laufender TAR-/Dump-Prozesse belegen. AGENTS, kanonische Planquellen, PR64-Status (Draft, Basis PR36, zwei grüne öffentliche Runs) und Work-Protokollc4b6a37 gelesen. PR62/64 ungemergt, kein echter Capture autorisiert/ausgeführt.
+
+Bestätigter Befund: alter Watchdog beendet nur PHP; normaler proc_terminate erfasst TAR-gzip-Nachkommen nicht zuverlässig. Neuer gemeinsamer Prozesshelper startet echte Capture-Aufrufe in eigener setsid-Prozessgruppe. Kind registriert PID/Startzeit/Gruppe/Session atomar und stoppt vor Nutzlast; Parent prüft Registrierung vor CONT. Normaler Cleanup und unabhängiger Watchdog verwenden dieselbe Gruppenbeendigung; Markerfreigabe erst bei bestätigtem Ende. Watchdog stoppt identifizierten Parent vor Gruppenbereinigung und beendet ihn danach; geerbte/fremde Gruppen und wiederverwendete PID verweigert. Neue Quelle verlangt setsid/POSIX-Funktionen vor Wartung, unbekannte IONOS-Fähigkeit wird nicht behauptet. Linux-Signalnummern statt PCNTL-Konstanten, weil minimales PHP-Image PCNTL nicht enthält.
+
+Synthetische Probe erweitert um echte TAR(gzip)- und mariadb-dump-Prozesse, deren bereits produzierte Ausgabe bewusst nicht weiter gelesen wird. Je Tool Exception, Watchdogtimeout und harter Parent/Kanalabbruch; alle beobachteten Gruppenmitglieder sowie spätere Gruppenmitglieder müssen beendet sein. Ein unbeteiligter Prozess muss überleben; danach frische DB-Writelocks/HTTP200 und alte Fremdmarkergrenze. Vier bestehende Fälle bleiben. Datenbankfixture auf flüchtiges tmpfs umgestellt.
+
+Zwischenprüfung34 Python PASS, sechs PHP-Lints/Helper zunächst PASS; vollständiger lokaler Wiederholungslauf noch nicht bestanden: zuerst fehlende PCNTL-Konstanten korrigiert, anschließend Docker-VFS-Speicher voll. Über Docker-Events ausschließlich nachweislich eigene verwaiste Abort-Fixturevolumes entfernt. Zwei nicht mehr benötigte ältere synthetische M3-Container entfernt, ihre Datenvolumes erhalten; keine Website oder echten Daten betroffen. Speicher reicht weiterhin nicht für parallele frische lokale DB-/CLI-Container. Deshalb gezielter kostenfreier privater Providerlauf für diese Änderung erforderlich; kein lokales PASS erfunden.
+
+Live-Sicherheitsfreigabe, Parentintegration, echte IONOS-Abbruchprobe und vollständige private Capture/Release/Readback/Restore-Anbindung bleiben offen. V1 unverändert62/71 historisch,M0–M7 0/8,P4 0/4,R0/18,alpha.2 letzter Livebeleg. Prüfergebnisse und endgültige SHA folgen als Nachtrag.
+
+
+O03-Kindprozessprobe: Öffentliche CI auf6b802c9 zweimal grün (42271383567/42271391725). Privater gezielter Run42271437757 scheiterte im frischen Lockprobe-Schritt. Testsentinel war vom DB-verbundenen PHP-Worker gestartet und konnte dessen DB-Socket erben; für einen wirklich unabhängigen Kontrollprozess wird er jetzt über separates docker exec gestartet. Das ist eine Fixturekorrektur, die behauptete harte Abbruchfreigabe bleibt bis erfolgreicher Wiederholung offen. Feste Case-/Fehlerkategorien ergänzt; keine vertraulichen Outputs. Gruppen-Cleanup toleriert zusätzlich natürliches Prozessende zwischen Prüfung und Signal, ohne ein echtes überlebendes Gruppenmitglied zu ignorieren.
+
+
+Run42271790486 aufe733537: erste vier Fälle und drei echte TAR/gzip-Abbruchfälle durchlaufen, Aufbau der Dump-Fixture noch fehlgeschlagen; kein Gesamt-PASS. Expliziten Commit der synthetischen Dump-Payload vor Readlocks und gleiche private umask wie im echten Capture ergänzt; begrenzte Diagnose nur aus bewusst synthetischer Worker-/Toolausgabe und festem Exitcode. Öffentliche CI e733537 zweimal grün (42271755723/42271767159). Wiederholung der Dump-Probe erforderlich.
+
+
+Run42272252201 bestätigt erneut alle sieben bisherigen/TAR-Fälle, Dumpaufbau verweigert konkret TLS/SSL2026: neuer CLI-Client erzwingt TLS, die ausdrücklich lokale synthetische MariaDB hat kein TLS eingerichtet. Nur für diesen internen Fixture-Dump --skip-ssl ergänzt; Produktions-Dumpargumente, SSH-Pin und HTTPS-/TLS-Prüfungen bleiben unverändert. Vorige explizite Transaktions-/umask-Korrektur war nicht die nachgewiesene Ursache; die neue begrenzte Diagnose liefert nun den konkreten Befund. Noch kein Gesamt-PASS vor Wiederholung.
+
+
+### 2026-11-06 – O03: Registrierungsabbruch (Codex, Basis 7c170f3)
+
+Auftrag: Befund 44554bd vor IONOS reproduzieren und korrigieren. Separater Branch fix/o03-registration-abort, ausschließlich disposable synthetische lokale Container; kein Livezugriff. Planung, Status, Matrix, Freeze und Work-Befund gelesen. GitHub-Metadatenprüfung scheiterte an sekundärem API-Rate-Limit; keine aktuelle Provider-CI behauptet.
+
+Reproduktion: zweite Session zwischen vollständiger temporärer Stat-Datei und mv stoppen, während TAR/gzip und DB-Locks aktiv sind. Alte Engine: zehn alte Fälle grün, registration-timeout rot (watchdog fixture cleanup timeout). Korrektur: vollständige temporäre Identitäten mit denselben PID-/Start-/Session-/UID-Prüfungen bereinigen; Datensatzfehler blockieren andere Gruppen nicht. Unvollständige Identitäten erlauben keine Signale und liefern weiterhin false; Diagnosemetadaten bleiben erhalten. Watchdog entfernt den hashgebundenen eigenen Marker auch bei Gruppenfehlern; fremde Marker bleiben bestehen. Erfolgreicher normaler Cleanup entfernt auch temporäre Registrierungen.
+
+Tatsächlich geprüft: erweiterte Containerprobe 13/13 grün, einschließlich registration-timeout/-disconnected/-foreign-marker. Eigene TAR/gzip-Gruppen samt Registrierungsshell beendet, neue Verbindung erhält WRITE-Locks, HTTP wieder 200, fremder Kontrollprozess und Marker erhalten. Ergänzte PHP-Hilfstests grün: beschädigte/partielle Identitäten abgelehnt, andere Gruppen dennoch beendet; Watchdog Exit71 entfernt eigenen, erhält fremden Marker. Vier PHP-Lints und diff-check grün. 34 Python-Tests grün nach Entfernen ausschließlich optionaler Writer-Tokenvariablen für diesen Testprozess; Runtime-/Netzwerkguards erhalten. Erstlauf mit Writer-Token: drei credential-boundary-Fehler. PHP-Testaufrufe zunächst wegen Container-UID, fehlendem Pipearray und PID1-Binding korrigiert; danach grün. Container/Netzwerk vollständig entfernt. Lokale Logs /workspace/repro.log, /workspace/fixed.log, /workspace/python-tests-clean.log; keine externe Run-ID.
+
+Grenzen: vollständig geschriebene temporäre Registrierung dynamisch belegt; zerstörte/unvollständige Identitäten werden bewusst nicht zur Signalzuordnung verwendet und bleiben Fehlerstatus. Kein IONOS-Abbruch, Snapshot, Release-Rückdownload oder Restore. Nächster Schritt: unabhängige Work-Nachprüfung des separaten Kandidaten, neue Provider-CI, reguläre Parentintegration; erst danach IONOS-Probe. PR62/64 Draft und ungemergt, nicht verändert. V1 unverändert offen: 62/71 historisch implementiert, M0–M7 0/8, P4 0/4, R0/18, alpha.2 letzter Livebeleg.
+
+**Sicherung:** Implementierung und Prüfprotokoll als `2226e36` auf separatem GitHub-Branch `fix/o03-registration-abort` veröffentlicht. Workspace sauber; PR62/64 weder aktualisiert noch gemergt. Neue Provider-CI/Work-Nachprüfung nicht behauptet.
+
+
+### 2026-11-06 – O03: gebündelte Erstproben-Sperren, Umsetzung in Arbeit
+
+Auftrag gemäß gebündelter Work-Prüfung ec83e31: Cleanupzustände und isolierte Probe gemeinsam korrigieren; erst anschließend CI/Integration/Capabilities/IONOS. Basis 3a87186, PR64 über GitHub frisch OPEN/Draft, HEAD7c170f3, Basis PR36 c352043 bestätigt. Privater Controller o03-private-live-backup.yml über Connector gelesen: weiterhin reiner Identity-Preflight, Pin7c170f3, keine Hostingcredentials/Release-Rechte. Neue Implementierung auf separatem Korrekturbranch; kein Draftmerge oder Livezugriff. Letzter eigener Markerfix 2226e36 war bei Überlebenden zu großzügig und wird bewusst durch konservatives Hold/Eskalation ersetzt.
+
+Umsetzung: Cleanup complete/unknown/survivors, Parentende vor Freigabe; private Eskalationskategorie mit Exit71/72 und erhaltener Wartung. Eigener Abort-CLI mit signierter Rolle abort, Preflight/Exception/hartem lokalem SSH-Gruppenabbruch und neuer separater Beobachtersitzung. Keine automatische Capture-/Package-Fortsetzung; Abort überspringt Dump/Archivprüfungen. Neuer Capabilitypfad mit temporären eigenen Hardlink-/nohup-/Session-/Lockprüfungen ohne Wartung/Dump. Unabhängige Recoveryroute bleibt vor Live praktisch zu belegen; Verfahren und WordPress-Markerablauf im O03_ABORT_ONLY_2026-11-06.md. Öffentliche Offline-CI um Korrekturbranch/abhängigen PR und komplette synthetische Abbruchprobe erweitert, ohne Secrets. Tests/Providerbelege folgen im nächsten Eintrag. V1-Zähler unverändert.
+
+
+**O03-Zwischennachweis:** Implementierung 2c1d609 auf [Draft PR65](https://github.com/orgavela/Orgavela-Plugin/pull/65) gegen PR64 veröffentlicht. Echter öffentlicher PR-Run42310740694, Job128211248128, sämtliche Schritte SUCCESS einschließlich 37 Regressionen/Krypto und kompletter 13-Fall-Abbruchprobe. Das ist ein Vorbeleg für diesen SHA, kein Erfolg für nachfolgende Änderungen. PR62/64 bleiben ungemergt; keine Main-Ancestry umgangen.
+
+Zusätzliche Absicherung: Watchdog schreibt für den harten Kanalmodus eine private Abschlussquittung ausschließlich nach vollständigem Gruppen-/Parentende; unabhängiger Beobachter verlangt diese Quittung zusätzlich zu erneutem Prozessscan, frischer WRITE-Lockprobe, Markerabwesenheit und Origin. Neues synthetic_abort_protocol.py führt das vollständig zusammengesetzte Remote-PHP in disponiblen Containern mit echter PHP8.3.36, POSIX-Account, 52 InnoDB-Tabellen und Hardlinks aus: Capabilitypfad, Exception und harter Docker-exec-Kanalverlust mit neuer Beobachtersitzung alle PASS, einschließlich Watchdogquittung und vollständiger Artefaktbereinigung. Origin ausdrücklich simuliert, Kanal Docker statt echtem SSH; kein IONOS-Beleg. Exportprozessstarts sind in der Fixture verboten. Erste Fixtureversuche scheiterten an fehlendem useradd, korrigiertem Python-Quoting sowie dem reduzierten PATH ohne Docker; nach Korrekturen finaler vollständiger Lauf grün (/workspace/protocol-final.log). Neue Probe jetzt Bestandteil der öffentlichen geheimnisfreien CI.
+
+Final lokal 37 Python-Regressionen PASS (/workspace/tests-final.log), PHP-Hilfstests mit echten überlebenden Sessions unter simulierter wirkungsloser Signalzustellung PASS; zwei aktuelle PHP-Lints PASS und zuvor vollständig assembliertes PHP-Lint PASS. Letzte 13-Fall-Gruppenprobe PASS (/workspace/abort-v2.log); darin unveränderte Gruppen-/Markerlogik nach dem anschließend hinzugefügten optionalen Quittungsparameter, dessen harter Pfad durch die neue Protokollprobe geprüft ist. Keine unbekannte Identität für Signale verwendet. Neue Providerprüfung auf finalem Folgecommit noch erforderlich.
+
+**Verbleibende echte Sperre:** Reguläre Parent-/Mainintegration und unabhängige Work-Nachprüfung fehlen; PR62/64 gemäß Auftrag Draft und ungemergt. Privaten Identity-only-Controller daher nicht still mit Hostingrechten aktiviert. Vor IONOS müssen der Source-only-Job auf integriertem exaktem CI-SHA, private Secretbindings und ein unabhängiger, praktisch geprobter Recoveryweg bereitstehen. Capabilitycode ist vorbereitet und synthetisch geprüft, auf IONOS noch nicht ausgeführt. Echte Abbruchprobe, Snapshot/Release-Rückdownload/Restore unverändert offen. V1 unverändert 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18; alpha.2 letzter Livebeleg.
+
+
+**O03 finaler Providerbeleg / Übergabe:** Engine `5c395148bd395a5688e9d5ef240433d63c48a351`, echter PR-Run [42311225902](https://github.com/orgavela/Orgavela-Plugin/actions/runs/42311225902), Job128212863561: alle Schritte SUCCESS. Joblog separat gelesen: PHP-Helper PASS, 37 Tests in4.627s, alle 13 namentlich protokollierten Gruppen-/Registrierungsfälle PASS, anschließend vollständige synthetische Remoteprotokollprobe PASS mit echter CLI8.3.36/52 Tabellen, eigener Watchdog-Abschlussquittung und getrennter Prozess-/Lock-/Markerbeobachtung. Origin simuliert, Kanal ausdrücklich docker-exec-not-SSH; keine IONOS- oder Livefreigabe. Öffentliche Krypto-/deaktivierte-Einstiegsprüfungen ebenfalls erfolgreich. Diese SHA ist der geprüfte Enginekandidat; nachfolgender Journalcommit ändert keinen Enginecode.
+
+GitHub-Stand frisch geprüft: PR33 Draft0d419c9 ohne Reviews; PR36 Draftc352043 nur eingeschränkter COMMENTED-Review, keine formale APPROVE-Abnahme; PR64 Draft7c170f3 ohne Reviews; neuer PR65 Draft, kein Review. Damit unabhängige Work-Nachprüfung und reguläre Parent-/Mainintegration weiterhin offen; keine Draft-/Main-Ancestry-Sperre umgangen. Privater Controller weiterhin Identity-only, Hostingbindings/Recoveryweg nicht praktisch nachgewiesen. Tatsächlich erledigt sind Codekorrektur, isolierter Einstieg, Capability-/Beobachtercode, lokale und öffentliche synthetische Providerprüfung. Nicht erledigt sind Integration, Source-only-Livejob, IONOS-Capabilities und echte Abbruchprobe. Keine echten Daten, kein Snapshot, Release, Rückdownload, Restore oder Websiteeingriff. Nächste konkrete Aktion: Work prüft PR65/Engine5c39514 samt Run42311225902; anschließend reguläre Parentintegration, private Source-only-Definition/Recoveryroute und erst dann IONOS-Preflight/Abbruch. PR62/64 unverändert Draft und ungemergt, V1 weiterhin offen 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18, alpha.2 letzter Livebeleg.
+
+
+### 2026-11-07 – O03: Auftrag reguläre Integration und getrennte IONOS-Probe
+
+Neue Work-Nachprüfung 7041789 und Betreiberauftrag gelesen: Engine5c39514 ohne weiteren bestätigten Codeblocker,37 lokale Regressionen und Provider42311225902 anerkannt; kein formeller Hosting-Signoff. Auftrag autorisiert jetzt reguläre PR-Integration nach Gates, Source-only-Job und Recoverynachweis vor Preflight/Exception/hartem SSH-Abbruch. Aktuell PR65 HEAD2bd2a03 gegen PR64, beide Draft; Parentstack reicht über33/36 in ältere O03/PGP05-PRs. Keine Statuszeile des Ausgangsstands als neue Livefreigabe behandelt; keine Schutzregeländerung oder Main-Ancestry-Umgehung.
+
+Vorbereitung: Offlineworkflow um manuellen geheimnisfreien Dispatch und push auf main ergänzt, damit tatsächliche Integrations-SHA geprüft werden kann. Worklog/Plan/Matrix/JSON/IONOS-Runbook gelesen. Managed Runtime ohne Hostingsecrets; diese werden ausschließlich in geschützten Source-Schritten benötigt. Direkte lesende Branch-Protection-Abfrage via gh wurde403 Resource not accessible by integration verweigert; normale GitHub-Merge-Gates bleiben unverändert, kein Bypass. Weitere Integrations-/CI-/Recoverybelege folgen.
+
+
+### 2026-11-07 – O03: reguläre Integration mit eingefrorener Archivbasis
+
+Betreiberauftrag nach Work7041789 autorisiert Integration und getrennte Source-/Recoveryprobe. Reguläre GitHub-Merges ohne Schutzänderung: PR65 ddf3b16 → PR64 5ebe9e4 → PR36 4955568 → PR33 5ace1b7 → PR31 aeae402 → PR30 a061890 → PR29 c991fde. Sämtliche übernommenen Dateibäume identisch zum geprüften d2fbe89; dieser Workflow-/Journalfolgecommit hat zusätzlich aktuelle öffentliche CI. Main war dabei noch unverändert.
+
+PR28 wurde regulär bereitgestellt, sein Merge in die eingefrorene synthetische V3-Testbranch wurde mit HTTP405 Cannot change this locked branch abgelehnt. Kein Entsperren, kein Admin-Bypass, kein erneuter Schreibversuch auf das gesperrte Ziel. Stattdessen eigener regulärer Integrations-PR gegen geschütztes main, mit vollständiger c991fde-Parent-Historie; die eingefrorenen Testrefs bleiben erhalten und PR28 wird nicht als gemergt ausgegeben. Die neue Main-PR muss eigene Pflichtchecks bestehen; Source-Ancestry bleibt tatsächliches Main-Gate.
+
+Konfliktauflösung: aktuelle main-.circleci/config.yml samt App-/O09-/O08-CI unverändert erhalten. Veraltete synthetische CircleCI-Pilotkonfiguration wird nicht darübergeschrieben; ihre Historie bleibt in Elterncommits, aktuelle O03-Engineprüfung läuft über den geheimnisfreien PGP05-GitHubworkflow inklusive neuem Main-Trigger. Arbeitsjournal append-only zusammengeführt: beide Versionen hatten exakt denselben Basispräfix, beide neuen Anhänge vollständig erhalten. Normativer Plan, JSON, Status und Matrix behalten den aktuellen Main-Stand und erhalten datierte O03-Nachträge; keine historische Statusfassung ersetzt aktuelle O02/O04/O08-Belege. 37 Tests,13 Fälle, neue synthetische Remoteprotokollprobe auf Integrationsstand erneut durch CI zu belegen.
+
+Privater Source-only-/Recoverycontroller als Draft PR1 vorbereitet, nicht aktiviert. Hostingcredential-Mapping ausschließlich in Source-Schritten, contents:read und OIDC, keine Release-Schreibrechte. Zwei getrennte Recoveryjobs sollen eine eigene Canary/Hardlinkdatei prüfen/entfernen; vor Wartung sind erfolgreiche Recovery- und Preflightruns auf exakt derselben Controller-SHA innerhalb einer Stunde erforderlich. Lokal vier Gate-Regressionen und Python/Bash/YAML-/Credentialgrenzenprüfung PASS. Private Environment-Secrets-/Variableninventur via gh403 verweigert; keine Werte gelesen oder kopiert. Benutzer nennt ausschließlich Codex oder Betreiber als mögliche Eingreifende; Codex übernimmt im aktiv beaufsichtigten Fenster die technische Erstreaktion, ein Betreiber-/IONOS-UI-Rückweg wird nicht als praktisch belegt behauptet. Neue Recoveryroute noch nicht ausgeführt, kein IONOS-Lauf oder Wartungsmarker.
+
+V1 offen, Zähler unverändert 62/71 historisch, M0–M7 0/8, P4 0/4, R0/18; alpha.2 letzter Livebeleg. PR62 bleibt Draft/unberührt. Weitere CI-/Merge-/Sourcebelege folgen, keine Livefreigabe aus dieser Zusammenführung abgeleitet.
