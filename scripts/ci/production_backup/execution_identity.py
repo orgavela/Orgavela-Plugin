@@ -35,6 +35,19 @@ def fetch_json(url, *, headers=None, limit=4*1024*1024):
     return json.loads(data)
 
 
+def github_read_headers(env, url):
+    # The optional job capability is used only for the fixed public engine API.
+    # Never send it to OIDC, asset hosts, redirects or arbitrary repositories.
+    prefix='https://api.github.com/repos/'+ENGINE_REPOSITORY+'/'
+    if not url.startswith(prefix) or '..' in urllib.parse.unquote(urllib.parse.urlsplit(url).path).split('/'):raise ProbeError('GitHub read capability target refused')
+    headers={'Accept':'application/vnd.github+json','User-Agent':'orgavela-backup-identity'}
+    token=env.get('ORGAVELA_GITHUB_READ_TOKEN','')
+    if token:
+        if not isinstance(token,str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,8192}',token):raise ProbeError('GitHub read capability encoding')
+        headers['Authorization']='Bearer '+token
+    return headers
+
+
 def decode(value):
     if not isinstance(value,str) or not re.fullmatch(r'[A-Za-z0-9_-]+',value):
         raise ProbeError('OIDC encoding refused')
@@ -132,7 +145,7 @@ def authorize(env, role, *, engine_root=None):
     engine_root=Path(__file__).resolve().parents[3] if engine_root is None else Path(engine_root)
     engine_sha=env.get('ORGAVELA_APPROVED_ENGINE_SHA','')
     checkout(engine_root,ENGINE_REPOSITORY,engine_sha)
-    comparison=fetch_json('https://api.github.com/repos/'+ENGINE_REPOSITORY+'/compare/'+engine_sha+'...main?per_page=1',
-                          headers={'Accept':'application/vnd.github+json','User-Agent':'orgavela-backup-identity'})
+    comparison_url='https://api.github.com/repos/'+ENGINE_REPOSITORY+'/compare/'+engine_sha+'...main?per_page=1'
+    comparison=fetch_json(comparison_url,headers=github_read_headers(env,comparison_url))
     integrated_engine(engine_sha,comparison)
     return {'controller_sha':sha,'engine_sha':engine_sha,'run_id':claims['run_id'],'run_attempt':claims['run_attempt'],'role':role}
