@@ -161,6 +161,19 @@ def run():
             try:legacy_receipt=transport.resource_probe(Binding(),'database',password='fixture',maintenance_approved=True,phase_callback=phases.append)
             except ValueError:raise RuntimeError('legacy bridge resource refused: '+str(phases)) from None
         if legacy_receipt['server_certificate_verified'] is not False:raise RuntimeError('legacy bridge certificate claim')
+        # USTAR cannot encode provider-sized numeric owners. Archive normalization
+        # must preserve bytes/modes and leave the actual Source file owner alone.
+        original_owner=docker('exec',name,'stat','-c','%u:%g','/tmp/o03-tls-source/wp/index.php').strip()
+        try:docker('exec','--user','33:33',name,'tar','--create','--format=ustar','--owner=3333333','--group=3333333','--gzip','--file','-','--directory','/tmp/o03-tls-source/wp','.')
+        except RuntimeError:pass
+        else:raise RuntimeError('large numeric owner did not reproduce USTAR refusal')
+        class HighOwnerBinding(Binding):
+            def argv(self):
+                command=super().argv();at=command.index('--user');command[at:at]=['-e','TAR_OPTIONS=--owner=3333333 --group=3333333'];return command
+        with patch.object(transport,'live_program',return_value=legacy_program),patch.dict('os.environ',{'ORGAVELA_DATABASE_TLS_MODE':MODE}):
+            file_receipt=transport.resource_probe(HighOwnerBinding(),'filesystem',password='fixture',maintenance_approved=True)
+        if file_receipt['completed'] is not True or file_receipt['backup_saved'] is not False:raise RuntimeError('portable owner filesystem probe')
+        if docker('exec',name,'stat','-c','%u:%g','/tmp/o03-tls-source/wp/index.php').strip()!=original_owner:raise RuntimeError('source owners mutated')
         import tempfile
         negative=transport.client_tls_negative_program(Binding())
         for source,line in zip(('e375617e0bad12f0880e85a4f1125a68480bd7b9b4160d86e48d0ef4210c5a76','a61d09007f25c5df6bcbdf02ff34fe13bcd86426cff4bb40efc5d216cbd74dea'),legacy_hashes):negative=negative.replace(source.encode(),line.split()[0].encode())
@@ -181,7 +194,7 @@ def run():
             cfg=('[client]\nuser=fixture\npassword='+password+'\nhost='+host+'\n').encode()
             rejected=json.loads(docker('exec','-i','--user','33:33',name,'sh','-c','exec 4>&1; php "$@"; status=$?; test "$status" -ne 0','fixture','/tmp/o03-tls-source/bridge-peer.php',encoded,'audit-plaintext-refusal',data=cfg))
             if rejected['client_started'] is not True or rejected['authentication_forwarded'] is not False or rejected['tls_established'] is not False or rejected['failure'] not in ('tls','peer'):raise RuntimeError('bridge peer mismatch accepted')
-        return {'legacy_10_11_19_both_clients_started_plaintext_refused_before_auth_or_output':True,'legacy_bridge_wrong_peer_before_auth_refused':True,'legacy_large_stream_over_pipe_capacity_complete':True,'legacy_10_11_19_bridge_actual_dump':True,'synthetic_tls_and_dump':True,'approved_unverified_tls_and_actual_dump':True,'assembled_unverified_evidence_false':True,'unverified_plaintext_client_and_dump_refused':True,'unverified_wrong_peer_refused':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
+        return {'legacy_10_11_19_both_clients_started_plaintext_refused_before_auth_or_output':True,'legacy_bridge_wrong_peer_before_auth_refused':True,'large_source_owner_ustar_refusal_reproduced_and_normalized_without_source_change':True,'legacy_large_stream_over_pipe_capacity_complete':True,'legacy_10_11_19_bridge_actual_dump':True,'synthetic_tls_and_dump':True,'approved_unverified_tls_and_actual_dump':True,'assembled_unverified_evidence_false':True,'unverified_plaintext_client_and_dump_refused':True,'unverified_wrong_peer_refused':True,'nonzero_system_owner_succeeded':True,'separate_protected_system_owners_succeeded':True,'source_owned_or_writable_or_replaceable_trust_refused':True,'untrusted_ca_refused':True,'wrong_hostname_refused':True,'explicit_system_ca_succeeded':True,'same_verified_flags_for_probe_and_dump':True,'production_source_accessed':False,'public_ports':0}
     finally:
         for kind,resource in reversed(made):
             if kind=='container':docker('rm','-f',resource)

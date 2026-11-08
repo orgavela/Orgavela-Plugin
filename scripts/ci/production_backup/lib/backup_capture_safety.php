@@ -21,9 +21,21 @@ function orgavela_tls_failure_phase(string $privateError): string {
 
 /** One source of truth: the same exact omission for probe and production TAR. */
 function orgavela_capture_tar_args(string $root): array {
-    return ['tar','--create','--format=ustar','--gzip','--file','-',
+    return [is_executable('/usr/bin/tar')?'/usr/bin/tar':'/bin/tar','--create','--format=ustar','--owner=0','--group=0','--numeric-owner','--hard-dereference','--gzip','--file','-',
         '--exclude=./.maintenance',
         '--directory',$root,'.'];
+}
+
+/** Fixed categories only; never forward Source paths or raw TAR errors. */
+function orgavela_tar_failure_phase(string $error):string {
+    if(preg_match('/out of (?:uid_t|gid_t) range|Numeric owner|numeric owner/i',$error))return 'filesystem_tar_owner_range';
+    if(str_contains($error,'file changed as we read it'))return 'filesystem_tar_changed';
+    if(str_contains($error,'Permission denied'))return 'filesystem_tar_permission';
+    if(preg_match('/unrecognized option|unknown option|unsupported|invalid argument/i',$error))return 'filesystem_tar_option_unsupported';
+    if(preg_match('/gzip.*(?:not found|Cannot exec)|Cannot exec.*gzip/i',$error))return 'filesystem_tar_gzip_unavailable';
+    if(preg_match('/Cannot stat|Cannot open|No such file/i',$error))return 'filesystem_tar_path_unavailable';
+    if(preg_match('/file name is too long|link name is too long/i',$error))return 'filesystem_tar_path_range';
+    return 'filesystem_tar_failed';
 }
 
 function orgavela_capture_inventory(string $root): array {

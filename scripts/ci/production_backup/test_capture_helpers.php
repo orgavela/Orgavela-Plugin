@@ -30,10 +30,15 @@ try {
     check(orgavela_remove_owned_maintenance($marker,$hash));
     file_put_contents($marker,'another-owner');check(!orgavela_remove_owned_maintenance($marker,$hash));
     check(file_get_contents($marker)==='another-owner');
-    $args=orgavela_capture_tar_args($root);check(count(array_filter($args,fn($a)=>str_starts_with($a,'--exclude=')))===1);
+    check(orgavela_tar_failure_phase('tar: private-file: value 3333333 out of uid_t range 0..2097151')==='filesystem_tar_owner_range');
+    check(orgavela_tar_failure_phase('tar: private-file: Permission denied')==='filesystem_tar_permission');
+    check(orgavela_tar_failure_phase('tar: private-file: file changed as we read it')==='filesystem_tar_changed');
+    check(link($root.'/wp-config.php',$root.'/same-bytes-hardlink.php'));
+    $args=orgavela_capture_tar_args($root);check(in_array('--owner=0',$args,true)&&in_array('--group=0',$args,true)&&in_array('--numeric-owner',$args,true));check(count(array_filter($args,fn($a)=>str_starts_with($a,'--exclude=')))===1);
     $proc=proc_open($args,[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
     $tar=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);
     check(proc_close($proc)===0 && $error==='');
+    $header=gzdecode($tar);check(octdec(substr($header,108,8))===0&&octdec(substr($header,116,8))===0);unset($header);
     $archive=$root.'.tar.gz';file_put_contents($archive,$tar);
     $listing=shell_exec('tar -tzf '.escapeshellarg($archive));unlink($archive);
     check(str_contains($listing,'./wp-content/cache/docket-cache/fixture.txt') && !str_contains($listing,'./.maintenance'));
