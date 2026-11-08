@@ -38,7 +38,8 @@ register_shutdown_function($cleanup);
 $checkTime = static function() use ($started): void { if (microtime(true)-$started > 100) throw new RuntimeException('deadline'); };
 $run = static function(array $args, ?string $config, bool $compress, int $limit=60) use (&$active,$checkTime,$phase,$filesystemOnly,&$entryCount,$cleanup,&$work,&$unverifiedTls,&$host,&$port,&$peerFingerprint): string {
     $runAt=microtime(true);
-    $kind=in_array('/usr/bin/openssl',$args,true)?'database_tls_peer':(basename($args[0])==='mariadb'?'database_tls_probe':($args[0]==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump')));
+    $kind=in_array('/usr/bin/openssl',$args,true)?'database_tls_peer':(basename($args[0])==='mariadb'?'database_tls_probe':(basename($args[0])==='tar'?'filesystem_tar':(in_array('--help',$args,true)?'client_help':'database_dump')));
+    if($kind==='filesystem_tar'){if(posix_geteuid()>2097151||posix_getegid()>2097151)$phase('filesystem_owner_ids_exceed_ustar');$phase('filesystem_archive_owner_ids_normalized');}
     if($kind!=='client_help')$phase($kind.'_started');
     $bridge=$unverifiedTls && $config!==null;
     if($bridge){if(!$work)throw new RuntimeException('bridge work absent');$args=[PHP_BINARY,$work.'/bridge.php',base64_encode(json_encode([$host,$port,$peerFingerprint,$work.'/s',$args],JSON_THROW_ON_ERROR))];}
@@ -86,6 +87,7 @@ $run = static function(array $args, ?string $config, bool $compress, int $limit=
     fclose($pipes[1]);$err=stream_get_contents($pipes[2]);if(strlen($errors)<16384)$errors.=substr($err,0,16384-strlen($errors));fclose($pipes[2]);
     if ($compress) $output.=deflate_add($gz,'',ZLIB_FINISH);
     proc_close($p); if ($state['exitcode']!==0) {
+        if($kind==='filesystem_tar'){$phase(orgavela_tar_failure_phase($errors));unset($errors);throw new RuntimeException('archive failed');}
         $kind='dump_process_failed';
         if (preg_match('/(?:Got error: |ERROR )(1045|1049|1142|1205|1213|1227|1969|2002|2003|2013|2026)\b/',$errors,$m)) $kind=match($m[1]){'1045'=>'dump_auth_failed','1049'=>'dump_database_missing','1205','1213'=>'dump_lock_timeout','1969'=>'dump_statement_timeout','2002','2003'=>'dump_connection_failed','2013'=>'dump_connection_lost','2026'=>orgavela_tls_failure_phase($errors),default=>'dump_permission_denied'};
         elseif (str_contains($errors,'ORGAVELA_TLS_BRIDGE_REFUSED')){$kind='database_tls_bridge_refused';if(preg_match('/ORGAVELA_TLS_BRIDGE_REFUSED=(input|listen|client|accept|connect|greeting|capabilities|tls_required|auth|tls|peer|cipher|auth_deadline|deadline|relay|read|write|internal)\b/',$errors,$m))$kind='database_tls_bridge_'.$m[1];}

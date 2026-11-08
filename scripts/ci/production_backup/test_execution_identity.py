@@ -91,3 +91,12 @@ class RecoveryBoundaryTests(unittest.TestCase):
             result=inspect_snapshot_files(archive)
             self.assertEqual(result['files'],3)
             self.assertFalse(marker.exists())
+
+class GithubReadCapability(unittest.TestCase):
+    def test_optional_read_header_scoped_away_from_oidc_and_other_hosts(self):
+        url='https://api.github.com/repos/orgavela/Orgavela-Plugin/compare/'+'a'*40+'...main?per_page=1'
+        self.assertNotIn('Authorization',gate.github_read_headers({},url))
+        self.assertEqual(gate.github_read_headers({'ORGAVELA_GITHUB_READ_TOKEN':'synthetic_read'},url)['Authorization'],'Bearer synthetic_read')
+        for other in ('https://token.actions.githubusercontent.com/.well-known/jwks','https://api.github.com.evil/repos/orgavela/Orgavela-Plugin/','https://api.github.com/repos/other/project/'):
+            with self.assertRaises(ProbeError):gate.github_read_headers({'ORGAVELA_GITHUB_READ_TOKEN':'synthetic_read'},other)
+        with self.assertRaises(ProbeError):gate.github_read_headers({'ORGAVELA_GITHUB_READ_TOKEN':'invalid\nheader'},url)
